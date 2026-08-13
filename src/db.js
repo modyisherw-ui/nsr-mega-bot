@@ -31,6 +31,13 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT, guild_id TEXT NOT NULL UNIQUE, channel_id TEXT NOT NULL,
     message_id TEXT NOT NULL, target_id TEXT NOT NULL, updated_at INTEGER DEFAULT (strftime('%s','now'))
   );
+  CREATE TABLE IF NOT EXISTS product_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, guild_id TEXT NOT NULL, product_id TEXT NOT NULL,
+    user_id TEXT NOT NULL, stars INTEGER NOT NULL CHECK(stars BETWEEN 1 AND 5),
+    comment TEXT, created_at INTEGER DEFAULT (strftime('%s','now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_prod_reviews_prod ON product_reviews(guild_id, product_id);
+  CREATE INDEX IF NOT EXISTS idx_prod_reviews_user ON product_reviews(user_id);
 
   -- 🎫 التذاكر
   CREATE TABLE IF NOT EXISTS tickets (
@@ -157,6 +164,17 @@ const ratings = {
   saveReview: ({ guildId, channelId, messageId, targetId }) => db.prepare(`INSERT OR REPLACE INTO review_panel (guild_id, channel_id, message_id, target_id, updated_at) VALUES (?,?,?,?,strftime('%s','now'))`).run(guildId, channelId, messageId, targetId),
   getReview: (guildId) => db.prepare(`SELECT * FROM review_panel WHERE guild_id=?`).get(guildId) || null,
   deleteReview: (guildId) => db.prepare(`DELETE FROM review_panel WHERE guild_id=?`).run(guildId).changes > 0,
+};
+
+// ═══════════════ تقييمات المنتجات (الراجعة الجديدة) ═══════════════
+const productReviews = {
+  add({ guildId, productId, userId, stars, comment }) {
+    db.prepare(`INSERT INTO product_reviews (guild_id, product_id, user_id, stars, comment) VALUES (?,?,?,?,?)`).run(guildId, productId, userId, stars, comment);
+    return db.prepare(`SELECT * FROM product_reviews WHERE id = last_insert_rowid()`).get();
+  },
+  byProduct: (guildId, productId, limit = 20) => db.prepare(`SELECT * FROM product_reviews WHERE guild_id=? AND product_id=? ORDER BY id DESC LIMIT ?`).all(guildId, productId, limit),
+  stats: (guildId, productId) => db.prepare(`SELECT COUNT(*) AS total, ROUND(AVG(stars),2) AS average FROM product_reviews WHERE guild_id=? AND product_id=?`).get(guildId, productId),
+  recent: (guildId, limit = 20) => db.prepare(`SELECT * FROM product_reviews WHERE guild_id=? ORDER BY id DESC LIMIT ?`).all(guildId, limit),
 };
 
 // ═══════════════ Tickets ═══════════════
@@ -356,5 +374,5 @@ setInterval(() => {
   try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch (_) {}
 }, 60 * 1000);
 
-module.exports = { db, ratings, tickets, broadcast, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe };
+module.exports = { db, ratings, productReviews, tickets, broadcast, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe };
 

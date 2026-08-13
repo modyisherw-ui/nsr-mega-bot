@@ -3,8 +3,8 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect } = require('./dashboard');
-const { handleRatingButton, handleRatingModal } = require('./modules/ratings');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal } = require('./dashboard');
+const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal } = require('./modules/tickets');
 const { handleBroadcastModal, handleBroadcastConfirm } = require('./modules/broadcast');
@@ -135,6 +135,13 @@ client.on('messageCreate', async message => {
 // ═══════════ الأزرار ═══════════
 client.on('interactionCreate', async interaction => {
   try {
+    if (interaction.isAutocomplete()) {
+      const { loadCommands } = require('./commands');
+      const cmd = loadCommands.get(interaction.commandName);
+      if (cmd && typeof cmd.autocomplete === 'function') return cmd.autocomplete(interaction);
+      return;
+    }
+
     if (interaction.isCommand()) {
       const { loadCommands } = require('./commands');
       const cmd = loadCommands.get(interaction.commandName);
@@ -147,7 +154,8 @@ client.on('interactionCreate', async interaction => {
       if (id.startsWith('admn_')) return handleAdminButton(interaction);
       if (id === 'bd_logs_apply') return handleLogsApply(interaction);
       if (id.startsWith('bd_')) return handleDashboard(interaction, client);
-      if (id.startsWith('rate_')) return handleRatingButton(interaction);
+      if (id.startsWith('rate_lang_')) return handleLangButton(interaction);
+      if (id.startsWith('rate_star_')) return handleStarButton(interaction);
       if (id === 'ticket_close_btn') return handleTicketClose(interaction);
       if (id === 'ticket_add_btn' || id === 'ticket_remove_btn') return handleTicketActions(interaction, id.replace('ticket_', '').replace('_btn', ''));
       if (id === 'bc_confirm') return handleBroadcastConfirm(interaction);
@@ -160,7 +168,8 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isModalSubmit()) {
       const id = interaction.customId;
       if (id.startsWith('admn_')) return handleAdminModal(interaction);
-      if (id.startsWith('rating_modal_')) return handleRatingModal(interaction);
+      if (id.startsWith('rate_comment_')) return handleCommentModal(interaction);
+      if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (id === 'suggestion_modal') return handleSuggestionModal(interaction);
       if (id === 'broadcast_modal') return handleBroadcastModal(interaction);
       if (id === 'ticket_add_modal' || id === 'ticket_remove_modal') return handleTicketModal(interaction);
@@ -170,16 +179,19 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'ticket_type_select') return handleTicketSelect(interaction);
       if (interaction.customId === 'bd_logs_evt') return handleLogsSelect(interaction);
+      if (interaction.customId === 'bd_prod_del_sel') return handleProdDeleteSelect(interaction);
       return;
     }
 
     if (interaction.isRoleSelectMenu()) {
       if (interaction.customId === 'bd_ar_member' || interaction.customId === 'bd_ar_bot') return handleAutoRoleSelect(interaction);
+      if (interaction.customId === 'bd_prod_role') return handleProdRoleSelect(interaction);
       return;
     }
 
     if (interaction.isChannelSelectMenu()) {
       if (interaction.customId === 'bd_logs_channel') return handleLogsChannelSelect(interaction);
+      if (interaction.customId === 'bd_rating_channel') return handleRatingChannelSelect(interaction);
       return;
     }
   } catch (err) {

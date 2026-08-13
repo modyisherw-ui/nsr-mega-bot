@@ -192,5 +192,9 @@
     "enabled": false
   },
   "footerText": "NSR BOT • لوحة التحكم",
-  "logoUrl": "https://cdn.discordapp.com/emojis/1537415469684756562.png?size=256"
+  "logoUrl": "https://cdn.discordapp.com/emojis/1537415469684756562.png?size=256",
+  "rating": {
+    "reviewsChannelId": "",
+    "products": []
+  }
 }

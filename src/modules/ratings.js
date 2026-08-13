@@ -1,82 +1,153 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
-const emb = require('../utils/embeds');
+const fs = require('fs');
+const path = require('path');
 const { config } = require('../config');
 
-const STARS = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'];
+const STARS_FULL = ['', '⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'];
 
-function ratingPanelRow(targetId, currentStars) {
-  return new ActionRowBuilder().addComponents(
+// ═══════════════ المنتجات ═══════════════
+function getProducts() { return config.rating?.products || []; }
+
+function findProduct(idOrName) {
+  return getProducts().find(p => p.id === idOrName) ||
+    getProducts().find(p => p.name.toLowerCase() === String(idOrName).toLowerCase());
+}
+
+function saveRatingConfig() {
+  try {
+    const fp = path.join(__dirname, '..', '..', 'config.json');
+    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    raw.rating = {
+      ...(raw.rating || {}),
+      reviewsChannelId: config.rating?.reviewsChannelId || '',
+      products: config.rating?.products || [],
+    };
+    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+  } catch (err) {
+    log.warn('فشل حفظ إعدادات التقييمات: ' + err.message);
+  }
+}
+
+// ═══════════════ إرسال رسالة الشراء على الخاص ═══════════════
+async function sendPurchaseDM(target, product, client, guild) {
+  try {
+    const dm = await target.createDM();
+    const icon = guild?.iconURL({ size: 256 }) || client.user.displayAvatarURL();
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setThumbnail(icon)
+      .setTitle('Thank you for purchase!')
+      .setDescription('Thank you for purchase.\n\nشكراً لشرائك معنا.');
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`rate_lang_ar_${product.id}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`rate_lang_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
+    );
+    await dm.send({ embeds: [embed], components: [row] });
+    return true;
+  } catch (err) {
+    log.warn('تعذر إرسال خاص: ' + err.message);
+    return false;
+  }
+}
+
+// ═══════════════ اختيار اللغة ═══════════════
+async function handleLangButton(interaction) {
+  const parts = interaction.customId.split('_'); // rate_lang_ar_<pid> / rate_lang_en_<pid>
+  const lang = parts[2];
+  const pid = parts.slice(3).join('_');
+  const product = findProduct(pid);
+  if (!product) {
+    await interaction.reply({ content: '❌ المنتج لم يعد موجوداً.', ephemeral: true });
+    return;
+  }
+  const ar = lang === 'ar';
+  const desc = ar
+    ? ['شكراً لثقتك بنا 💙', '', '**Products**', `**${product.name}**`, '', 'نتمنى أن تكون تجربتك معنا رائعة.', 'قيّم تجربتك بالأسفل ⭐'].join('\n')
+    : ['**Products**', `**${product.name}**`, '', 'We hope you had a great experience with us.', 'Please rate your experience below ⭐'].join('\n');
+  const embed = new EmbedBuilder()
+    .setColor(ar ? 0x57F287 : 0x5865F2)
+    .setTitle(ar ? 'تقييم تجربتك' : 'Rate your experience')
+    .setDescription(desc);
+  const starRow = new ActionRowBuilder().addComponents(
     [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
-      .setCustomId(`rate_${s}`)
+      .setCustomId(`rate_star_${s}_${pid}_${lang}`)
       .setLabel('⭐'.repeat(s))
-      .setStyle(currentStars === s ? ButtonStyle.Success : ButtonStyle.Primary))
+      .setStyle(ButtonStyle.Primary))
   );
+  await interaction.update({ embeds: [embed], components: [starRow] });
 }
 
-async function sendRatingPanel(target, channel, client, guild) {
-  const stats = db.ratings.stats(guild.id, target.id);
-  const user = (target.username ? target : { username: target.displayName });
-  const embed = emb.buildPanelEmbed({ client, target: { ...user, displayAvatarURL: () => target.displayAvatarURL?.() }, title: `⭐ قيّم ${target.displayName || target.username || target.name}`, stats });
-  await channel.send({ embeds: [embed], components: [ratingPanelRow(target.id, null)] });
-}
-
-async function handleRatingButton(interaction) {
-  const modal = new ModalBuilder().setCustomId(`rating_modal_${interaction.customId}`).setTitle('تقييم');
-  const commentInput = new TextInputBuilder().setCustomId('comment_input').setLabel('تعليق (اختياري)').setStyle(TextInputStyle.Paragraph).setRequired(false).setMaxLength(500);
-  modal.addComponents(new ActionRowBuilder().addComponents(commentInput));
+// ═══════════════ اختيار النجوم → فتح نافذة الرسالة ═══════════════
+async function handleStarButton(interaction) {
+  const parts = interaction.customId.split('_'); // rate_star_<n>_<pid>_<lang>
+  const stars = parseInt(parts[2], 10);
+  const pid = parts.slice(3, -1).join('_');
+  const lang = parts[parts.length - 1];
+  const ar = lang === 'ar';
+  const modal = new ModalBuilder()
+    .setCustomId(`rate_comment_${pid}_${lang}_${stars}`)
+    .setTitle(ar ? 'تقييمك' : 'Your review');
+  const input = new TextInputBuilder()
+    .setCustomId('review_comment')
+    .setLabel(ar ? 'اكتب رسالتك' : 'Your message')
+    .setPlaceholder(ar ? 'اكتب رسالة ترسل في روم التقييمات ⭐' : 'Write a message to be sent in the reviews room. ⭐')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true)
+    .setMaxLength(1000);
+  modal.addComponents(new ActionRowBuilder().addComponents(input));
   await interaction.showModal(modal);
 }
 
-async function handleRatingModal(interaction) {
-  const customIdParts = interaction.customId.split('_');
-  const stars = parseInt(customIdParts[2]);
-  const comment = interaction.fields.getTextInputValue('comment_input').trim();
+// ═══════════════ إرسال التقييم ═══════════════
+async function handleCommentModal(interaction) {
+  const parts = interaction.customId.split('_'); // rate_comment_<pid>_<lang>_<stars>
+  const pid = parts.slice(2, -2).join('_');
+  const lang = parts[parts.length - 2];
+  const stars = parseInt(parts[parts.length - 1], 10);
+  const comment = interaction.fields.getTextInputValue('review_comment').trim();
+  const product = findProduct(pid);
+  const ar = lang === 'ar';
+  const client = interaction.client;
+  const guild = client.guilds.cache.get(config.mainServerId || config.logServerId) || client.guilds.cache.first();
 
-  const target = await resolveTarget(interaction);
-  if (!target) { await interaction.reply({ content: '⚠️ تعذر العثور على المستخدم المستهدف.', ephemeral: true }); return; }
-  const targetId = target.id || target.user?.id;
+  db.productReviews.add({ guildId: guild?.id || '', productId: pid, userId: interaction.user.id, stars, comment });
 
-  const old = db.ratings.get(interaction.guild.id, targetId, interaction.user.id);
-  const result = db.ratings.upsert({ guildId: interaction.guild.id, targetId, raterId: interaction.user.id, stars, comment });
-  const stats = db.ratings.stats(interaction.guild.id, targetId);
+  await interaction.reply({
+    content: ar ? '✅ شكراً على تقييمك! ⭐' : '✅ Thank you for your rating! ⭐',
+    ephemeral: true,
+  });
 
-  if (config.rating.feedChannelId) {
-    const ch = interaction.guild.channels.cache.get(config.rating.feedChannelId);
+  if (guild && config.rating?.reviewsChannelId) {
+    const ch = guild.channels.cache.get(config.rating.reviewsChannelId);
     if (ch) {
-      const feed = new EmbedBuilder()
-        .setColor(0x5865F2)
-        .setTitle(`${old ? '🔄' : '⭐'} ${old ? 'تقييم محدث' : 'تقييم جديد'}`)
-        .setDescription(`${interaction.user.tag} ${old ? 'عدّل تقييمه لـ' : 'قيّم'} <@${targetId}> ب ${'⭐'.repeat(stars)}`)
-        .setTimestamp();
-      ch.send({ embeds: [feed] }).catch(() => {});
+      const role = product?.roleId ? guild.roles.cache.get(product.roleId) : null;
+      const embed = new EmbedBuilder()
+        .setColor(0x57F287)
+        .setAuthor({ name: 'Feedback', iconURL: guild.iconURL({ size: 128 }) || client.user.displayAvatarURL() })
+        .setDescription("We are delighted by a customer's evaluation of our services and the positive impression it left.")
+        .addFields(
+          { name: '**Products**', value: role ? `<@&${role.id}>` : (product?.name || '—') },
+          { name: '**Rating**', value: `**${STARS_FULL[stars]} (${stars}/5)**` },
+          { name: '**Comment**', value: comment ? `**${comment}**` : '—' },
+          { name: '**Rating by**', value: `<@${interaction.user.id}>` },
+        );
+      await ch.send({ embeds: [embed] }).catch(err => log.warn('فشل إرسال التقييم للروم: ' + err.message));
+    } else {
+      log.warn(`روم التقييمات ${config.rating.reviewsChannelId} غير موجود`);
     }
+  } else {
+    log.warn('لا يوجد روم تقييمات مضبوط بعد');
   }
 
-  const reply = new EmbedBuilder()
-    .setColor('Gold')
-    .setTitle('✅ تم تسجيل تقييمك!')
-    .setDescription(`${'⭐'.repeat(stars)} — شكراً لوقتك ${interaction.user.globalName || interaction.user.username}!`)
-    .addFields({ name: '📊 المتوسط الآن', value: `\`${stats.average}/5\`` });
-  await interaction.reply({ embeds: [reply], ephemeral: true });
-
-  await interaction.message.edit({ embeds: [emb.buildPanelEmbed({ client: interaction.client, target: target.user || target, stats })], components: [ratingPanelRow(targetId, stars)] });
+  try {
+    await interaction.message.edit({
+      content: ar ? '✅ تم استلام تقييمك، شكراً لك! ⭐' : '✅ Your review has been received, thank you! ⭐',
+      embeds: [],
+      components: [],
+    });
+  } catch (_) {}
 }
 
-async function resolveTarget(interaction) {
-  const embed = interaction.message?.embeds?.[0];
-  if (!embed) return null;
-  const desc = embed.description || '';
-  const mention = desc.match(/<@!?(\d+)>/);
-  const title = embed.title || '';
-  const titleMention = title.match(/<@!?(\d+)>/);
-  const targetId = (mention || titleMention)?.[1];
-  if (!targetId) return null;
-  const member = interaction.guild?.members.cache.get(targetId);
-  if (member) return member;
-  const user = await interaction.client.users.fetch(targetId).catch(() => null);
-  return user;
-}
-
-module.exports = { handleRatingButton, handleRatingModal, ratingPanelRow, sendRatingPanel, resolveTarget };
+module.exports = { sendPurchaseDM, handleLangButton, handleStarButton, handleCommentModal, getProducts, findProduct, saveRatingConfig };

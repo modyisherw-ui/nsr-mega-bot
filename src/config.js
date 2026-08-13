@@ -43,7 +43,7 @@ const config = {
   streak: raw.streak || {},
   lines: raw.lines || {},
   moderation: raw.moderation || { staffRoles: raw.adminRoles || [] },
-  rating: { feedChannelId: process.env.FEED_CHANNEL_ID || raw.rating?.feedChannelId || '' },
+  rating: { feedChannelId: process.env.FEED_CHANNEL_ID || raw.rating?.feedChannelId || '', reviewsChannelId: raw.rating?.reviewsChannelId || '', products: raw.rating?.products || [] },
   games: {
     minBet: raw.games?.minBet || 10,
     rouletteEnabled: raw.games?.rouletteEnabled ?? true,

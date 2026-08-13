@@ -4,11 +4,12 @@ const log = require('./utils/logger');
 const db = require('./db');
 const { config } = require('./config');
 const { systemRows } = require('./modules/adminPanel');
+const { getProducts, findProduct, saveRatingConfig } = require('./modules/ratings');
 
 const PAGES = {
   logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
   autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
-  ratings: { emoji: '⭐', name: 'نظام التقييمات', desc: 'تقييم الأعضاء من 1 إلى 5 نجوم مع تعليقات ولوحات صدارة وملفات تقييم.', commands: ['`/rate <user> <stars>` — تقييم', '`/setupreview <user>` — رسالة التقييم المثبتة', '`/panel <user>` — لوحة تقييم', '`/profile [user]` — ملف التقييمات', '`/leaderboard` — الصدارة', '`/myratings` — تقييماتي', '`/deleterating <user>` — حذف تقييمي'] },
+  ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص.', commands: ['زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
@@ -241,6 +242,166 @@ async function handleAutoRoleSelect(interaction) {
   await interaction.followUp({ content: `✅ تم حفظ الرتبة: <@&${roleId}>`, ephemeral: true });
 }
 
+// ═══════════ المنتجات والتقييمات ═══════════
+const pendingProductRole = new Map(); // userId -> productId (بانتظار اختيار الرول)
+
+function ratingsEmbed(client, guild) {
+  const roomId = config.rating?.reviewsChannelId;
+  const room = roomId ? guild?.channels?.cache?.get(roomId) : null;
+  const prods = getProducts();
+  const lines = prods.length
+    ? prods.map((p, i) => {
+        const role = p.roleId && guild?.roles?.cache?.get(p.roleId) ? `<@&${p.roleId}>` : '`بدون رول`';
+        return `${i + 1}. **${p.name}** — ${role}`;
+      }).join('\n')
+    : 'لا توجد منتجات بعد. اضغط **إضافة منتج** بالأسفل.';
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('🛍️ المنتجات والتقييمات')
+    .setDescription([
+      `**روم التقييمات:** ${room ? `<#${room.id}>` : '`غير محدد`'}`,
+      '',
+      '**المنتجات المسجلة:**',
+      lines,
+    ].join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setTimestamp();
+}
+
+const PROD_ADD = 'bd_prod_add';
+const PROD_DEL = 'bd_prod_del';
+const PROD_ROLE = 'bd_prod_role';
+const PROD_CANCEL = 'bd_prod_cancel';
+const PROD_TARGET = 'bd_prod_del_sel';
+
+function ratingsRows(guild, state) {
+  const { ChannelSelectMenuBuilder, ChannelType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, RoleSelectMenuBuilder } = require('discord.js');
+  const roomId = config.rating?.reviewsChannelId;
+  const rows = [];
+  const roomSel = new ChannelSelectMenuBuilder()
+    .setCustomId('bd_rating_channel')
+    .setPlaceholder(roomId && guild?.channels?.cache?.get(roomId) ? `روم التقييمات: #${guild.channels.cache.get(roomId).name}` : 'اختر روم التقييمات...')
+    .addChannelTypes(ChannelType.GuildText);
+  if (roomId && guild?.channels?.cache?.get(roomId)) roomSel.setDefaultChannels([roomId]);
+  rows.push(new ActionRowBuilder().addComponents(roomSel));
+
+  if (state?.mode === 'role') {
+    const roleSel = new RoleSelectMenuBuilder()
+      .setCustomId(PROD_ROLE)
+      .setPlaceholder(state.productName ? `اختر رول منتج «${state.productName}»...` : 'اختر رول المنتج...');
+    rows.push(new ActionRowBuilder().addComponents(roleSel));
+    rows.push(new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(PROD_CANCEL).setLabel('✖ إلغاء').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع').setStyle(ButtonStyle.Secondary),
+    ));
+    return rows;
+  }
+
+  if (state?.mode === 'del') {
+    const prods = getProducts();
+    const sel = new StringSelectMenuBuilder()
+      .setCustomId(PROD_TARGET)
+      .setPlaceholder('اختر المنتج الذي تريد حذفه...')
+      .addOptions(prods.map(p => new StringSelectMenuOptionBuilder().setLabel(p.name).setValue(p.id)));
+    rows.push(new ActionRowBuilder().addComponents(sel));
+    rows.push(new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(PROD_CANCEL).setLabel('✖ إلغاء').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع').setStyle(ButtonStyle.Secondary),
+    ));
+    return rows;
+  }
+
+  rows.push(new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(PROD_ADD).setLabel('➕ إضافة منتج').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(PROD_DEL).setLabel('🗑️ حذف منتج').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
+  ));
+  return rows;
+}
+
+async function handleRatingChannelSelect(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  if (!config.rating) config.rating = {};
+  config.rating.reviewsChannelId = channelId;
+  saveRatingConfig();
+  await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ضبط روم التقييمات: <#${channelId}>`, ephemeral: true });
+}
+
+async function handleProdAdd(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const modal = new ModalBuilder().setCustomId('bd_prod_modal').setTitle('إضافة منتج جديد');
+  const nameInput = new TextInputBuilder()
+    .setCustomId('prod_name')
+    .setLabel('اسم المنتج')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(100)
+    .setPlaceholder('مثال: لعبة ماينكرافت 🎮');
+  modal.addComponents(new ActionRowBuilder().addComponents(nameInput));
+  await interaction.showModal(modal);
+}
+
+async function handleProdModal(interaction) {
+  const name = interaction.fields.getTextInputValue('prod_name').trim();
+  if (!name) {
+    await interaction.reply({ content: '❌ اسم المنتج مطلوب.', ephemeral: true });
+    return;
+  }
+  if (!config.rating) config.rating = {};
+  if (!config.rating.products) config.rating.products = [];
+  const id = 'p_' + Date.now().toString(36);
+  config.rating.products.push({ id, name, roleId: null });
+  pendingProductRole.set(interaction.user.id, id);
+  saveRatingConfig();
+  await interaction.deferUpdate();
+  await interaction.message.edit({
+    embeds: [ratingsEmbed(interaction.client, interaction.guild)],
+    components: ratingsRows(interaction.guild, { mode: 'role', productName: name }),
+  });
+  await interaction.followUp({ content: `✅ تمت إضافة **«${name}»** — الآن اختر رول المنتج من القائمة بالأسفل.`, ephemeral: true });
+}
+
+async function handleProdRoleSelect(interaction) {
+  const roleId = interaction.values[0];
+  if (!roleId) return;
+  const productId = pendingProductRole.get(interaction.user.id);
+  const product = findProduct(productId);
+  if (!product) {
+    await interaction.reply({ content: '⚠️ المنتج غير موجود، جرّب مرة أخرى.', ephemeral: true });
+    return;
+  }
+  product.roleId = roleId;
+  pendingProductRole.delete(interaction.user.id);
+  saveRatingConfig();
+  await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ربط رول <@&${roleId}> بمنتج **«${product.name}»**.`, ephemeral: true });
+}
+
+async function handleProdDelete(interaction) {
+  if (!getProducts().length) {
+    await interaction.reply({ content: '⚠️ لا توجد منتجات لحذفها.', ephemeral: true });
+    return;
+  }
+  await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild, { mode: 'del' }) });
+}
+
+async function handleProdDeleteSelect(interaction) {
+  const productId = interaction.values[0];
+  if (!productId) return;
+  const product = findProduct(productId);
+  config.rating.products = config.rating.products.filter(p => p.id !== productId);
+  saveRatingConfig();
+  await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
+  await interaction.followUp({ content: `🗑️ تم حذف المنتج **«${product?.name || ''}»**.`, ephemeral: true });
+}
+
+async function handleProdCancel(interaction) {
+  pendingProductRole.delete(interaction.user.id);
+  await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
+}
+
 function mainEmbed(client, guild) {
   return new EmbedBuilder()
     .setColor(0x5865F2)
@@ -273,6 +434,7 @@ function mainRows() {
 function pageRows(pageId, guild) {
   if (pageId === 'logs') return logsRows(guild);
   if (pageId === 'autoroles') return autorolesRows(guild);
+  if (pageId === 'ratings') return ratingsRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -293,9 +455,14 @@ async function handleDashboard(interaction, client) {
     return handleAutoRoleSelect(interaction);
   }
 
+  if (id === PROD_ADD) return handleProdAdd(interaction);
+  if (id === PROD_DEL) return handleProdDelete(interaction);
+  if (id === PROD_CANCEL) return handleProdCancel(interaction);
+
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
-    await interaction.update({ embeds: [pageEmbed(interaction, pageId)], components: pageRows(pageId, interaction.guild) });
+    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId);
+    await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
   }
 
@@ -340,4 +507,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal };
