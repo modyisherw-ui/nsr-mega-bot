@@ -47,6 +47,12 @@ jobs:
       - name: Run bot with keep-alive
         run: |
           set -e
+          # مفتاح الإيقاف: لو فيه ملف data/stop البوت لا يشتغل نهائياً
+          # لتشغيله من جديد: احذف الملف وادفع أو run workflow يدوياً
+          if [ -f data/stop ]; then
+            echo "STOPPED: data/stop exists. Bot will not run. Delete the file to start it again."
+            exit 0
+          fi
           git config user.name "nsr-bot"
           git config user.email "nsr-bot@users.noreply.github.com"
 
@@ -54,9 +60,12 @@ jobs:
           WATCHER=$!
 
           while true; do
+            if [ -f data/stop ]; then
+              echo "STOPPED: data/stop appeared, shutting down."
+              kill $WATCHER 2>/dev/null || true
+              exit 0
+            fi
             node src/index.js || true
             echo "[keep-alive] bot exited, restarting in 20s..."
             sleep 20
           done
-
-          kill $WATCHER 2>/dev/null || true
