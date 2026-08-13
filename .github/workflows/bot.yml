@@ -1,4 +1,4 @@
-name: Run Bot 24/7
+﻿name: Run Bot 24/7
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: bot-run
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -50,7 +50,7 @@ jobs:
           git config user.name "nsr-bot"
           git config user.email "nsr-bot@users.noreply.github.com"
 
-          # حارس: كل 2 دقيقة نشارك قاعدة البيانات في الريبو عشان ما تضيع
+          # Ø­Ø§Ø±Ø³: ÙƒÙ„ 2 Ø¯Ù‚ÙŠÙ‚Ø© Ù†Ø´Ø§Ø±Ùƒ Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙÙŠ Ø§Ù„Ø±ÙŠØ¨Ùˆ Ø¹Ø´Ø§Ù† Ù…Ø§ ØªØ¶ÙŠØ¹
           (
             while true; do
               sleep 120
@@ -63,7 +63,7 @@ jobs:
           ) &
           WATCHER=$!
 
-          # حلقة إعادة تشغيل: لو طفى البوت نرجع نشغله
+          # Ø­Ù„Ù‚Ø© Ø¥Ø¹Ø§Ø¯Ø© ØªØ´ØºÙŠÙ„: Ù„Ùˆ Ø·ÙÙ‰ Ø§Ù„Ø¨ÙˆØª Ù†Ø±Ø¬Ø¹ Ù†Ø´ØºÙ„Ù‡
           while true; do
             node src/index.js || true
             echo "[keep-alive] bot exited, restarting in 20s..."
