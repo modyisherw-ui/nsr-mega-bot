@@ -1,0 +1,7 @@
+node_modules/
+data/*.db-*
+data/scan_reports/
+data/transcripts/
+.env
+*.log
+npm-debug.log*

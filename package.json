@@ -1,0 +1,25 @@
+{
+  "name": "discord-mega-bot",
+  "version": "3.0.0",
+  "description": "البوت الموحد — 12 نظام في بوت واحد",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node deploy.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
