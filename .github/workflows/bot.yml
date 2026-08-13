@@ -31,7 +31,7 @@ jobs:
           cache: npm
 
       - name: Install deps
-        run: npm ci --omit=dev
+        run: npm ci --omit=dev --omit=optional
 
       - name: Write .env
         run: |

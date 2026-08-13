@@ -2,7 +2,7 @@ const { CompatDatabase, driverName } = require('./utils/sqlite');
 const path = require('path');
 const fs = require('fs');
 
-// مسار قاعدة البيانات — يُعرَّف من Fly عبر MEGA_BOT_DATA_DIR (قرص دائم)
+// مسار قاعدة البيانات — مجلد data (يمكن تخصيصه عبر MEGA_BOT_DATA_DIR)
 const DATA_DIR = process.env.MEGA_BOT_DATA_DIR || path.join(__dirname, '../data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
