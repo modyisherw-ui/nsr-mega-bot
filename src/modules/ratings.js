@@ -1,30 +1,25 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
-const fs = require('fs');
-const path = require('path');
-const { config } = require('../config');
 
 const STARS_FULL = ['', '⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'];
 
-// ═══════════════ المنتجات ═══════════════
-function getProducts() { return config.rating?.products || []; }
-
-function findProduct(idOrName) {
-  return getProducts().find(p => p.id === idOrName) ||
-    getProducts().find(p => p.name.toLowerCase() === String(idOrName).toLowerCase());
+function ratingCfg(guildId) {
+  return require('../guildCfg').get(guildId).rating || {};
 }
 
-function saveRatingConfig() {
+// ═══════════════ المنتجات ═══════════════
+function getProducts(guildId) { return ratingCfg(guildId).products || []; }
+
+function findProduct(guildId, idOrName) {
+  return getProducts(guildId).find(p => p.id === idOrName) ||
+    getProducts(guildId).find(p => p.name.toLowerCase() === String(idOrName).toLowerCase());
+}
+
+function saveRatingConfig(guildId) {
   try {
-    const fp = path.join(__dirname, '..', '..', 'config.json');
-    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    raw.rating = {
-      ...(raw.rating || {}),
-      reviewsChannelId: config.rating?.reviewsChannelId || '',
-      products: config.rating?.products || [],
-    };
-    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+    const cur = ratingCfg(guildId);
+    require('../guildCfg').set(guildId, { rating: { reviewsChannelId: cur.reviewsChannelId || '', products: cur.products || [] } });
   } catch (err) {
     log.warn('فشل حفظ إعدادات التقييمات: ' + err.message);
   }
@@ -41,8 +36,8 @@ async function sendPurchaseDM(target, product, client, guild) {
       .setTitle('Thank you for purchase!')
       .setDescription('Thank you for purchase.\n\nشكراً لشرائك معنا.');
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`rate_lang_ar_${product.id}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`rate_lang_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_ar_${product.id}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
     );
     await dm.send({ embeds: [embed], components: [row] });
     return true;
@@ -54,10 +49,11 @@ async function sendPurchaseDM(target, product, client, guild) {
 
 // ═══════════════ اختيار اللغة ═══════════════
 async function handleLangButton(interaction) {
-  const parts = interaction.customId.split('_'); // rate_lang_ar_<pid> / rate_lang_en_<pid>
-  const lang = parts[2];
-  const pid = parts.slice(3).join('_');
-  const product = findProduct(pid);
+  const parts = interaction.customId.split('_'); // rate_lang_<guildId>_<lang>_<pid>
+  const guildId = parts[2];
+  const lang = parts[3];
+  const pid = parts.slice(4).join('_');
+  const product = findProduct(guildId, pid);
   if (!product) {
     await interaction.reply({ content: '❌ المنتج لم يعد موجوداً.', ephemeral: true });
     return;
@@ -72,7 +68,7 @@ async function handleLangButton(interaction) {
     .setDescription(desc);
   const starRow = new ActionRowBuilder().addComponents(
     [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
-      .setCustomId(`rate_star_${s}_${pid}_${lang}`)
+      .setCustomId(`rate_star_${s}_${guildId}_${pid}_${lang}`)
       .setLabel('⭐'.repeat(s))
       .setStyle(ButtonStyle.Primary))
   );
@@ -81,13 +77,14 @@ async function handleLangButton(interaction) {
 
 // ═══════════════ اختيار النجوم → فتح نافذة الرسالة ═══════════════
 async function handleStarButton(interaction) {
-  const parts = interaction.customId.split('_'); // rate_star_<n>_<pid>_<lang>
+  const parts = interaction.customId.split('_'); // rate_star_<n>_<guildId>_<pid>_<lang>
   const stars = parseInt(parts[2], 10);
-  const pid = parts.slice(3, -1).join('_');
+  const guildId = parts[3];
+  const pid = parts.slice(4, -1).join('_');
   const lang = parts[parts.length - 1];
   const ar = lang === 'ar';
   const modal = new ModalBuilder()
-    .setCustomId(`rate_comment_${pid}_${lang}_${stars}`)
+    .setCustomId(`rate_comment_${guildId}_${pid}_${lang}_${stars}`)
     .setTitle(ar ? 'تقييمك' : 'Your review');
   const input = new TextInputBuilder()
     .setCustomId('review_comment')
@@ -102,25 +99,27 @@ async function handleStarButton(interaction) {
 
 // ═══════════════ إرسال التقييم ═══════════════
 async function handleCommentModal(interaction) {
-  const parts = interaction.customId.split('_'); // rate_comment_<pid>_<lang>_<stars>
-  const pid = parts.slice(2, -2).join('_');
+  const parts = interaction.customId.split('_'); // rate_comment_<guildId>_<pid>_<lang>_<stars>
+  const guildId = parts[2];
+  const pid = parts.slice(3, -2).join('_');
   const lang = parts[parts.length - 2];
   const stars = parseInt(parts[parts.length - 1], 10);
   const comment = interaction.fields.getTextInputValue('review_comment').trim();
-  const product = findProduct(pid);
+  const product = findProduct(guildId, pid);
   const ar = lang === 'ar';
   const client = interaction.client;
-  const guild = client.guilds.cache.get(config.mainServerId || config.logServerId) || client.guilds.cache.first();
+  const guild = client.guilds.cache.get(guildId) || null;
 
-  db.productReviews.add({ guildId: guild?.id || '', productId: pid, userId: interaction.user.id, stars, comment });
+  db.productReviews.add({ guildId, productId: pid, userId: interaction.user.id, stars, comment });
 
   await interaction.reply({
     content: ar ? '✅ شكراً على تقييمك! ⭐' : '✅ Thank you for your rating! ⭐',
     ephemeral: true,
   });
 
-  if (guild && config.rating?.reviewsChannelId) {
-    const ch = guild.channels.cache.get(config.rating.reviewsChannelId);
+  const reviewsChannelId = ratingCfg(guildId).reviewsChannelId;
+  if (guild && reviewsChannelId) {
+    const ch = guild.channels.cache.get(reviewsChannelId);
     if (ch) {
       const role = product?.roleId ? guild.roles.cache.get(product.roleId) : null;
       const embed = new EmbedBuilder()
@@ -135,7 +134,7 @@ async function handleCommentModal(interaction) {
         );
       await ch.send({ embeds: [embed] }).catch(err => log.warn('فشل إرسال التقييم للروم: ' + err.message));
     } else {
-      log.warn(`روم التقييمات ${config.rating.reviewsChannelId} غير موجود`);
+      log.warn(`روم التقييمات ${reviewsChannelId} غير موجود`);
     }
   } else {
     log.warn('لا يوجد روم تقييمات مضبوط بعد');

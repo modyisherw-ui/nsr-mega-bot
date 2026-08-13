@@ -48,14 +48,15 @@ async function ensureEmojiLogo(client, guild) {
 async function ensureLogoUrl(client) {
   if (!HAS_LOGO) return;
   if (config.logoUrl) { LOGO_URL = config.logoUrl; HAS_URL = true; return; }
-  const guild = client.guilds.cache.get(config.mainServerId || config.logServerId) || client.guilds.cache.first();
+  const guild = client.guilds.cache.first();
   if (!guild) return;
   try {
     const { PermissionsBitField } = require('discord.js');
     const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
     const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
-    let channel = canAttach(guild.channels.cache.get(config.logChannels?.memberJoin))
-      ? guild.channels.cache.get(config.logChannels?.memberJoin) : null;
+    const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
+    let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
+      ? guild.channels.cache.get(memberJoinChannel) : null;
     if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
     if (!channel) channel = guild.channels.cache.find(canAttach);
     if (!channel) { await ensureEmojiLogo(client, guild); return; }

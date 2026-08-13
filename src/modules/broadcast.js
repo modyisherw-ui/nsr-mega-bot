@@ -1,7 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
-const { config } = require('../config');
 
 let clientRef = null;
 

@@ -1,8 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const path = require('path');
 const log = require('./utils/logger');
 const db = require('./db');
-const { config } = require('./config');
+const guildCfg = require('./guildCfg');
 const { systemRows } = require('./modules/adminPanel');
 const { getProducts, findProduct, saveRatingConfig } = require('./modules/ratings');
 
@@ -49,27 +48,25 @@ const LOG_EVENTS = [
 const pendingLogEvent = new Map(); // userId -> [eventIds]
 const pendingLogChannel = new Map(); // userId -> channelId
 
-function saveLogChannels() {
+function saveLogChannels(guildId) {
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const fp = path.join(__dirname, '../config.json');
-    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    raw.logChannels = { ...(raw.logChannels || {}), ...config.logChannels };
-    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+    const g = guildCfg.get(guildId);
+    guildCfg.set(guildId, { logChannels: g.logChannels || {} });
   } catch (err) {
     log.warn('فشل حفظ إعدادات اللوقات: ' + err.message);
   }
 }
 
 function logsEmbed(client, guild) {
+  const g = guildCfg.get(guild.id);
+  const logChannels = g.logChannels || {};
   const lines = LOG_EVENTS.map(ev => {
-    const ch = config.logChannels[ev.id];
+    const ch = logChannels[ev.id];
     const channel = ch ? guild?.channels?.cache?.get(ch) : null;
     return `${ev.emoji} **${ev.name}:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`;
   });
   // الأحداث المستخدمة فعلياً (مربوطة بروم) — قائمة واضحة بالرومات
-  const used = LOG_EVENTS.map(ev => ({ ev, ch: config.logChannels[ev.id] ? guild?.channels?.cache?.get(config.logChannels[ev.id]) : null }))
+  const used = LOG_EVENTS.map(ev => ({ ev, ch: logChannels[ev.id] ? guild?.channels?.cache?.get(logChannels[ev.id]) : null }))
     .filter(x => x.ch);
   const usedList = used.length
     ? used.map(x => `${x.ev.emoji} **${x.ev.name}** → <#${x.ch.id}>`).join('\n')
@@ -92,11 +89,13 @@ function logsEmbed(client, guild) {
 
 function logsRows(guild, state) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const g = guildCfg.get(guild.id);
+  const logChannels = g.logChannels || {};
   // الآن يدعم اختيار أكثر من حدث في نفس الوقت
   const selIds = state?.eventIds && state.eventIds.length ? state.eventIds : [];
   const sel = selIds.map(id => LOG_EVENTS.find(x => x.id === id)).filter(Boolean);
   const opts = LOG_EVENTS.map(ev => {
-    const ch = config.logChannels[ev.id];
+    const ch = logChannels[ev.id];
     const channel = ch ? guild?.channels?.cache?.get(ch) : null;
     return new StringSelectMenuOptionBuilder()
       .setLabel(`${ev.emoji} ${ev.name}`)
@@ -113,7 +112,7 @@ function logsRows(guild, state) {
     .setCustomId('bd_logs_channel')
     .setPlaceholder('2) اختر الروم...')
     .addChannelTypes(ChannelType.GuildText);
-  const prefill = state?.channelId || (sel.length ? config.logChannels[sel[0].id] : null);
+  const prefill = state?.channelId || (sel.length ? logChannels[sel[0].id] : null);
   if (prefill) {
     const ch = guild?.channels?.cache?.get(prefill);
     if (ch) chSel.setDefaultChannels([ch.id]);
@@ -162,8 +161,10 @@ async function handleLogsApply(interaction) {
   }
   pendingLogEvent.delete(interaction.user.id);
   pendingLogChannel.delete(interaction.user.id);
-  for (const ev of evs) config.logChannels[ev.id] = channelId;
-  saveLogChannels();
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.logChannels) g.logChannels = {};
+  for (const ev of evs) g.logChannels[ev.id] = channelId;
+  saveLogChannels(interaction.guild.id);
   await interaction.update({ embeds: [logsEmbed(interaction.client, interaction.guild)], components: logsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط **${evs.length}** أحداث: ${evs.map(ev => ev.emoji).join(' ')} <#${channelId}>`, ephemeral: true });
 }
@@ -181,21 +182,19 @@ function pageEmbed(interaction, pageId) {
 }
 
 // ═══════════ الرولات التلقائية ═══════════
-function saveAutoRoles() {
+function saveAutoRoles(guildId) {
   try {
-    const fs = require('fs');
-    const fp = path.join(__dirname, '..', 'config.json');
-    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    raw.autoRoles = { memberRoleId: config.autoRoles?.memberRoleId || null, botRoleId: config.autoRoles?.botRoleId || null };
-    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+    const g = guildCfg.get(guildId);
+    guildCfg.set(guildId, { autoRoles: g.autoRoles || { memberRoleId: null, botRoleId: null } });
   } catch (err) {
     log.warn('فشل حفظ الرولات التلقائية: ' + err.message);
   }
 }
 
 function autorolesEmbed(client, guild) {
-  const memberRole = config.autoRoles?.memberRoleId ? guild?.roles?.cache?.get(config.autoRoles.memberRoleId) : null;
-  const botRole = config.autoRoles?.botRoleId ? guild?.roles?.cache?.get(config.autoRoles.botRoleId) : null;
+  const ar = guildCfg.get(guild.id).autoRoles || {};
+  const memberRole = ar.memberRoleId ? guild?.roles?.cache?.get(ar.memberRoleId) : null;
+  const botRole = ar.botRoleId ? guild?.roles?.cache?.get(ar.botRoleId) : null;
   return new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('🤖 الرولات التلقائية')
@@ -213,8 +212,9 @@ function autorolesEmbed(client, guild) {
 
 function autorolesRows(guild) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, RoleSelectMenuBuilder } = require('discord.js');
-  const memberRole = config.autoRoles?.memberRoleId ? guild?.roles?.cache?.get(config.autoRoles.memberRoleId) : null;
-  const botRole = config.autoRoles?.botRoleId ? guild?.roles?.cache?.get(config.autoRoles.botRoleId) : null;
+  const ar = guildCfg.get(guild.id).autoRoles || {};
+  const memberRole = ar.memberRoleId ? guild?.roles?.cache?.get(ar.memberRoleId) : null;
+  const botRole = ar.botRoleId ? guild?.roles?.cache?.get(ar.botRoleId) : null;
   const memberSel = new RoleSelectMenuBuilder()
     .setCustomId('bd_ar_member')
     .setPlaceholder(memberRole ? `👤 الأعضاء: ${memberRole.name}` : '👤 اختر رتبة الأعضاء...');
@@ -234,10 +234,11 @@ function autorolesRows(guild) {
 async function handleAutoRoleSelect(interaction) {
   const roleId = interaction.values[0];
   if (!roleId) return;
-  if (!config.autoRoles) config.autoRoles = { memberRoleId: null, botRoleId: null };
-  if (interaction.customId === 'bd_ar_member') config.autoRoles.memberRoleId = roleId;
-  else if (interaction.customId === 'bd_ar_bot') config.autoRoles.botRoleId = roleId;
-  saveAutoRoles();
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.autoRoles) g.autoRoles = { memberRoleId: null, botRoleId: null };
+  if (interaction.customId === 'bd_ar_member') g.autoRoles.memberRoleId = roleId;
+  else if (interaction.customId === 'bd_ar_bot') g.autoRoles.botRoleId = roleId;
+  saveAutoRoles(interaction.guild.id);
   await interaction.update({ embeds: [autorolesEmbed(interaction.client, interaction.guild)], components: autorolesRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم حفظ الرتبة: <@&${roleId}>`, ephemeral: true });
 }
@@ -246,9 +247,9 @@ async function handleAutoRoleSelect(interaction) {
 const pendingProductRole = new Map(); // userId -> productId (بانتظار اختيار الرول)
 
 function ratingsEmbed(client, guild) {
-  const roomId = config.rating?.reviewsChannelId;
+  const roomId = guildCfg.get(guild.id).rating?.reviewsChannelId;
   const room = roomId ? guild?.channels?.cache?.get(roomId) : null;
-  const prods = getProducts();
+  const prods = getProducts(guild.id);
   const lines = prods.length
     ? prods.map((p, i) => {
         const role = p.roleId && guild?.roles?.cache?.get(p.roleId) ? `<@&${p.roleId}>` : '`بدون رول`';
@@ -276,7 +277,7 @@ const PROD_TARGET = 'bd_prod_del_sel';
 
 function ratingsRows(guild, state) {
   const { ChannelSelectMenuBuilder, ChannelType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, RoleSelectMenuBuilder } = require('discord.js');
-  const roomId = config.rating?.reviewsChannelId;
+  const roomId = guildCfg.get(guild.id).rating?.reviewsChannelId;
   const rows = [];
   const roomSel = new ChannelSelectMenuBuilder()
     .setCustomId('bd_rating_channel')
@@ -298,7 +299,7 @@ function ratingsRows(guild, state) {
   }
 
   if (state?.mode === 'del') {
-    const prods = getProducts();
+    const prods = getProducts(guild.id);
     const sel = new StringSelectMenuBuilder()
       .setCustomId(PROD_TARGET)
       .setPlaceholder('اختر المنتج الذي تريد حذفه...')
@@ -322,9 +323,10 @@ function ratingsRows(guild, state) {
 async function handleRatingChannelSelect(interaction) {
   const channelId = interaction.values[0];
   if (!channelId) return;
-  if (!config.rating) config.rating = {};
-  config.rating.reviewsChannelId = channelId;
-  saveRatingConfig();
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.rating) g.rating = {};
+  g.rating.reviewsChannelId = channelId;
+  saveRatingConfig(interaction.guild.id);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط روم التقييمات: <#${channelId}>`, ephemeral: true });
 }
@@ -349,12 +351,13 @@ async function handleProdModal(interaction) {
     await interaction.reply({ content: '❌ اسم المنتج مطلوب.', ephemeral: true });
     return;
   }
-  if (!config.rating) config.rating = {};
-  if (!config.rating.products) config.rating.products = [];
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.rating) g.rating = {};
+  if (!g.rating.products) g.rating.products = [];
   const id = 'p_' + Date.now().toString(36);
-  config.rating.products.push({ id, name, roleId: null });
+  g.rating.products.push({ id, name, roleId: null });
   pendingProductRole.set(interaction.user.id, id);
-  saveRatingConfig();
+  saveRatingConfig(interaction.guild.id);
   await interaction.deferUpdate();
   await interaction.message.edit({
     embeds: [ratingsEmbed(interaction.client, interaction.guild)],
@@ -367,20 +370,20 @@ async function handleProdRoleSelect(interaction) {
   const roleId = interaction.values[0];
   if (!roleId) return;
   const productId = pendingProductRole.get(interaction.user.id);
-  const product = findProduct(productId);
+  const product = findProduct(interaction.guild.id, productId);
   if (!product) {
     await interaction.reply({ content: '⚠️ المنتج غير موجود، جرّب مرة أخرى.', ephemeral: true });
     return;
   }
   product.roleId = roleId;
   pendingProductRole.delete(interaction.user.id);
-  saveRatingConfig();
+  saveRatingConfig(interaction.guild.id);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ربط رول <@&${roleId}> بمنتج **«${product.name}»**.`, ephemeral: true });
 }
 
 async function handleProdDelete(interaction) {
-  if (!getProducts().length) {
+  if (!getProducts(interaction.guild.id).length) {
     await interaction.reply({ content: '⚠️ لا توجد منتجات لحذفها.', ephemeral: true });
     return;
   }
@@ -390,9 +393,10 @@ async function handleProdDelete(interaction) {
 async function handleProdDeleteSelect(interaction) {
   const productId = interaction.values[0];
   if (!productId) return;
-  const product = findProduct(productId);
-  config.rating.products = config.rating.products.filter(p => p.id !== productId);
-  saveRatingConfig();
+  const product = findProduct(interaction.guild.id, productId);
+  const g = guildCfg.get(interaction.guild.id);
+  if (g.rating) g.rating.products = (g.rating.products || []).filter(p => p.id !== productId);
+  saveRatingConfig(interaction.guild.id);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `🗑️ تم حذف المنتج **«${product?.name || ''}»**.`, ephemeral: true });
 }
@@ -473,16 +477,17 @@ async function handleDashboard(interaction, client) {
 async function sendTicketPanel(interaction) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
   const { tickets } = db;
-  const types = config.ticket.ticketTypes || [];
+  const tcfg = guildCfg.get(interaction.guild.id).ticket || {};
+  const types = tcfg.ticketTypes || [];
   const select = new StringSelectMenuBuilder()
     .setCustomId('ticket_type_select')
     .setPlaceholder('Select a ticket type...')
     .addOptions(types.map(tp => new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id).setEmoji(tp.emoji)));
   const embed = new EmbedBuilder()
-    .setColor(config.ticket.panel.color || 0x5865F2)
-    .setTitle(config.ticket.panel.title || '🎫 Support Tickets')
-    .setDescription(`${config.ticket.panel.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
-    .setFooter({ text: config.ticket.panel.footer || 'NSR BOT' });
+    .setColor(tcfg.panel?.color || 0x5865F2)
+    .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
+    .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
+    .setFooter({ text: tcfg.panel?.footer || 'NSR BOT' });
   await interaction.channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
   await interaction.reply({ content: '✅ تم إرسال لوحة التذاكر!', ephemeral: true });
 }

@@ -1,7 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
-const { config } = require('../config');
 
 let clientRef = null;
 
@@ -24,7 +23,6 @@ async function handleRoleButton(interaction) {
 
 async function handleJoinRole(message) {
   if (message.author.bot) return;
-  if (config.mainServerId && message.guild.id !== config.mainServerId) return;
   const cfg = db.rolesCfg.get(message.guild.id);
   if (!cfg.enabled || !cfg.join_channel_id) return;
   if (message.channel.id !== cfg.join_channel_id) return;

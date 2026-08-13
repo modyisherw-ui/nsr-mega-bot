@@ -12,7 +12,7 @@ module.exports = {
         .addStringOption(o => o.setName('product').setDescription('اسم المنتج (اكتب أو اختر من القائمة)').setRequired(true).setAutocomplete(true)),
       async autocomplete(interaction) {
         const q = interaction.options.getFocused().toLowerCase();
-        const prods = getProducts().filter(p => p.name.toLowerCase().includes(q)).slice(0, 25);
+        const prods = getProducts(interaction.guild.id).filter(p => p.name.toLowerCase().includes(q)).slice(0, 25);
         await interaction.respond(prods.map(p => ({ name: p.name, value: p.id })));
       },
       async execute(interaction) {
@@ -21,15 +21,15 @@ module.exports = {
           await interaction.reply({ content: '❌ اختر عميلاً حقيقياً (وليس بوتاً).', ephemeral: true });
           return;
         }
-        if (!getProducts().length) {
+        if (!getProducts(interaction.guild.id).length) {
           await interaction.reply({ content: '❌ لا توجد منتجات بعد — أضف منتجاً من لوحة التحكم أولاً.', ephemeral: true });
           return;
         }
         const raw = interaction.options.getString('product');
-        const product = findProduct(raw);
+        const product = findProduct(interaction.guild.id, raw);
         if (!product) {
           await interaction.reply({
-            content: '❌ المنتج غير موجود. المنتجات المتاحة:\n' + getProducts().map(p => `• **${p.name}**`).join('\n'),
+            content: '❌ المنتج غير موجود. المنتجات المتاحة:\n' + getProducts(interaction.guild.id).map(p => `• **${p.name}**`).join('\n'),
             ephemeral: true,
           });
           return;

@@ -1,19 +1,23 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
-const { config } = require('../config');
 
 let clientRef = null;
 
-function ticketColor(typeId) {
-  const t = (config.ticket.ticketTypes || []).find(tp => tp.id === typeId);
+function ticketConfig(guildId) {
+  return require('../guildCfg').get(guildId).ticket || {};
+}
+
+function ticketColor(typeId, guildId) {
+  const t = (ticketConfig(guildId).ticketTypes || []).find(tp => tp.id === typeId);
   return t?.color || 0x57F287;
 }
 
 async function handleTicketSelect(interaction) {
   if (interaction.customId !== 'ticket_type_select') return;
   const typeId = interaction.values[0];
-  const type = (config.ticket.ticketTypes || []).find(tp => tp.id === typeId);
+  const tcfg = ticketConfig(interaction.guild.id);
+  const type = (tcfg.ticketTypes || []).find(tp => tp.id === typeId);
   if (!type) return;
 
   const existing = db.tickets.getUserOpen(interaction.user.id, interaction.guild.id);
@@ -22,7 +26,7 @@ async function handleTicketSelect(interaction) {
     return;
   }
 
-  const category = interaction.guild.channels.cache.get(config.ticket.categoryId);
+  const category = interaction.guild.channels.cache.get(tcfg.categoryId);
   const channel = await interaction.guild.channels.create({
     name: `ticket-${interaction.user.username}`,
     parent: category || undefined,
@@ -38,7 +42,7 @@ async function handleTicketSelect(interaction) {
   const controlEmbed = new EmbedBuilder()
     .setTitle(`🎫 ${type.label}`)
     .setDescription(`Welcome <@${interaction.user.id}>!\nPlease describe your issue and our staff will assist you shortly.`)
-    .setColor(ticketColor(typeId))
+    .setColor(ticketColor(typeId, interaction.guild.id))
     .setTimestamp();
   const controlRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('ticket_close_btn').setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger),
@@ -63,7 +67,8 @@ async function handleTicketClose(interaction) {
     transcript = messages.reverse().map(m => `[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content || '(مرفق)'}`).join('\n');
   } catch {}
 
-  const logChannel = config.ticket.logChannelId ? interaction.guild.channels.cache.get(config.ticket.logChannelId) : null;
+  const logChannelId = ticketConfig(interaction.guild.id).logChannelId;
+  const logChannel = logChannelId ? interaction.guild.channels.cache.get(logChannelId) : null;
   if (logChannel) {
     const record = db.tickets.get(interaction.channel.id);
     const embed = new EmbedBuilder()
@@ -85,7 +90,8 @@ async function handleTicketClose(interaction) {
 
 async function handleTicketActions(interaction, action) {
   const member = interaction.member;
-  const isStaff = (config.ticket.staffRoles || []).some(r => member.roles.cache.has(r)) || member.permissions.has('ManageChannels');
+  const staffRoles = ticketConfig(interaction.guild.id).staffRoles || [];
+  const isStaff = staffRoles.some(r => member.roles.cache.has(r)) || member.permissions.has('ManageChannels');
   if (!isStaff) {
     await interaction.reply({ content: '❌ فقط فريق الدعم يمكنه استخدام هذه الأزرار.', ephemeral: true });
     return;

@@ -12,6 +12,7 @@ const config = {
   logServerId: process.env.LOG_SERVER_ID || raw.logServerId || '',
   owners: raw.owners || [],
   adminRoles: raw.adminRoles || [],
+  autoRoles: raw.autoRoles || { memberRoleId: null, botRoleId: null },
   gamesChannelId: raw.gamesChannelId || '',
   gamesPrefix: raw.gamesPrefix || '-',
   jailPrefix: raw.jailPrefix || '$',
@@ -67,6 +68,8 @@ function isAdmin(member) {
   if (!member) return false;
   if (member.permissions?.has('Administrator')) return true;
   if (member.permissions?.has('ManageGuild')) return true;
+  const guildCfg = require('./guildCfg').get(member.guild?.id);
+  if ((guildCfg.staffRoles || []).some(roleId => member.roles?.cache?.has(roleId))) return true;
   return (config.adminRoles || []).some(roleId => member.roles?.cache?.has(roleId));
 }
 

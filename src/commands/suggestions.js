@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const db = require('../db');
 const emb = require('../utils/embeds');
-const { config } = require('../config');
 
 module.exports = {
   name: 'suggestions-group',

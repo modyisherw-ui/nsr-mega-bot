@@ -10,8 +10,9 @@ function setClient(client) {
 }
 
 function isMod(member) {
-  const { config } = require('../config');
-  return (config.moderation.staffRoles || []).some(r => member.roles.cache.has(r)) || member.permissions.has('Administrator');
+  if (!member?.guild) return false;
+  const guildCfg = require('../guildCfg').get(member.guild.id);
+  return (guildCfg.staffRoles || []).some(r => member.roles.cache.has(r)) || member.permissions.has('Administrator');
 }
 
 function giveawayEmbed(g) {

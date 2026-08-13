@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { mainEmbed, mainRows } = require('../dashboard');
-const { config } = require('../config');
 
 module.exports = {
   data: new SlashCommandBuilder()

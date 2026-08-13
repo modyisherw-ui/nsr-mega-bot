@@ -104,7 +104,8 @@ client.on('messageCreate', async message => {
     if (message.guild && (cmdText === '#قفل' || cmdText === '#فتح')) {
       const { PermissionFlagsBits } = require('discord.js');
       const isOwner = (config.owners || []).includes(message.author.id);
-      const isAdmin = (config.adminRoles || []).some(r => message.member?.roles.cache.has(r));
+      const guildCfg = require('./guildCfg').get(message.guild.id);
+      const isAdmin = (guildCfg.staffRoles || []).some(r => message.member?.roles.cache.has(r));
       const canManage = message.member?.permissions.has(PermissionFlagsBits.ManageChannels);
       if (!isOwner && !isAdmin && !canManage) {
         await message.delete().catch(() => {});
@@ -203,10 +204,10 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.on('guildMemberAdd', async member => {
-  if (config.mainServerId && member.guild.id !== config.mainServerId) return;
-  // الرولات التلقائية: رتبة لكل عضو ورتبة لكل بوت يدخل السيرفر
+  // الرولات التلقائية: رتبة لكل عضو ورتبة لكل بوت يدخل السيرفر (لكل سيرفر إعداداته)
   try {
-    const ar = config.autoRoles || {};
+    const guildCfg = require('./guildCfg').get(member.guild.id);
+    const ar = guildCfg.autoRoles || {};
     if (member.user.bot) {
       if (ar.botRoleId) await member.roles.add(ar.botRoleId).catch(() => {});
     } else {

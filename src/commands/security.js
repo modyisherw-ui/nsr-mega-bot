@@ -12,8 +12,8 @@ module.exports = {
         .addSubcommand(s => s.setName('status').setDescription('حالة الحماية')),
       async execute(interaction) {
         const cfg = db.securityCfg.get(interaction.guild.id);
-        const { config } = require('../config');
-        const protectedRoles = cfg.protected_roles.length ? cfg.protected_roles : (config.protectedRoles || []);
+        const guildCfg = require('../guildCfg').get(interaction.guild.id);
+        const protectedRoles = cfg.protected_roles.length ? cfg.protected_roles : (guildCfg.protectedRoles || []);
         const embed = new emb.infoEmbed(interaction.client, '🛡️ حالة الحماية', [
           `**مكافحة السبام:** \`${cfg.spam_enabled ? '✅ مفعّل' : '❌ معطّل'}\``,
           `**حد الرسائل:** \`${cfg.spam_max_messages}\` خلال \`${cfg.spam_window}\` ثانية`,
@@ -23,7 +23,7 @@ module.exports = {
           protectedRoles.length
             ? protectedRoles.map(id => `<@&${id}>`).join(', ')
             : 'لا توجد',
-          `**العقوبة:** \`${config.protectionAction || 'kick'}\``,
+          `**العقوبة:** \`${guildCfg.protectionAction || 'kick'}\``,
         ].join('\n'));
         await interaction.reply({ embeds: [embed] });
       },
@@ -40,8 +40,8 @@ module.exports = {
         }
         const guild = interaction.guild;
         const bots = guild.members.cache.filter(m => m.user.bot).size;
-        const { config } = require('../config');
-        const protected = (config.protectedRoles || []).filter(id => guild.roles.cache.has(id)).length;
+        const guildCfg = require('../guildCfg').get(guild.id);
+        const protected = (guildCfg.protectedRoles || []).filter(id => guild.roles.cache.has(id)).length;
         const dangerousPerms = ['Administrator', 'BanMembers', 'KickMembers', 'ManageRoles', 'ManageChannels'];
         const flagged = guild.roles.cache.filter(r => r.permissions.has('Administrator') && r.members.size > 0).size;
         const embed = new emb.infoEmbed(interaction.client, '🔍 تقرير الفحص', [
