@@ -47,6 +47,14 @@ client.once('ready', async () => {
   log.ok(`✅ تم تسجيل الدخول باسم ${client.user.tag}`);
   log.info(`📡 متصل في ${client.guilds.cache.size} سيرفر`);
 
+  // تسجيل كل أحداث الاتصال للدياجنوز: لو انقطع الـ gateway سنعرف السبب فوراً
+  client.on('shardDisconnect', (e, id) => log.warn(`🟠 shardDisconnect id=${id}: ${e?.message || 'غالباً مهلة/إنترنت'}`));
+  client.on('shardReconnecting', (id) => log.warn(`🔄 shardReconnecting id=${id} — جاري إعادة الاتصال`));
+  client.on('shardResumed', (id, replayed) => log.ok(`🔁 shardResumed id=${id} (تقرير ${replayed})`));
+  client.on('debug', (msg) => { if (/Reconnecting|Connection|disconnect|error/i.test(msg)) log.warn('🔧 debug: ' + msg.slice(0, 200)); });
+  client.on('warn', (msg) => log.warn('⚡ warn: ' + msg));
+  client.on('error', (err) => log.error('💥 error: ' + (err?.message || err)));
+
   await ensureLogoUrl(client);
   registerLogs(client);
 
