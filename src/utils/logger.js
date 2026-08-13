@@ -34,6 +34,7 @@ const log = {
   security: (msg) => { toFile(msg); console.log(`${chalk.gray('[' + ts() + ']')} ${chalk.redBright('[🛡️]')} ${msg}`); },
   giveaway: (msg) => { toFile(msg); console.log(`${chalk.gray('[' + ts() + ']')} ${chalk.yellow('[🎁]')} ${msg}`); },
   games: (msg) => { toFile(msg); console.log(`${chalk.gray('[' + ts() + ']')} ${chalk.blue('[🎮]')} ${msg}`); },
+  toFile,
 };
 
 module.exports = log;
