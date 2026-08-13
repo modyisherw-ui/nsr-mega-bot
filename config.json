@@ -195,6 +195,12 @@
   "logoUrl": "https://cdn.discordapp.com/emojis/1537415469684756562.png?size=256",
   "rating": {
     "reviewsChannelId": "1409932333519470694",
-    "products": []
+    "products": [
+      {
+        "id": "p_msrsehxg",
+        "name": "Onesync",
+        "roleId": "1409932029247619093"
+      }
+    ]
   }
 }
