@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect } = require('./dashboard');
 const { handleRatingButton, handleRatingModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal } = require('./modules/tickets');
@@ -173,6 +173,11 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
+    if (interaction.isRoleSelectMenu()) {
+      if (interaction.customId === 'bd_ar_member' || interaction.customId === 'bd_ar_bot') return handleAutoRoleSelect(interaction);
+      return;
+    }
+
     if (interaction.isChannelSelectMenu()) {
       if (interaction.customId === 'bd_logs_channel') return handleLogsChannelSelect(interaction);
       return;
@@ -187,6 +192,17 @@ client.on('interactionCreate', async interaction => {
 
 client.on('guildMemberAdd', async member => {
   if (config.mainServerId && member.guild.id !== config.mainServerId) return;
+  // الرولات التلقائية: رتبة لكل عضو ورتبة لكل بوت يدخل السيرفر
+  try {
+    const ar = config.autoRoles || {};
+    if (member.user.bot) {
+      if (ar.botRoleId) await member.roles.add(ar.botRoleId).catch(() => {});
+    } else {
+      if (ar.memberRoleId) await member.roles.add(ar.memberRoleId).catch(() => {});
+    }
+  } catch (err) {
+    log.warn('فشل الرول التلقائي: ' + err.message);
+  }
   await security.handleBotJoin(member);
 });
 

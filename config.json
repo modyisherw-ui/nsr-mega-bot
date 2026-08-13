@@ -7,6 +7,10 @@
   "adminRoles": [
     "1409931979692048394"
   ],
+  "autoRoles": {
+    "memberRoleId": null,
+    "botRoleId": null
+  },
   "gamesChannelId": "",
   "gamesPrefix": "-",
   "jailPrefix": "$",

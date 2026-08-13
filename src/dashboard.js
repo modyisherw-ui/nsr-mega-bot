@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const path = require('path');
 const log = require('./utils/logger');
 const db = require('./db');
 const { config } = require('./config');
@@ -6,6 +7,7 @@ const { systemRows } = require('./modules/adminPanel');
 
 const PAGES = {
   logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
+  autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
   ratings: { emoji: '⭐', name: 'نظام التقييمات', desc: 'تقييم الأعضاء من 1 إلى 5 نجوم مع تعليقات ولوحات صدارة وملفات تقييم.', commands: ['`/rate <user> <stars>` — تقييم', '`/setupreview <user>` — رسالة التقييم المثبتة', '`/panel <user>` — لوحة تقييم', '`/profile [user]` — ملف التقييمات', '`/leaderboard` — الصدارة', '`/myratings` — تقييماتي', '`/deleterating <user>` — حذف تقييمي'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص.', commands: ['زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
@@ -65,10 +67,24 @@ function logsEmbed(client, guild) {
     const channel = ch ? guild?.channels?.cache?.get(ch) : null;
     return `${ev.emoji} **${ev.name}:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`;
   });
+  // الأحداث المستخدمة فعلياً (مربوطة بروم) — قائمة واضحة بالرومات
+  const used = LOG_EVENTS.map(ev => ({ ev, ch: config.logChannels[ev.id] ? guild?.channels?.cache?.get(config.logChannels[ev.id]) : null }))
+    .filter(x => x.ch);
+  const usedList = used.length
+    ? used.map(x => `${x.ev.emoji} **${x.ev.name}** → <#${x.ch.id}>`).join('\n')
+    : 'لا توجد أحداث مربوطة بعد.';
   return new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('📋 إعداد رومات اللوقات')
-    .setDescription(['اختر الحدث من القوائم بالأسفل، ثم اختر القناة التي تصل إليه.', '', ...lines].join('\n'))
+    .setDescription([
+      'اختر الحدث من القوائم بالأسفل، ثم اختر القناة التي تصل إليه.',
+      '',
+      ...lines,
+      '',
+      '━━━━━━━━━━━━━━',
+      '**📌 الأحداث المستخدمة حالياً في الرومات:**',
+      usedList,
+    ].join('\n'))
     .setFooter({ text: 'لوحة التحكم • NSR BOT' })
     .setTimestamp();
 }
@@ -92,7 +108,6 @@ function logsRows(guild, state) {
     .setMaxValues(LOG_EVENTS.length)
     .setPlaceholder(sel.length ? `✔ المحدد (${sel.length}): ${sel.map(s => s.emoji).join(' ')}` : '1) اختر الأحداث (يمكن أكثر من واحد)...')
     .addOptions(opts);
-  if (sel.length) evtSel.setDefaultValues(sel.map(s => s.id));
   const chSel = new ChannelSelectMenuBuilder()
     .setCustomId('bd_logs_channel')
     .setPlaceholder('2) اختر الروم...')
@@ -164,6 +179,68 @@ function pageEmbed(interaction, pageId) {
     .setTimestamp();
 }
 
+// ═══════════ الرولات التلقائية ═══════════
+function saveAutoRoles() {
+  try {
+    const fs = require('fs');
+    const fp = path.join(__dirname, '..', 'config.json');
+    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    raw.autoRoles = { memberRoleId: config.autoRoles?.memberRoleId || null, botRoleId: config.autoRoles?.botRoleId || null };
+    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+  } catch (err) {
+    log.warn('فشل حفظ الرولات التلقائية: ' + err.message);
+  }
+}
+
+function autorolesEmbed(client, guild) {
+  const memberRole = config.autoRoles?.memberRoleId ? guild?.roles?.cache?.get(config.autoRoles.memberRoleId) : null;
+  const botRole = config.autoRoles?.botRoleId ? guild?.roles?.cache?.get(config.autoRoles.botRoleId) : null;
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('🤖 الرولات التلقائية')
+    .setDescription([
+      'اختر من القوائم بالأسفل، ويُحفظ فوراً.',
+      '',
+      `👤 **رتبة الأعضاء:** ${memberRole ? `<@&${memberRole.id}>` : '`غير محددة`'}`,
+      `🤖 **رتبة البوتات:** ${botRole ? `<@&${botRole.id}>` : '`غير محددة`'}`,
+      '',
+      '> سيحصل أي عضو/بوت يدخل السيرفر على رتبته تلقائياً.',
+    ].join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setTimestamp();
+}
+
+function autorolesRows(guild) {
+  const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, RoleSelectMenuBuilder } = require('discord.js');
+  const memberRole = config.autoRoles?.memberRoleId ? guild?.roles?.cache?.get(config.autoRoles.memberRoleId) : null;
+  const botRole = config.autoRoles?.botRoleId ? guild?.roles?.cache?.get(config.autoRoles.botRoleId) : null;
+  const memberSel = new RoleSelectMenuBuilder()
+    .setCustomId('bd_ar_member')
+    .setPlaceholder(memberRole ? `👤 الأعضاء: ${memberRole.name}` : '👤 اختر رتبة الأعضاء...');
+  if (memberRole) memberSel.setDefaultRoles([memberRole.id]);
+  const botSel = new RoleSelectMenuBuilder()
+    .setCustomId('bd_ar_bot')
+    .setPlaceholder(botRole ? `🤖 البوتات: ${botRole.name}` : '🤖 اختر رتبة البوتات...');
+  if (botRole) botSel.setDefaultRoles([botRole.id]);
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(memberSel),
+    new ActionRowBuilder().addComponents(botSel),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+async function handleAutoRoleSelect(interaction) {
+  const roleId = interaction.values[0];
+  if (!roleId) return;
+  if (!config.autoRoles) config.autoRoles = { memberRoleId: null, botRoleId: null };
+  if (interaction.customId === 'bd_ar_member') config.autoRoles.memberRoleId = roleId;
+  else if (interaction.customId === 'bd_ar_bot') config.autoRoles.botRoleId = roleId;
+  saveAutoRoles();
+  await interaction.update({ embeds: [autorolesEmbed(interaction.client, interaction.guild)], components: autorolesRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم حفظ الرتبة: <@&${roleId}>`, ephemeral: true });
+}
+
 function mainEmbed(client, guild) {
   return new EmbedBuilder()
     .setColor(0x5865F2)
@@ -195,6 +272,7 @@ function mainRows() {
 
 function pageRows(pageId, guild) {
   if (pageId === 'logs') return logsRows(guild);
+  if (pageId === 'autoroles') return autorolesRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -209,6 +287,10 @@ async function handleDashboard(interaction, client) {
   if (id === 'bd_back') {
     await interaction.update({ embeds: [mainEmbed(client, interaction.guild)], components: mainRows() });
     return;
+  }
+
+  if (id === 'bd_ar_member' || id === 'bd_ar_bot') {
+    return handleAutoRoleSelect(interaction);
   }
 
   const pageId = id.replace('bd_', '');
@@ -258,4 +340,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect };
