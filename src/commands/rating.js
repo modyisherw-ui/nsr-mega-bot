@@ -15,7 +15,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('rate')
-        .setDescription('🛍️ إرسال رسالة تقييم منتج لعميل على الخاص')
+        .setDescription('إرسال رسالة تقييم منتج لعميل على الخاص')
         .addUserOption(o => o.setName('user').setDescription('العميل الذي سيُقيّم').setRequired(true))
         .addStringOption(o => o.setName('product').setDescription('اسم المنتج (اكتب أو اختر من القائمة)').setRequired(true).setAutocomplete(true)),
       async autocomplete(interaction) {

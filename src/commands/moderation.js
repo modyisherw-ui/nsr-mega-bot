@@ -7,7 +7,7 @@ module.exports = {
   commands: [
     // ⚠️ التحذيرات
     {
-      data: new SlashCommandBuilder().setName('warn').setDescription('⚠️ تحذير عضو').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+      data: new SlashCommandBuilder().setName('warn').setDescription('تحذير عضو').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true))
         .addStringOption(o => o.setName('reason').setDescription('السبب').setRequired(false)),
       async execute(interaction) {
@@ -23,7 +23,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('warnings').setDescription('📋 تحذيرات عضو').addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)),
+      data: new SlashCommandBuilder().setName('warnings').setDescription('تحذيرات عضو').addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)),
       async execute(interaction) {
         const target = interaction.options.getUser('user');
         const rows = db.warnings.list(interaction.guild.id, target.id);
@@ -34,7 +34,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('clearwarnings').setDescription('🗑️ مسح تحذيرات عضو').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+      data: new SlashCommandBuilder().setName('clearwarnings').setDescription('مسح تحذيرات عضو').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -47,7 +47,7 @@ module.exports = {
 
     // 🎉 الجيفاواي
     {
-      data: new SlashCommandBuilder().setName('giveaway').setDescription('🎉 نظام الجيفاواي').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('giveaway').setDescription('نظام الجيفاواي').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addSubcommand(s => s.setName('start').setDescription('بدء جيفاواي').addStringOption(o => o.setName('prize').setDescription('الجائزة').setRequired(true)).addIntegerOption(o => o.setName('duration').setDescription('المدة بالدقائق').setRequired(true)).addChannelOption(o => o.setName('channel').setDescription('القناة (اختياري)'))),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -75,7 +75,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('giveaway-end').setDescription('🎉 إنهاء جيفاواي').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('giveaway-end').setDescription('إنهاء جيفاواي').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addStringOption(o => o.setName('id').setDescription('معرف الجيفاواي (اختياري)').setRequired(false)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -94,7 +94,7 @@ module.exports = {
 
     // 🏷️ لوحة الرتب
     {
-      data: new SlashCommandBuilder().setName('rolespanel').setDescription('🏷️ لوحة الرتب').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+      data: new SlashCommandBuilder().setName('rolespanel').setDescription('لوحة الرتب').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addRoleOption(o => o.setName('role').setDescription('رتبة يجب وضعها في اللوحة').setRequired(false)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -109,7 +109,7 @@ module.exports = {
 
     // 👢 العقوبات
     {
-      data: new SlashCommandBuilder().setName('kick').setDescription('👢 طرد عضو').setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
+      data: new SlashCommandBuilder().setName('kick').setDescription('طرد عضو').setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addStringOption(o => o.setName('reason').setDescription('السبب').setRequired(false)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -125,7 +125,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('ban').setDescription('⛔ باند عضو').setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+      data: new SlashCommandBuilder().setName('ban').setDescription('باند عضو').setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addStringOption(o => o.setName('reason').setDescription('السبب').setRequired(false)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -139,7 +139,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('unban').setDescription('✅ إلغاء باند').setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+      data: new SlashCommandBuilder().setName('unban').setDescription('إلغاء باند').setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
         .addStringOption(o => o.setName('user_id').setDescription('معرف المستخدم').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -168,7 +168,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('untimeout').setDescription('✅ إزالة التايم أوت').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+      data: new SlashCommandBuilder().setName('untimeout').setDescription('إزالة التايم أوت').setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -184,7 +184,7 @@ module.exports = {
 
     // 🧹 إدارة القنوات والرسائل
     {
-      data: new SlashCommandBuilder().setName('purge').setDescription('🧹 مسح رسائل').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('purge').setDescription('مسح رسائل').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addIntegerOption(o => o.setName('amount').setDescription('العدد (1-100)').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -199,7 +199,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('lock').setDescription('🔒 قفل القناة').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+      data: new SlashCommandBuilder().setName('lock').setDescription('قفل القناة').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
         .addChannelOption(o => o.setName('channel').setDescription('القناة (اختياري)')),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -212,7 +212,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('unlock').setDescription('🔓 فتح القناة').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+      data: new SlashCommandBuilder().setName('unlock').setDescription('فتح القناة').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
         .addChannelOption(o => o.setName('channel').setDescription('القناة (اختياري)')),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -225,7 +225,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('slowmode').setDescription('🐢 وضع بطيء').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+      data: new SlashCommandBuilder().setName('slowmode').setDescription('وضع بطيء').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
         .addIntegerOption(o => o.setName('seconds').setDescription('المدة بالثواني').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -238,7 +238,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('createchannel').setDescription('➕ إنشاء روم').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+      data: new SlashCommandBuilder().setName('createchannel').setDescription('إنشاء روم').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
         .addStringOption(o => o.setName('name').setDescription('الاسم').setRequired(true)).addStringOption(o => o.setName('type').setDescription('النوع').addChoices({ name: 'نصي', value: 'text' }, { name: 'صوتي', value: 'voice' }, { name: 'فئة', value: 'category' })),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -252,7 +252,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('deletechannel').setDescription('🗑️ حذف روم').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+      data: new SlashCommandBuilder().setName('deletechannel').setDescription('حذف روم').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
         .addChannelOption(o => o.setName('channel').setDescription('القناة').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -266,7 +266,7 @@ module.exports = {
 
     // 🎭 الرتب
     {
-      data: new SlashCommandBuilder().setName('role').setDescription('🎭 إعطاء/سحب رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+      data: new SlashCommandBuilder().setName('role').setDescription('إعطاء/سحب رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addRoleOption(o => o.setName('role').setDescription('الرتبة').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -283,7 +283,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('createrole').setDescription('➕ إنشاء رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+      data: new SlashCommandBuilder().setName('createrole').setDescription('إنشاء رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addStringOption(o => o.setName('name').setDescription('الاسم').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -294,7 +294,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('deleterole').setDescription('🗑️ حذف رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+      data: new SlashCommandBuilder().setName('deleterole').setDescription('حذف رتبة').setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
         .addRoleOption(o => o.setName('role').setDescription('الرتبة').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -306,7 +306,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('addemoji').setDescription('😀 إضافة إيموجي').setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions)
+      data: new SlashCommandBuilder().setName('addemoji').setDescription('إضافة إيموجي').setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions)
         .addStringOption(o => o.setName('url').setDescription('رابط الصورة').setRequired(true)).addStringOption(o => o.setName('name').setDescription('الاسم').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuildExpressions)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -319,7 +319,7 @@ module.exports = {
 
     // 📝 الرسائل
     {
-      data: new SlashCommandBuilder().setName('say').setDescription('📢 إرسال رسالة باسم البوت').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('say').setDescription('إرسال رسالة باسم البوت').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addStringOption(o => o.setName('message').setDescription('الرسالة').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -328,7 +328,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('embed').setDescription('📋 إرسال إمبد').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('embed').setDescription('إرسال إمبد').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addStringOption(o => o.setName('title').setDescription('العنوان').setRequired(true)).addStringOption(o => o.setName('description').setDescription('الوصف').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -338,7 +338,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('announce').setDescription('📣 إعلان مع منشن').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('announce').setDescription('إعلان مع منشن').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addStringOption(o => o.setName('message').setDescription('الإعلان').setRequired(true)).addRoleOption(o => o.setName('role').setDescription('رتبة المنشن (اختياري)')),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -348,7 +348,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('poll').setDescription('📊 استفتاء').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+      data: new SlashCommandBuilder().setName('poll').setDescription('استفتاء').setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
         .addStringOption(o => o.setName('question').setDescription('السؤال').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -360,32 +360,38 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('snipe').setDescription('🔍 آخر رسالة محذوفة'),
-      async execute(interaction) {
-        const deleted = db.snipe.get(interaction.channel.id);
-        if (!deleted) {
-          await interaction.reply({ content: '❌ لا توجد رسالة محذوفة في هذه القناة.', ephemeral: true });
-          return;
-        }
-        const embed = new EmbedBuilder()
-          .setColor('Orange')
-          .setAuthor({ name: deleted.author, iconURL: deleted.avatar })
-          .setDescription(deleted.content || '*بدون محتوى*')
-          .setFooter({ text: `حذفت منذ <t:${Math.floor(deleted.deletedAt / 1000)}:R>` });
-        await interaction.reply({ embeds: [embed] });
-      },
+      data: new SlashCommandBuilder().setName('snipe').setDescription('آخر رسالة محذوفة'),
+        async execute(interaction) {
+          // فقط الأدمن/المالك يستطيعون استعمال /snipe
+          if (!require('../config').isAdmin(interaction.member) && !require('../config').isOwner(interaction.user.id)) {
+            await interaction.reply({ content: '❌ هذه الميزة للإدارة فقط.', ephemeral: true });
+            return;
+          }
+          const deleted = db.snipe.get(interaction.channel.id);
+          if (!deleted) {
+            await interaction.reply({ content: '❌ لا توجد رسالة محذوفة في هذه القناة.', ephemeral: true });
+            return;
+          }
+          const embed = new EmbedBuilder()
+            .setColor('Orange')
+            .setAuthor({ name: deleted.author, iconURL: deleted.avatar })
+            .setDescription(deleted.content || '*بدون محتوى*')
+            .setFooter({ text: `حذفت منذ <t:${Math.floor(deleted.deletedAt / 1000)}:R>` });
+          await interaction.reply({ embeds: [embed] });
+        },
+
     },
 
     // ℹ️ المعلومات
     {
-      data: new SlashCommandBuilder().setName('avatar').setDescription('🖼️ صورة العضو').addUserOption(o => o.setName('user').setDescription('العضو')),
+      data: new SlashCommandBuilder().setName('avatar').setDescription('صورة العضو').addUserOption(o => o.setName('user').setDescription('العضو')),
       async execute(interaction) {
         const user = interaction.options.getUser('user') || interaction.user;
         await interaction.reply({ embeds: [new EmbedBuilder().setTitle(`🖼️ صورة ${user.username}`).setImage(user.displayAvatarURL({ size: 1024 })).setColor('Blurple')] });
       },
     },
     {
-      data: new SlashCommandBuilder().setName('userinfo').setDescription('👤 معلومات العضو').addUserOption(o => o.setName('user').setDescription('العضو')),
+      data: new SlashCommandBuilder().setName('userinfo').setDescription('معلومات العضو').addUserOption(o => o.setName('user').setDescription('العضو')),
       async execute(interaction) {
         const target = interaction.options.getMember('user') || interaction.member;
         const embed = new EmbedBuilder()
@@ -402,7 +408,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('serverinfo').setDescription('🏠 معلومات السيرفر'),
+      data: new SlashCommandBuilder().setName('serverinfo').setDescription('معلومات السيرفر'),
       async execute(interaction) {
         const g = interaction.guild;
         const embed = new EmbedBuilder()
@@ -424,7 +430,7 @@ module.exports = {
 
     // 🎤 الصوت
     {
-      data: new SlashCommandBuilder().setName('nickname').setDescription('✏️ تغيير الاسم').setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames)
+      data: new SlashCommandBuilder().setName('nickname').setDescription('تغيير الاسم').setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addStringOption(o => o.setName('nickname').setDescription('الاسم الجديد').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -436,7 +442,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('move').setDescription('🚚 نقل عضو لروم صوتي').setDefaultMemberPermissions(PermissionFlagsBits.MoveMembers)
+      data: new SlashCommandBuilder().setName('move').setDescription('نقل عضو لروم صوتي').setDefaultMemberPermissions(PermissionFlagsBits.MoveMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addChannelOption(o => o.setName('channel').setDescription('الروم الصوتي').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.MoveMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }
@@ -450,7 +456,7 @@ module.exports = {
       },
     },
     {
-      data: new SlashCommandBuilder().setName('deafen').setDescription('🙉 دفن/رفع دفن عضو').setDefaultMemberPermissions(PermissionFlagsBits.DeafenMembers)
+      data: new SlashCommandBuilder().setName('deafen').setDescription('دفن/رفع دفن عضو').setDefaultMemberPermissions(PermissionFlagsBits.DeafenMembers)
         .addUserOption(o => o.setName('user').setDescription('العضو').setRequired(true)).addBooleanOption(o => o.setName('deafen').setDescription('دفن أم لا').setRequired(true)),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.DeafenMembers)) { await interaction.reply({ content: '❌ بدون صلاحية.', ephemeral: true }); return; }

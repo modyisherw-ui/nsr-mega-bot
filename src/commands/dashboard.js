@@ -4,7 +4,7 @@ const { mainEmbed, mainRows } = require('../dashboard');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('bordnsr')
-    .setDescription('🎛️ لوحة التحكم الرئيسية')
+    .setDescription('لوحة التحكم الرئيسية')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {

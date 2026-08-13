@@ -8,7 +8,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('security')
-        .setDescription('🛡️ نظام الأمان')
+        .setDescription('نظام الأمان')
         .addSubcommand(s => s.setName('status').setDescription('حالة الحماية')),
       async execute(interaction) {
         const cfg = db.securityCfg.get(interaction.guild.id);
@@ -31,7 +31,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('scan')
-        .setDescription('🔍 فحص شامل للسيرفر')
+        .setDescription('فحص شامل للسيرفر')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
       async execute(interaction) {
         if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {

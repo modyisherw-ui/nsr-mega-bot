@@ -9,7 +9,7 @@ const PAGES = {
   logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
   autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
   ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
-  suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص.', commands: ['زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
+  suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
   staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'حدد رتبة أو أكثر (الأدمنز) الذين يستطيعون استخدام أوامر الإدارة مثل `/rate`. لوحة التحكم نفسها تبقى للأدمن (Administrator) فقط.', commands: ['اختر رتب الإدارة من القائمة بالأسفل — يمكن اختيار أكثر من رتبة'] },
@@ -216,6 +216,48 @@ async function handleStaffRolesSelect(interaction) {
     content: roleIds.length ? `✅ تم ضبط رتب الإدارة: ${roleIds.map(id => `<@&${id}>`).join(' ')}` : '✅ تم إفراغ قائمة رتب الإدارة.',
     ephemeral: true,
   });
+}
+
+// ═══════════ نظام الاقتراحات ═══════════
+function suggestionsEmbed(client, guild) {
+  const channelId = guildCfg.get(guild.id).suggestions?.channelId || '';
+  const channel = channelId ? guild?.channels?.cache?.get(channelId) : null;
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('💡 نظام الاقتراحات')
+    .setDescription([
+      `**روم الاقتراحات:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`,
+      '',
+      'عندما يرسل أحدهم اقتراحاً سيصلك على الخاص **ومعه نسخة في الروم** المحدد بالأسفل.',
+    ].join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setTimestamp();
+}
+
+function suggestionsRows(guild) {
+  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const channelId = guildCfg.get(guild.id).suggestions?.channelId || '';
+  const chSel = new ChannelSelectMenuBuilder()
+    .setCustomId('bd_suggestions_channel')
+    .setPlaceholder(channelId && guild?.channels?.cache?.get(channelId) ? `روم الاقتراحات: #${guild.channels.cache.get(channelId).name}` : 'اختر روم الاقتراحات...')
+    .addChannelTypes(ChannelType.GuildText);
+  if (channelId && guild?.channels?.cache?.get(channelId)) chSel.setDefaultChannels([channelId]);
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(chSel),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+async function handleSuggestionsChannelSelect(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.suggestions) g.suggestions = {};
+  g.suggestions.channelId = channelId;
+  guildCfg.set(interaction.guild.id, { suggestions: { channelId } });
+  await interaction.update({ embeds: [suggestionsEmbed(interaction.client, interaction.guild)], components: suggestionsRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ضبط روم الاقتراحات: <#${channelId}>`, ephemeral: true });
 }
 
 function pageEmbed(interaction, pageId) {
@@ -489,6 +531,7 @@ function pageRows(pageId, guild) {
   if (pageId === 'autoroles') return autorolesRows(guild);
   if (pageId === 'ratings') return ratingsRows(guild);
   if (pageId === 'staff') return staffRows(guild);
+  if (pageId === 'suggestions') return suggestionsRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -515,7 +558,7 @@ async function handleDashboard(interaction, client) {
 
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
-    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : (pageId === 'staff' ? staffEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId));
+    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : (pageId === 'staff' ? staffEmbed(interaction.client, interaction.guild) : (pageId === 'suggestions' ? suggestionsEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId)));
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
   }
@@ -523,6 +566,7 @@ async function handleDashboard(interaction, client) {
   if (id === 'bd_send_ticket_panel') return sendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
   if (id === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
+  if (id === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
 }
 
 async function sendTicketPanel(interaction) {
@@ -563,4 +607,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, sendTicketPanel, sendSuggestionsPanel };

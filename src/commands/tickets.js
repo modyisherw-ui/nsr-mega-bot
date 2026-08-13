@@ -13,7 +13,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('ticket')
-        .setDescription('🎫 نظام التذاكر')
+        .setDescription('نظام التذاكر')
         .addSubcommand(s => s.setName('panel').setDescription('إرسال لوحة التذاكر'))
         .addSubcommand(s => s.setName('stats').setDescription('إحصائيات التذاكر'))
         .addSubcommand(s => s.setName('close').setDescription('إغلاق تذكرة').addChannelOption(o => o.setName('channel').setDescription('قناة التذكرة (اختياري)'))),

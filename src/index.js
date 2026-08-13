@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -77,11 +77,13 @@ client.once('ready', async () => {
     const body = [...loadCommands.values()].map(c => c.data.toJSON());
     // تسجيل عام: لازم عشان تظهر شارة "Supports Commands" في بروفايل البوت
     await rest.put(Routes.applicationCommands(config.clientId), { body });
-    // تسجيل فوري في كل سيرفر البوت فيه (بدل العام اللي ياخذ ساعة)
+    // حذف أوامر السيرفرات المحلية حتى لا تتكرر الأوامر (عام + سيرفر)
     for (const guild of client.guilds.cache.values()) {
-      await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body });
+      try {
+        await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body: [] });
+      } catch (_) {}
     }
-    log.ok(`✅ تم تسجيل ${body.length} أوامر في ${client.guilds.cache.size} سيرفر`);
+    log.ok(`✅ تم تسجيل ${body.length} أوامر عامة في ${client.guilds.cache.size} سيرفر`);
   } catch (err) {
     log.warn('تعذر تسجيل الأوامر تلقائياً: ' + err.message + ' — شغّل: node deploy.js');
   }
@@ -196,6 +198,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isChannelSelectMenu()) {
       if (interaction.customId === 'bd_logs_channel') return handleLogsChannelSelect(interaction);
       if (interaction.customId === 'bd_rating_channel') return handleRatingChannelSelect(interaction);
+      if (interaction.customId === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
       return;
     }
   } catch (err) {

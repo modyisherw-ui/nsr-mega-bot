@@ -13,7 +13,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('broadcast')
-        .setDescription('📢 إرسال برودكاست لأعضاء السيرفر'),
+        .setDescription('إرسال برودكاست لأعضاء السيرفر'),
       async execute(interaction) {
         if (!checkAdmin(interaction)) {
           await interaction.reply({ content: '❌ هذه الميزة لرتب الإدارة فقط (حددها من لوحة التحكم).', ephemeral: true });
@@ -33,7 +33,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('bc_stats')
-        .setDescription('📊 إحصائيات البرودكاست'),
+        .setDescription('إحصائيات البرودكاست'),
       async execute(interaction) {
         if (!checkAdmin(interaction)) {
           await interaction.reply({ content: '❌ هذه الميزة لرتب الإدارة فقط.', ephemeral: true });
@@ -49,7 +49,7 @@ module.exports = {
     {
       data: new SlashCommandBuilder()
         .setName('reset_blocked')
-        .setDescription('♻️ مسح قائمة الأعضاء المحظورين من البرودكاست'),
+        .setDescription('مسح قائمة الأعضاء المحظورين من البرودكاست'),
       async execute(interaction) {
         if (!checkAdmin(interaction)) {
           await interaction.reply({ content: '❌ هذه الميزة لرتب الإدارة فقط.', ephemeral: true });

@@ -9,6 +9,7 @@ const DEFAULTS = {
   protectionAction: 'kick',
   staffRoles: [],
   autoRoles: { memberRoleId: null, botRoleId: null },
+  suggestions: { channelId: '' },
   rating: { reviewsChannelId: '', products: [] },
   ticket: {
     categoryId: '',

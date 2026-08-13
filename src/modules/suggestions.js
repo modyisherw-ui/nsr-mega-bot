@@ -26,6 +26,8 @@ async function handleSuggestionModal(interaction) {
     return;
   }
 
+  const guildCfg = require('../guildCfg').get(interaction.guild.id);
+  const channelId = guildCfg.suggestions?.channelId || '';
   const owner = interaction.guild?.members.cache.get(interaction.guild?.ownerId) || null;
   const embed = new EmbedBuilder()
     .setColor('Blurple')
@@ -34,9 +36,20 @@ async function handleSuggestionModal(interaction) {
     .addFields({ name: 'Submitted By', value: `<@${interaction.user.id}>` })
     .setTimestamp();
 
-  const sendEmbed = (channel, label) => channel.send({ embeds: [embed] });
+  const sentTo = [];
 
-  let sentTo = ['📬 لوحة الاقتراحات'];
+  // الروم المحدد من اللوحة
+  const channel = channelId ? interaction.guild.channels.cache.get(channelId) : null;
+  if (channel) {
+    try {
+      await channel.send({ embeds: [embed] });
+      sentTo.push(`<#${channel.id}>`);
+    } catch (err) {
+      log.warn('فشل إرسال الاقتراح للروم: ' + err.message);
+    }
+  }
+
+  // رسالة خاصة للمالك
   try {
     if (owner) {
       const dm = await owner.createDM().catch(() => null);
