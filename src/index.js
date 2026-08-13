@@ -50,6 +50,16 @@ client.once('ready', async () => {
   await ensureLogoUrl(client);
   registerLogs(client);
 
+  // نبضة قلب: ملف زمني يثبت أن البوت حي (يشاركه الريبو ليتأكد أي مراقب)
+  const fs = require('fs');
+  const path = require('path');
+  const hbFile = path.join(process.env.MEGA_BOT_DATA_DIR || path.join(__dirname, '..', 'data'), 'heartbeat.json');
+  const beat = () => {
+    try { fs.writeFileSync(hbFile, JSON.stringify({ at: Date.now(), user: client.user.tag })); } catch (_) {}
+  };
+  beat();
+  setInterval(beat, 30000);
+
   // تسجيل الأوامر تلقائياً عند الإقلاع (آمن ومتكرر)
   try {
     const { REST, Routes } = require('discord.js');
