@@ -99,6 +99,32 @@ client.once('ready', async () => {
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
   try {
+    // أمرا القفل والفتح النصيان: #قفل / #فتح
+    const cmdText = message.content.trim();
+    if (message.guild && (cmdText === '#قفل' || cmdText === '#فتح')) {
+      const { PermissionFlagsBits } = require('discord.js');
+      const isOwner = (config.owners || []).includes(message.author.id);
+      const isAdmin = (config.adminRoles || []).some(r => message.member?.roles.cache.has(r));
+      const canManage = message.member?.permissions.has(PermissionFlagsBits.ManageChannels);
+      if (!isOwner && !isAdmin && !canManage) {
+        await message.delete().catch(() => {});
+        return;
+      }
+      const isLock = cmdText === '#قفل';
+      await message.delete().catch(() => {});
+      const overwrites = {
+        SendMessages: isLock ? false : null,
+        SendMessagesInThreads: isLock ? false : null,
+        CreatePublicThreads: isLock ? false : null,
+        CreatePrivateThreads: isLock ? false : null,
+      };
+      await message.channel.permissionOverwrites.edit(message.guild.id, overwrites);
+      const reply = await message.channel.send({ content: isLock ? '🔒 تم قفل الروم' : '🔓 تم فتح الروم' });
+      // رد مؤقت يختفي بعد ثوانٍ (محد يشوفه غير طالب الأمر)
+      setTimeout(() => reply.delete().catch(() => {}), 3000);
+      return;
+    }
+
     await roles.handleJoinRole(message);
     await security.handleMessageSecurity(message);
   } catch (err) {
