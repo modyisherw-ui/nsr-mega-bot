@@ -1,6 +1,11 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const db = require('../db');
 const emb = require('../utils/embeds');
+const { isAdmin, isOwner } = require('../config');
+
+function checkAdmin(interaction) {
+  return isOwner(interaction.user.id) || isAdmin(interaction.member);
+}
 
 module.exports = {
   name: 'ticket-group',
@@ -13,6 +18,10 @@ module.exports = {
         .addSubcommand(s => s.setName('stats').setDescription('إحصائيات التذاكر'))
         .addSubcommand(s => s.setName('close').setDescription('إغلاق تذكرة').addChannelOption(o => o.setName('channel').setDescription('قناة التذكرة (اختياري)'))),
       async execute(interaction) {
+        if (!checkAdmin(interaction)) {
+          await interaction.reply({ content: '❌ هذه الأوامر لرتب الإدارة فقط (حددها من لوحة التحكم).', ephemeral: true });
+          return;
+        }
         const sub = interaction.options.getSubcommand();
         if (sub === 'panel') {
           const { sendTicketPanel } = require('../dashboard');

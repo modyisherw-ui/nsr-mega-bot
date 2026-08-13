@@ -12,6 +12,7 @@ const PAGES = {
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص.', commands: ['زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
+  staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'حدد رتبة أو أكثر (الأدمنز) الذين يستطيعون استخدام أوامر الإدارة مثل `/rate`. لوحة التحكم نفسها تبقى للأدمن (Administrator) فقط.', commands: ['اختر رتب الإدارة من القائمة بالأسفل — يمكن اختيار أكثر من رتبة'] },
   broadcast: { emoji: '📢', name: 'نظام البرودكاست', desc: 'إرسال رسائل جماعية للأعضاء على الخاص مع شريط تقدم وتقرير.', commands: ['`/broadcast` — إرسال برودكاست', '`/bc_stats` — الإحصائيات', '`/reset_blocked` — مسح المحظورين'] },
   security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية من السبام، الرايد، النسف، والبوتات الخطرة مع مراقبة مستمرة.', commands: ['الحماية تعمل تلقائياً', '`/security status` — الحالة', '`/scan` — فحص شامل'] },
 };
@@ -167,6 +168,54 @@ async function handleLogsApply(interaction) {
   saveLogChannels(interaction.guild.id);
   await interaction.update({ embeds: [logsEmbed(interaction.client, interaction.guild)], components: logsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط **${evs.length}** أحداث: ${evs.map(ev => ev.emoji).join(' ')} <#${channelId}>`, ephemeral: true });
+}
+
+// ═══════════ رتب الإدارة (staffRoles) ═══════════
+function staffEmbed(client, guild) {
+  const roles = guildCfg.get(guild.id).staffRoles || [];
+  const list = roles.length
+    ? roles.map(id => (guild?.roles?.cache?.get(id) ? `<@&${id}>` : `<@&${id}>`)).join(' ')
+    : '`لا توجد رتب إدارة محددة`';
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('👮 رتب الإدارة')
+    .setDescription([
+      'هذه الرتب تستطيع استخدام أوامر الإدارة مثل `/rate` و`/ticket panel` وغيرها.',
+      'لوحة التحكم نفسها تبقى **للأدمن (Administrator) فقط**.',
+      '',
+      `**رتب الإدارة الحالية:**`,
+      list,
+    ].join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setTimestamp();
+}
+
+function staffRows(guild) {
+  const { RoleSelectMenuBuilder } = require('discord.js');
+  const roles = guildCfg.get(guild.id).staffRoles || [];
+  const sel = new RoleSelectMenuBuilder()
+    .setCustomId('bd_staff_roles')
+    .setPlaceholder(roles.length ? `✔ المحدد (${roles.length}): رتب إدارة` : '👮 اختر رتب الإدارة (يمكن أكثر من رتبة)...')
+    .setMinValues(0)
+    .setMaxValues(25);
+  if (roles.length) sel.setDefaultRoles(roles);
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(sel),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+async function handleStaffRolesSelect(interaction) {
+  const roleIds = interaction.values || [];
+  const g = guildCfg.get(interaction.guild.id);
+  g.staffRoles = roleIds;
+  guildCfg.set(interaction.guild.id, { staffRoles: roleIds });
+  await interaction.update({ embeds: [staffEmbed(interaction.client, interaction.guild)], components: staffRows(interaction.guild) });
+  await interaction.followUp({
+    content: roleIds.length ? `✅ تم ضبط رتب الإدارة: ${roleIds.map(id => `<@&${id}>`).join(' ')}` : '✅ تم إفراغ قائمة رتب الإدارة.',
+    ephemeral: true,
+  });
 }
 
 function pageEmbed(interaction, pageId) {
@@ -439,6 +488,7 @@ function pageRows(pageId, guild) {
   if (pageId === 'logs') return logsRows(guild);
   if (pageId === 'autoroles') return autorolesRows(guild);
   if (pageId === 'ratings') return ratingsRows(guild);
+  if (pageId === 'staff') return staffRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -465,13 +515,14 @@ async function handleDashboard(interaction, client) {
 
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
-    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId);
+    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : (pageId === 'staff' ? staffEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId));
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
   }
 
   if (id === 'bd_send_ticket_panel') return sendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
+  if (id === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
 }
 
 async function sendTicketPanel(interaction) {
@@ -512,4 +563,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, sendTicketPanel, sendSuggestionsPanel };

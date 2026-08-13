@@ -31,15 +31,21 @@ async function sendPurchaseDM(target, product, client, guild) {
     const dm = await target.createDM();
     const icon = guild?.iconURL({ size: 256 }) || client.user.displayAvatarURL();
     const embed = new EmbedBuilder()
-      .setColor(0x5865F2)
+      .setColor(0x57F287)
       .setThumbnail(icon)
-      .setTitle('Thank you for purchase!')
-      .setDescription('Thank you for purchase.\n\nشكراً لشرائك معنا.');
-    const row = new ActionRowBuilder().addComponents(
+      .setTitle('Thank you for purchase')
+      .setDescription(`\n**Products**\n**${product.name}**\n\nشكراً لثقتك بنا 💙\nنتمنى أن تكون تجربتك معنا رائعة.\nقيّم تجربتك بالأسفل ⭐`);
+    const starRow = new ActionRowBuilder().addComponents(
+      [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
+        .setCustomId(`rate_star_${s}_${guild?.id || '0'}_${product.id}_ar`)
+        .setLabel('⭐'.repeat(s))
+        .setStyle(ButtonStyle.Primary))
+    );
+    const langRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_ar_${product.id}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
     );
-    await dm.send({ embeds: [embed], components: [row] });
+    await dm.send({ embeds: [embed], components: [starRow, langRow] });
     return true;
   } catch (err) {
     log.warn('تعذر إرسال خاص: ' + err.message);
@@ -47,7 +53,7 @@ async function sendPurchaseDM(target, product, client, guild) {
   }
 }
 
-// ═══════════════ اختيار اللغة ═══════════════
+// ═══════════════ اختيار اللغة (تحديث الرسالة مع النجوم) ═══════════════
 async function handleLangButton(interaction) {
   const parts = interaction.customId.split('_'); // rate_lang_<guildId>_<lang>_<pid>
   const guildId = parts[2];
@@ -60,19 +66,23 @@ async function handleLangButton(interaction) {
   }
   const ar = lang === 'ar';
   const desc = ar
-    ? ['شكراً لثقتك بنا 💙', '', '**Products**', `**${product.name}**`, '', 'نتمنى أن تكون تجربتك معنا رائعة.', 'قيّم تجربتك بالأسفل ⭐'].join('\n')
+    ? ['**Products**', `**${product.name}**`, '', 'شكراً لثقتك بنا 💙', 'نتمنى أن تكون تجربتك معنا رائعة.', 'قيّم تجربتك بالأسفل ⭐'].join('\n')
     : ['**Products**', `**${product.name}**`, '', 'We hope you had a great experience with us.', 'Please rate your experience below ⭐'].join('\n');
   const embed = new EmbedBuilder()
     .setColor(ar ? 0x57F287 : 0x5865F2)
-    .setTitle(ar ? 'تقييم تجربتك' : 'Rate your experience')
-    .setDescription(desc);
+    .setTitle(ar ? 'Thank you for purchase' : 'Rate your experience')
+    .setDescription('\n' + desc);
   const starRow = new ActionRowBuilder().addComponents(
     [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
       .setCustomId(`rate_star_${s}_${guildId}_${pid}_${lang}`)
       .setLabel('⭐'.repeat(s))
       .setStyle(ButtonStyle.Primary))
   );
-  await interaction.update({ embeds: [embed], components: [starRow] });
+  const langRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`rate_lang_${guildId}_ar_${pid}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`rate_lang_${guildId}_en_${pid}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
+  );
+  await interaction.update({ embeds: [embed], components: [starRow, langRow] });
 }
 
 // ═══════════════ اختيار النجوم → فتح نافذة الرسالة ═══════════════

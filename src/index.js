@@ -3,10 +3,10 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
-const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal } = require('./modules/tickets');
+const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
 const { handleBroadcastModal, handleBroadcastConfirm } = require('./modules/broadcast');
 const security = require('./modules/security');
 const giveaway = require('./modules/giveaway');
@@ -158,6 +158,8 @@ client.on('interactionCreate', async interaction => {
       if (id.startsWith('rate_lang_')) return handleLangButton(interaction);
       if (id.startsWith('rate_star_')) return handleStarButton(interaction);
       if (id === 'ticket_close_btn') return handleTicketClose(interaction);
+      if (id === 'ticket_claim_btn') return handleTicketClaim(interaction);
+      if (id === 'ticket_summon_btn') return handleTicketSummon(interaction);
       if (id === 'ticket_add_btn' || id === 'ticket_remove_btn') return handleTicketActions(interaction, id.replace('ticket_', '').replace('_btn', ''));
       if (id === 'bc_confirm') return handleBroadcastConfirm(interaction);
       if (id === 'bc_cancel') return interaction.update({ content: '⛔ تم الإلغاء.', embeds: [], components: [] });
@@ -187,6 +189,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isRoleSelectMenu()) {
       if (interaction.customId === 'bd_ar_member' || interaction.customId === 'bd_ar_bot') return handleAutoRoleSelect(interaction);
       if (interaction.customId === 'bd_prod_role') return handleProdRoleSelect(interaction);
+      if (interaction.customId === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
       return;
     }
 

@@ -1,5 +1,13 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { sendPurchaseDM, getProducts, findProduct } = require('../modules/ratings');
+const { isOwner } = require('../config');
+
+function isRateStaff(member) {
+  if (!member) return false;
+  if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
+  const staffRoles = require('../guildCfg').get(member.guild.id).staffRoles || [];
+  return staffRoles.some(r => member.roles.cache.has(r));
+}
 
 module.exports = {
   name: 'rating-group',
@@ -16,6 +24,10 @@ module.exports = {
         await interaction.respond(prods.map(p => ({ name: p.name, value: p.id })));
       },
       async execute(interaction) {
+        if (!isOwner(interaction.user.id) && !isRateStaff(interaction.member)) {
+          await interaction.reply({ content: '❌ هذا الأمر للإدارة فقط (حدد رتب الإدارة من لوحة التحكم).', ephemeral: true });
+          return;
+        }
         const target = interaction.options.getUser('user');
         if (!target || target.bot) {
           await interaction.reply({ content: '❌ اختر عميلاً حقيقياً (وليس بوتاً).', ephemeral: true });
