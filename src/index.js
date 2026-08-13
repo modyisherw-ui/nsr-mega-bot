@@ -57,6 +57,7 @@ client.once('ready', async () => {
 
   await ensureLogoUrl(client);
   registerLogs(client);
+  giveaway.setClient(client);
 
   // نبضة قلب: ملف زمني يثبت أن البوت حي (يشاركه الريبو ليتأكد أي مراقب)
   const fs = require('fs');

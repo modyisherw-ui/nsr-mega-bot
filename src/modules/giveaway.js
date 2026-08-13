@@ -4,6 +4,11 @@ const log = require('../utils/logger');
 
 let clientRef = null;
 
+// ربط الـ client (يستدعيه index.js عند الإقلاع)
+function setClient(client) {
+  clientRef = client;
+}
+
 function isMod(member) {
   const { config } = require('../config');
   return (config.moderation.staffRoles || []).some(r => member.roles.cache.has(r)) || member.permissions.has('Administrator');
@@ -23,6 +28,7 @@ function giveawayEmbed(g) {
 }
 
 async function checkExpired() {
+  if (!clientRef || !clientRef.guilds) return;
   const all = db.giveaways.all().map(db.giveaways.parse);
   for (const g of all) {
     if (g.ended || g.ends_at > Date.now()) continue;
@@ -72,4 +78,4 @@ async function handleReaction(reaction, user) {
   db.giveaways.setEntrants(reaction.message.id, entrants);
 }
 
-module.exports = { checkExpired, handleReaction, isMod };
+module.exports = { checkExpired, handleReaction, isMod, setClient };
