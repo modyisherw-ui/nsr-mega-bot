@@ -43,7 +43,7 @@ const LOG_EVENTS = [
   { id: 'protectedRoleViolation', emoji: '🛡️', name: 'انتهاك رتبة محمية' },
 ];
 
-const pendingLogEvent = new Map(); // userId -> eventId
+const pendingLogEvent = new Map(); // userId -> [eventIds]
 const pendingLogChannel = new Map(); // userId -> channelId
 
 function saveLogChannels() {
@@ -75,7 +75,9 @@ function logsEmbed(client, guild) {
 
 function logsRows(guild, state) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
-  const stateEv = state?.eventId ? LOG_EVENTS.find(x => x.id === state.eventId) : null;
+  // الآن يدعم اختيار أكثر من حدث في نفس الوقت
+  const selIds = state?.eventIds && state.eventIds.length ? state.eventIds : [];
+  const sel = selIds.map(id => LOG_EVENTS.find(x => x.id === id)).filter(Boolean);
   const opts = LOG_EVENTS.map(ev => {
     const ch = config.logChannels[ev.id];
     const channel = ch ? guild?.channels?.cache?.get(ch) : null;
@@ -86,13 +88,16 @@ function logsRows(guild, state) {
   });
   const evtSel = new StringSelectMenuBuilder()
     .setCustomId('bd_logs_evt')
-    .setPlaceholder(stateEv ? `✔ المحدد: ${stateEv.emoji} ${stateEv.name}` : '1) اختر الحدث...')
+    .setMinValues(1)
+    .setMaxValues(LOG_EVENTS.length)
+    .setPlaceholder(sel.length ? `✔ المحدد (${sel.length}): ${sel.map(s => s.emoji).join(' ')}` : '1) اختر الأحداث (يمكن أكثر من واحد)...')
     .addOptions(opts);
+  if (sel.length) evtSel.setDefaultValues(sel.map(s => s.id));
   const chSel = new ChannelSelectMenuBuilder()
     .setCustomId('bd_logs_channel')
     .setPlaceholder('2) اختر الروم...')
     .addChannelTypes(ChannelType.GuildText);
-  const prefill = state?.channelId || (stateEv ? config.logChannels[stateEv.id] : null);
+  const prefill = state?.channelId || (sel.length ? config.logChannels[sel[0].id] : null);
   if (prefill) {
     const ch = guild?.channels?.cache?.get(prefill);
     if (ch) chSel.setDefaultChannels([ch.id]);
@@ -107,13 +112,13 @@ function logsRows(guild, state) {
 }
 
 async function handleLogsSelect(interaction) {
-  const eventId = interaction.values[0];
-  const ev = LOG_EVENTS.find(x => x.id === eventId);
-  if (!ev) return;
-  pendingLogEvent.set(interaction.user.id, eventId);
+  const eventIds = interaction.values || [];
+  const evs = eventIds.map(id => LOG_EVENTS.find(x => x.id === id)).filter(Boolean);
+  if (!evs.length) return;
+  pendingLogEvent.set(interaction.user.id, eventIds);
   await interaction.update({
     embeds: [logsEmbed(interaction.client, interaction.guild)],
-    components: logsRows(interaction.guild, { eventId, channelId: pendingLogChannel.get(interaction.user.id) }),
+    components: logsRows(interaction.guild, { eventIds, channelId: pendingLogChannel.get(interaction.user.id) }),
   });
 }
 
@@ -123,16 +128,16 @@ async function handleLogsChannelSelect(interaction) {
   pendingLogChannel.set(interaction.user.id, channelId);
   await interaction.update({
     embeds: [logsEmbed(interaction.client, interaction.guild)],
-    components: logsRows(interaction.guild, { eventId: pendingLogEvent.get(interaction.user.id), channelId }),
+    components: logsRows(interaction.guild, { eventIds: pendingLogEvent.get(interaction.user.id), channelId }),
   });
 }
 
 async function handleLogsApply(interaction) {
-  const eventId = pendingLogEvent.get(interaction.user.id);
+  const eventIds = pendingLogEvent.get(interaction.user.id) || [];
   const channelId = pendingLogChannel.get(interaction.user.id);
-  const ev = LOG_EVENTS.find(x => x.id === eventId);
-  if (!ev) {
-    await interaction.reply({ content: '⚠️ اختر الحدث أولاً من القائمة الأولى.', ephemeral: true });
+  const evs = eventIds.map(id => LOG_EVENTS.find(x => x.id === id)).filter(Boolean);
+  if (!evs.length) {
+    await interaction.reply({ content: '⚠️ اختر الأحداث أولاً من القائمة الأولى.', ephemeral: true });
     return;
   }
   if (!channelId) {
@@ -141,10 +146,10 @@ async function handleLogsApply(interaction) {
   }
   pendingLogEvent.delete(interaction.user.id);
   pendingLogChannel.delete(interaction.user.id);
-  config.logChannels[eventId] = channelId;
+  for (const ev of evs) config.logChannels[ev.id] = channelId;
   saveLogChannels();
   await interaction.update({ embeds: [logsEmbed(interaction.client, interaction.guild)], components: logsRows(interaction.guild) });
-  await interaction.followUp({ content: `✅ تم ضبط لوق "${ev.emoji} ${ev.name}" على القناة <#${channelId}>`, ephemeral: true });
+  await interaction.followUp({ content: `✅ تم ضبط **${evs.length}** أحداث: ${evs.map(ev => ev.emoji).join(' ')} <#${channelId}>`, ephemeral: true });
 }
 
 function pageEmbed(interaction, pageId) {

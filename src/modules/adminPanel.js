@@ -52,8 +52,8 @@ function systemRows() {
   const rows = [];
   for (let i = 0; i < ACTIONS.length; i += 5) {
     rows.push(new ActionRowBuilder().addComponents(
-      ACTIONS.slice(i, i + 5).map(([id, label, style]) =>
-        new ButtonBuilder().setCustomId(`admn_${id}`).setLabel(label).setStyle(style)
+      ACTIONS.slice(i, i + 5).map(([id, label]) =>
+        new ButtonBuilder().setCustomId(`admn_${id}`).setLabel(label).setStyle(ButtonStyle.Secondary)
       )
     ));
   }
