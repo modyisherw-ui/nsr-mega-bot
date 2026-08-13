@@ -75,8 +75,8 @@ client.once('ready', async () => {
     const { loadCommands } = require('./commands');
     const rest = new REST({ version: '10' }).setToken(config.token);
     const body = [...loadCommands.values()].map(c => c.data.toJSON());
-    // مسح الأوامر العامة القديمة حتى لا تتكرر مع أوامر السيرفر
-    await rest.put(Routes.applicationCommands(config.clientId), { body: [] });
+    // تسجيل عام: لازم عشان تظهر شارة "Supports Commands" في بروفايل البوت
+    await rest.put(Routes.applicationCommands(config.clientId), { body });
     // تسجيل فوري في كل سيرفر البوت فيه (بدل العام اللي ياخذ ساعة)
     for (const guild of client.guilds.cache.values()) {
       await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body });
