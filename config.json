@@ -8,7 +8,7 @@
     "1409931979692048394"
   ],
   "autoRoles": {
-    "memberRoleId": null,
+    "memberRoleId": "1409932044607295529",
     "botRoleId": null
   },
   "gamesChannelId": "",
@@ -194,7 +194,7 @@
   "footerText": "NSR BOT • لوحة التحكم",
   "logoUrl": "https://cdn.discordapp.com/emojis/1537415469684756562.png?size=256",
   "rating": {
-    "reviewsChannelId": "",
+    "reviewsChannelId": "1409932333519470694",
     "products": []
   }
 }
