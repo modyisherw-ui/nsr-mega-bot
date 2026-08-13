@@ -11,7 +11,7 @@ function ensureStream() {
   if (logStreamActive) return true;
   try {
     fs.mkdirSync(path.dirname(logFp), { recursive: true });
-    logFp = logFp.replace(/\.[^.]+$/, '-') + `${process.pid}.txt`;
+    logFp = path.join(path.dirname(logFp), 'bot-live.txt');
     logStreamActive = true;
     return true;
   } catch (_) { return false; }
