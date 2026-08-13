@@ -1,4 +1,4 @@
-﻿name: Run Bot 24/7
+name: Run Bot 24/7
 
 on:
   workflow_dispatch:
