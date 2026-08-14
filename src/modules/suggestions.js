@@ -7,28 +7,30 @@ let clientRef = null;
 async function handleSuggestion(interaction) {
   const modal = new ModalBuilder()
     .setCustomId('suggestion_modal')
-    .setTitle('📬 Share Your Suggestion | شارك اقتراحك');
+    .setTitle('📬 شارك اقتراحك');
   const input = new TextInputBuilder()
     .setCustomId('suggestion_input')
-    .setLabel('What suggestion would you like to share? | ما الاقتراح الذي تريد مشاركته؟')
+    .setLabel('ما الاقتراح الذي تريد مشاركته؟')
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(true)
-    .setPlaceholder('Type your suggestion here... | اكتب اقتراحك هنا...')
+    .setPlaceholder('اكتب اقتراحك هنا...')
     .setMaxLength(500);
   modal.addComponents(new ActionRowBuilder().addComponents(input));
   await interaction.showModal(modal);
 }
 
 async function handleSuggestionModal(interaction) {
+  // تأكيد سريع حتى لا تنتهي مهلة Discord (3 ثوانٍ)
+  await interaction.deferReply({ ephemeral: true });
+
   const suggestion = interaction.fields.getTextInputValue('suggestion_input').trim();
   if (!suggestion) {
-    await interaction.reply({ content: '❌ لا يمكنك إرسال اقتراح فارغ.', ephemeral: true });
+    await interaction.editReply({ content: '❌ لا يمكنك إرسال اقتراح فارغ.' });
     return;
   }
 
   const guildCfg = require('../guildCfg').get(interaction.guild.id);
   const channelId = guildCfg.suggestions?.channelId || '';
-  const owner = interaction.guild?.members.cache.get(interaction.guild?.ownerId) || null;
   const embed = new EmbedBuilder()
     .setColor('Blurple')
     .setTitle('📬 Suggestion Received')
@@ -49,8 +51,10 @@ async function handleSuggestionModal(interaction) {
     }
   }
 
-  // رسالة خاصة للمالك
+  // رسالة خاصة للمالك (Fetch دائماً حتى لو غير موجود بالكاش)
   try {
+    const guild = interaction.guild;
+    const owner = guild.ownerId ? (guild.members.cache.get(guild.ownerId) || await guild.fetchOwner().catch(() => null)) : null;
     if (owner) {
       const dm = await owner.createDM().catch(() => null);
       if (dm) {
@@ -63,12 +67,14 @@ async function handleSuggestionModal(interaction) {
         await dm.send({ embeds: [dmEmbed] });
         sentTo.push('💌 رسالة خاصة للمالك');
       }
+    } else {
+      log.warn('تعذر إيجاد مالك السيرفر');
     }
   } catch (err) {
     log.warn('فشل إرسال الاقتراح للمالك: ' + err.message);
   }
 
-  await interaction.reply({ content: `✅ تم إرسال اقتراحك بنجاح إلى ${sentTo.join(' و ')}`, ephemeral: true });
+  await interaction.editReply({ content: `✅ تم إرسال اقتراحك بنجاح إلى ${sentTo.join(' و ')}` });
 }
 
 module.exports = { handleSuggestion, handleSuggestionModal };
