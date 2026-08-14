@@ -49,27 +49,11 @@ const ACTIONS = [
 ];
 
 async function showCmdList(interaction) {
-  const fs = require('fs');
-  const path = require('path');
-  const cfg = require('../guildCfg').get(interaction.guild.id).commands || {};
-  const labels = { any: '✓ عام', staff: '👮 رتب الإدارة', admin: '🔒 أدمن', off: '⛔ معطّل' };
-  const cmdDir = path.join(__dirname, '..', 'commands');
-  const files = fs.readdirSync(cmdDir).filter(f => f.endsWith('.js') && f !== 'index.js');
-  const lines = [];
-  for (const f of files) {
-    const mod = require(path.join(cmdDir, f));
-    if (!mod.commands) continue;
-    for (const c of mod.commands) {
-      const acc = cfg[c.data.name] || 'any';
-      lines.push(`/${c.data.name} — ${labels[acc] || acc}`);
-    }
-  }
-  const embed = new EmbedBuilder()
-    .setColor(0x5865F2)
-    .setTitle('📜 الأوامر والصلاحيات')
-    .setDescription(lines.join('\n'))
-    .setFooter({ text: 'NSR HUB - MoDy Dev' });
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  const dash = require('../dashboard');
+  await interaction.update({
+    embeds: [dash.commandsEmbed2(interaction.client, interaction.guild, 0)],
+    components: dash.commandsRows(interaction.guild, { page: 0 }),
+  });
 }
 
 function systemRows() {

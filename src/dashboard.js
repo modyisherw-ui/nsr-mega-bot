@@ -11,10 +11,9 @@ const PAGES = {
   autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
   ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
-  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — عرض قائمة الأوامر وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
+  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — قائمة الأوامر الكاملة وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
   messages: { emoji: '💬', name: 'نظام الرسائل', desc: 'أرسل رسائل خاصة للأعضاء: رسالة، استدعاء، شكر، أو عرض خاص.\n\n> هناك تهدئة دقيقة واحدة بين كل رسالة لنفس الشخص.', commands: ['اختر نوع الرسالة من الأزرار بالأسفل ثم اكتب المعرّف والنص'] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
-  commands: { emoji: '📜', name: 'قائمة الأوامر', desc: 'عرض جميع الأوامر وصلاحياتها. يمكن تعديل الكود في GitHub إذا لزم الأمر.', commands: [] },
   security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية من السبام، الرايد، النسف، والبوتات الخطرة مع مراقبة مستمرة.', commands: ['الحماية تعمل تلقائياً', '`/security status` — الحالة', '`/scan` — فحص شامل'] },
 };
 
@@ -956,4 +955,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.reply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };

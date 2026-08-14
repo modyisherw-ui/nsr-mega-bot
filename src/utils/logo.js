@@ -39,7 +39,9 @@ function clearGlobalLogo() {
   }
 }
 
-// رفع اللوقو مرة واحدة إلى صورة ديسكورد دائمة (CDN) ثم حذف الرسالة
+// ضمان رابط دائم للوقو لا ينتهي أبداً:
+// 1) إيموجي السيرفر (رابطه دائم طالما الإيموجي موجود)
+// 2) لو فشل (بدون صلاحية إنشاء ايموجي) → رفع الملف لقناة وعدم حذف الرسالة حتى يبقى الرابط حياً
 async function ensureLogoUrl(client) {
   if (!HAS_LOGO) return;
   // التحقق أن الرابط المحفوظ ما زال شغالاً — لو مكسور نعيد رفعه من الملف الطبيعي
@@ -47,7 +49,7 @@ async function ensureLogoUrl(client) {
     try {
       const res = await fetch(config.logoUrl, { method: 'GET', signal: AbortSignal.timeout(8000) });
       if (res.ok) return;
-      log.warn('🟠 رابط اللوقو مكسور، جاري إعادة رفعه من الملف الطبيعي...');
+      log.warn('🟠 رابط اللوقو مكسور، جاري إعادة رفعه...');
       config.logoUrl = '';
       clearGlobalLogo();
     } catch (err) {
@@ -58,23 +60,31 @@ async function ensureLogoUrl(client) {
   }
   const guild = client.guilds.cache.first();
   if (!guild) return;
+  // حاول الإيموجي أولاً (رابط دائم لا ينتهي)
+  if (await ensureEmojiLogo(client, guild)) return;
+  // لو ما صار الإيموجي → نرفع الملف لقناة ونبقي الرسالة (مسحها يكسر الرابط)
   try {
-    const { PermissionsBitField } = require('discord.js');
-    const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
-    const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
-    const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
-    let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
-      ? guild.channels.cache.get(memberJoinChannel) : null;
-    if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
-    if (!channel) channel = guild.channels.cache.find(canAttach);
-    if (!channel) { await ensureEmojiLogo(client, guild); return; }
+    const channel = await finduploadLogoChannel(guild);
+    if (!channel) return;
     const msg = await channel.send({ files: [{ attachment: LOGO_PATH, name: LOGO_NAME }] });
     const url = msg.attachments.first()?.url;
-    if (url) setLogoUrl(null, url);
-    msg.delete().catch(() => {});
+    if (!url) return;
+    setLogoUrl(null, url);
+    log.ok('✅ تم رفع اللوقو إلى CDN (رابط الرسالة صالح دائم طالما باقية): ' + msg.id);
   } catch (err) {
-    await ensureEmojiLogo(client, guild);
+    log.warn('تعذر رفع اللوقو نهائياً: ' + err.message);
   }
+}
+
+// إيجاد قناة يسمح فيها البوت بنشر الملفات
+function finduploadLogoChannel(guild) {
+  const { PermissionsBitField } = require('discord.js');
+  const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
+  const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
+  const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
+  if (canAttach(guild.channels.cache.get(memberJoinChannel))) return guild.channels.cache.get(memberJoinChannel);
+  if (canAttach(guild.systemChannel)) return guild.systemChannel;
+  return guild.channels.cache.find(canAttach) || null;
 }
 
 // رفع صورة من رابط خارجي إلى CDN ديسكورد (يضمن ظهورها دائماً في الثمبنيل)
