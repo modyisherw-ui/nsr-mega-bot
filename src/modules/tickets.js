@@ -70,7 +70,7 @@ async function handleTicketSelect(interaction) {
     .setTimestamp();
   const controlRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('ticket_claim_btn').setLabel('📥 Claim').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('ticket_summon_btn').setLabel('📣 Summon').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('ticket_summon_btn').setLabel('📣 Summon').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('ticket_close_btn').setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger),
   );
 

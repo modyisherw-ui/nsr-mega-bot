@@ -39,11 +39,11 @@ async function sendPurchaseDM(target, product, client, guild) {
       [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
         .setCustomId(`rate_star_${s}_${guild?.id || '0'}_${product.id}_ar`)
         .setLabel('⭐'.repeat(s))
-        .setStyle(ButtonStyle.Primary))
+        .setStyle(ButtonStyle.Secondary))
     );
     const langRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_ar_${product.id}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId(`rate_lang_${guild?.id || '0'}_en_${product.id}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Secondary),
     );
     await dm.send({ embeds: [embed], components: [starRow, langRow] });
     return true;
@@ -76,11 +76,11 @@ async function handleLangButton(interaction) {
     [1, 2, 3, 4, 5].map(s => new ButtonBuilder()
       .setCustomId(`rate_star_${s}_${guildId}_${pid}_${lang}`)
       .setLabel('⭐'.repeat(s))
-      .setStyle(ButtonStyle.Primary))
+      .setStyle(ButtonStyle.Secondary))
   );
   const langRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`rate_lang_${guildId}_ar_${pid}`).setLabel('العربية 🇸🇦').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`rate_lang_${guildId}_en_${pid}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`rate_lang_${guildId}_en_${pid}`).setLabel('English 🇬🇧').setStyle(ButtonStyle.Secondary),
   );
   await interaction.update({ embeds: [embed], components: [starRow, langRow] });
 }

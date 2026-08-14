@@ -26,24 +26,24 @@ const ACTIONS = [
   ['kick', '👢 طرد', ButtonStyle.Danger, PermissionFlagsBits.KickMembers],
   ['ban', '⛔ باند', ButtonStyle.Danger, PermissionFlagsBits.BanMembers],
   ['warn', '⚠️ تحذير', ButtonStyle.Secondary, PermissionFlagsBits.ModerateMembers],
-  ['timeout', '⏳ فترة صمت', ButtonStyle.Primary, PermissionFlagsBits.ModerateMembers],
+  ['timeout', '⏳ فترة صمت', ButtonStyle.Secondary, PermissionFlagsBits.ModerateMembers],
   ['unban', '✅ فك باند', ButtonStyle.Secondary, PermissionFlagsBits.BanMembers],
 
   ['createchannel', '➕ روم', ButtonStyle.Success, PermissionFlagsBits.ManageChannels],
   ['deletechannel', '🗑️ حذف روم', ButtonStyle.Danger, PermissionFlagsBits.ManageChannels],
   ['createrole', '➕ رتبة', ButtonStyle.Success, PermissionFlagsBits.ManageRoles],
   ['deleterole', '🗑️ حذف رتبة', ButtonStyle.Danger, PermissionFlagsBits.ManageRoles],
-  ['role', '🎭 رتبة لعضو', ButtonStyle.Primary, PermissionFlagsBits.ManageRoles],
+  ['role', '🎭 رتبة لعضو', ButtonStyle.Secondary, PermissionFlagsBits.ManageRoles],
 
   ['say', '📢 رسالة', ButtonStyle.Secondary, PermissionFlagsBits.ManageMessages],
   ['embed', '📋 إمبد', ButtonStyle.Secondary, PermissionFlagsBits.ManageMessages],
-  ['announce', '📣 إعلان', ButtonStyle.Primary, PermissionFlagsBits.ManageMessages],
-  ['poll', '📊 استفتاء', ButtonStyle.Primary, PermissionFlagsBits.ManageMessages],
+  ['announce', '📣 إعلان', ButtonStyle.Secondary, PermissionFlagsBits.ManageMessages],
+  ['poll', '📊 استفتاء', ButtonStyle.Secondary, PermissionFlagsBits.ManageMessages],
   ['purge', '🧹 مسح رسائل', ButtonStyle.Danger, PermissionFlagsBits.ManageMessages],
 
   ['lock', '🔒 قفل القناة', ButtonStyle.Secondary, PermissionFlagsBits.ManageChannels],
   ['unlock', '🔓 فتح القناة', ButtonStyle.Secondary, PermissionFlagsBits.ManageChannels],
-  ['slowmode', '🐢 وضع بطيء', ButtonStyle.Primary, PermissionFlagsBits.ManageChannels],
+  ['slowmode', '🐢 وضع بطيء', ButtonStyle.Secondary, PermissionFlagsBits.ManageChannels],
   ['rolespanel', '🏷️ لوحة الرتب', ButtonStyle.Success, PermissionFlagsBits.ManageRoles],
   ['giveaway', '🎁 جيفاواي', ButtonStyle.Success, PermissionFlagsBits.ManageMessages],
 ];
@@ -59,10 +59,10 @@ async function showCmdList(interaction) {
 function systemRows() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('admn_embed').setLabel('📋 إمبد').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('admn_cmdlist').setLabel('📜 الأوامر').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('admn_say').setLabel('📢 رسالة').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('admn_staff').setLabel('👮 رتبة الإدارة').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('admn_embed').setLabel('📋 إمبد').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('admn_cmdlist').setLabel('📜 الأوامر').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('admn_say').setLabel('📢 رسالة').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('admn_staff').setLabel('👮 رتبة الإدارة').setStyle(ButtonStyle.Secondary),
     ),
   ];
 }

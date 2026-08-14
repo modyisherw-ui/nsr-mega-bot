@@ -29,7 +29,7 @@ function messagesEmbed(client, guild) {
 function messagesRows() {
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   const btns = Object.entries(MSG_TYPES).map(([id, t]) =>
-    new ButtonBuilder().setCustomId(`msg_${id}`).setLabel(t.name).setEmoji(t.emoji).setStyle(ButtonStyle.Primary)
+    new ButtonBuilder().setCustomId(`msg_${id}`).setLabel(t.name).setEmoji(t.emoji).setStyle(ButtonStyle.Secondary)
   );
   return [
     new ActionRowBuilder().addComponents(...btns),

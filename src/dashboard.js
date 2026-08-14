@@ -736,7 +736,7 @@ function mainRows() {
   for (let i = 0; i < ids.length; i += 5) {
     const row = new ActionRowBuilder().addComponents(
       ids.slice(i, i + 5).map(id =>
-        new ButtonBuilder().setCustomId(`bd_${id}`).setLabel(PAGES[id].name).setEmoji(PAGES[id].emoji).setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId(`bd_${id}`).setLabel(PAGES[id].name).setEmoji(PAGES[id].emoji).setStyle(ButtonStyle.Secondary)
       )
     );
     rows.push(row);
@@ -768,8 +768,8 @@ function botInfoEmbed(client, guild) {
 function botInfoRows() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('bd_set_color').setLabel('🎨 تغيير لون البوت').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_set_color').setLabel('🎨 تغيير لون البوت').setStyle(ButtonStyle.Secondary),
     ),
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
@@ -994,7 +994,7 @@ async function sendSuggestionsPanel(interaction, opts) {
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Primary)
+    new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Secondary)
   );
   // لو مررنا روم محدد نرسل فيه، وإلا نرسل في الروم الحالي
   const target = opts?.targetChannel || interaction.channel;
