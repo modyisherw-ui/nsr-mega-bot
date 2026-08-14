@@ -97,13 +97,15 @@ async function getTicketUser(interaction, userId) {
 
 // ═══════════ استلام التذكرة (Claim) ═══════════
 async function handleTicketClaim(interaction) {
+  // نعترف بالتفاعل فوراً — إرسال DM لإشعار صاحب التذكرة قد يتجاوز 3 ثوانٍ
+  await interaction.deferReply({ ephemeral: true });
   const ticket = db.tickets.get(interaction.channel.id);
   if (!ticket || ticket.status === 'closed') {
-    await interaction.reply({ content: '❌ هذه ليست تذكرة نشطة.', ephemeral: true });
+    await interaction.editReply({ content: '❌ هذه ليست تذكرة نشطة.', ephemeral: true });
     return;
   }
   if (!canManageTicket(interaction.member, interaction.guild.id)) {
-    await interaction.reply({ content: '❌ فقط فريق الدعم يمكنه استلام التذكرة.', ephemeral: true });
+    await interaction.editReply({ content: '❌ فقط فريق الدعم يمكنه استلام التذكرة.', ephemeral: true });
     return;
   }
   db.tickets.claim(interaction.channel.id, interaction.user.id);
@@ -118,19 +120,21 @@ async function handleTicketClaim(interaction) {
         .setTimestamp()],
     }).catch(() => {});
   }
-  await interaction.reply({ content: `✅ تم استلام التذكرة! أُرسل إشعار لصاحبها.`, ephemeral: true });
+  await interaction.editReply({ content: `✅ تم استلام التذكرة! أُرسل إشعار لصاحبها.`, ephemeral: true });
   await interaction.channel.send({ content: `📥 تم استلام التذكرة بواسطة <@${interaction.user.id}>` }).catch(() => {});
 }
 
 // ═══════════ استدعاء صاحب التذكرة (Summon) ═══════════
 async function handleTicketSummon(interaction) {
+  // نعترف بالتفاعل فوراً — جلب المستخدم + إرسال DM قد يتجاوز 3 ثوانٍ
+  await interaction.deferReply({ ephemeral: true });
   const ticket = db.tickets.get(interaction.channel.id);
   if (!ticket || ticket.status === 'closed') {
-    await interaction.reply({ content: '❌ هذه ليست تذكرة نشطة.', ephemeral: true });
+    await interaction.editReply({ content: '❌ هذه ليست تذكرة نشطة.', ephemeral: true });
     return;
   }
   if (!canManageTicket(interaction.member, interaction.guild.id)) {
-    await interaction.reply({ content: '❌ فقط فريق الدعم يمكنه استدعاء صاحب التذكرة.', ephemeral: true });
+    await interaction.editReply({ content: '❌ فقط فريق الدعم يمكنه استدعاء صاحب التذكرة.', ephemeral: true });
     return;
   }
   const user = await getTicketUser(interaction, ticket.user_id);
@@ -145,7 +149,7 @@ async function handleTicketSummon(interaction) {
         .setTimestamp()],
     }).catch(() => {});
   }
-  await interaction.reply({ content: `✅ تم استدعاء صاحب التذكرة (إشعار على الخاص).`, ephemeral: true });
+  await interaction.editReply({ content: `✅ تم استدعاء صاحب التذكرة (إشعار على الخاص).`, ephemeral: true });
   await interaction.channel.send({ content: `📣 تم استدعاء صاحب التذكرة بواسطة <@${interaction.user.id}>` }).catch(() => {});
 }
 
