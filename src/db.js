@@ -195,16 +195,6 @@ const tickets = {
   avgRating: (guildId) => db.prepare(`SELECT AVG(r.rating) AS avg, COUNT(*) AS count FROM ticket_ratings r JOIN tickets t ON r.ticket_id = t.id WHERE t.guild_id=?`).get(guildId),
 };
 
-// ═══════════════ Broadcast ═══════════════
-const broadcast = {
-  isBlocked: (userId) => !!db.prepare(`SELECT 1 FROM blocked_users WHERE user_id=?`).get(String(userId)),
-  addBlocked: (userId) => db.prepare(`INSERT OR IGNORE INTO blocked_users (user_id) VALUES (?)`).run(String(userId)),
-  clearBlocked: () => db.prepare(`DELETE FROM blocked_users`).run().changes,
-  blockedCount: () => db.prepare(`SELECT COUNT(*) c FROM blocked_users`).get().c,
-  log: ({ guildId, sentBy, total, success, failed, blocked, duration }) => db.prepare(`INSERT INTO broadcast_logs (guild_id, sent_by, total, success, failed, blocked, duration) VALUES (?,?,?,?,?,?,?)`).run(String(guildId), String(sentBy), total, success, failed, blocked, duration),
-  lastLogs: (guildId, limit = 3) => db.prepare(`SELECT * FROM broadcast_logs WHERE guild_id=? ORDER BY created_at DESC LIMIT ?`).all(String(guildId), limit),
-};
-
 // ═══════════════ Warnings ═══════════════
 const warnings = {
   add: (guildId, userId, reason, moderatorId) => db.prepare(`INSERT INTO warnings (guild_id, user_id, reason, moderator_id, timestamp) VALUES (?,?,?,?,?)`).run(guildId, userId, reason, moderatorId, Date.now()),
@@ -374,5 +364,5 @@ setInterval(() => {
   try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch (_) {}
 }, 60 * 1000);
 
-module.exports = { db, ratings, productReviews, tickets, broadcast, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe };
+module.exports = { db, ratings, productReviews, tickets, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe };
 

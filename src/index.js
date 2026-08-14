@@ -3,16 +3,16 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm } = require('./dashboard');
+const { handleDashboard, handleSetLogoModal, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
-const { handleBroadcastModal, handleBroadcastConfirm } = require('./modules/broadcast');
 const security = require('./modules/security');
 const giveaway = require('./modules/giveaway');
 const roles = require('./modules/roles');
 const registerLogs = require('./modules/logs');
-const { handleAdminButton, handleAdminModal } = require('./modules/adminPanel');
+const { handleAdminButton, handleAdminModal, handleStaffRolesSelect: handleAdminStaffSelect, handleEmbedChannelSelect } = require('./modules/adminPanel');
+const { handleMessagesButton, handleMessagesModal } = require('./modules/messages');
 
 const client = new Client({
   intents: [
@@ -172,6 +172,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
       const id = interaction.customId;
       if (id.startsWith('admn_')) return handleAdminButton(interaction);
+      if (id.startsWith('msg_')) return handleMessagesButton(interaction);
       if (id === 'bd_logs_apply') return handleLogsApply(interaction);
       if (id === 'bd_logs_delete') return handleLogsDelete(interaction);
       if (id.startsWith('bd_')) return handleDashboard(interaction, client);
@@ -181,8 +182,6 @@ client.on('interactionCreate', async interaction => {
       if (id === 'ticket_claim_btn') return handleTicketClaim(interaction);
       if (id === 'ticket_summon_btn') return handleTicketSummon(interaction);
       if (id === 'ticket_add_btn' || id === 'ticket_remove_btn') return handleTicketActions(interaction, id.replace('ticket_', '').replace('_btn', ''));
-      if (id === 'bc_confirm') return handleBroadcastConfirm(interaction);
-      if (id === 'bc_cancel') return interaction.update({ content: '⛔ تم الإلغاء.', embeds: [], components: [] });
       if (id === 'open_suggestion_modal') return handleSuggestion(interaction);
       if (id.startsWith('role_')) return roles.handleRoleButton(interaction);
       return;
@@ -191,10 +190,10 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isModalSubmit()) {
       const id = interaction.customId;
       if (id.startsWith('admn_')) return handleAdminModal(interaction);
+      if (id.startsWith('msg_')) return handleMessagesModal(interaction);
       if (id.startsWith('rate_comment_')) return handleCommentModal(interaction);
-      if (id === 'bd_prod_modal') return handleProdModal(interaction);
+if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (id === 'suggestion_modal') return handleSuggestionModal(interaction);
-      if (id === 'broadcast_modal') return handleBroadcastModal(interaction);
       if (id === 'ticket_add_modal' || id === 'ticket_remove_modal') return handleTicketModal(interaction);
       return;
     }
@@ -212,10 +211,12 @@ client.on('interactionCreate', async interaction => {
       if (interaction.customId === 'bd_ar_member' || interaction.customId === 'bd_ar_bot') return handleAutoRoleSelect(interaction);
       if (interaction.customId === 'bd_prod_role') return handleProdRoleSelect(interaction);
       if (interaction.customId === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
+      if (interaction.customId === 'admn_staff_roles') return handleAdminStaffSelect(interaction);
       return;
     }
 
     if (interaction.isChannelSelectMenu()) {
+      if (interaction.customId === 'admn_embed_channel') return handleEmbedChannelSelect(interaction);
       if (interaction.customId === 'bd_logs_channel') return handleLogsChannelSelect(interaction);
       if (interaction.customId === 'bd_rating_channel') return handleRatingChannelSelect(interaction);
       if (interaction.customId === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);

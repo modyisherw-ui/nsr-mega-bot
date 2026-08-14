@@ -102,22 +102,4 @@ function buildLeaderboardEmbed({ client, rows, guild }) {
     .setTimestamp().setFooter(footer(client));
 }
 
-function buildBroadcastStats({ client, blocked, totalMembers, recentLogs }) {
-  const available = Math.max(0, totalMembers - blocked);
-  const pct = totalMembers > 0 ? Math.round((available / totalMembers) * 100) : 0;
-  const embed = new EmbedBuilder()
-    .setColor(0x3498DB)
-    .setTitle('📊 إحصائيات البرودكاست')
-    .addFields(
-      { name: '👥 الأعضاء', value: `\`${totalMembers}\``, inline: true },
-      { name: '🚫 المحظورون', value: `\`${blocked}\``, inline: true },
-      { name: '✅ المتاحون', value: `\`${available}\` (${pct}%)`, inline: true },
-    )
-    .setTimestamp().setFooter(footer(client));
-  if (recentLogs?.length) {
-    embed.addFields({ name: '🕘 آخر الإرساليات', value: recentLogs.map(l => `✅ ${l.success}/${l.total} — <t:${Number(l.created_at)}:R>`).join('\n') });
-  }
-  return embed;
-}
-
-module.exports = { successEmbed, errorEmbed, infoEmbed, buildPanelEmbed, buildReviewPanelEmbed, buildProfileEmbed, buildLeaderboardEmbed, colorByAverage, buildDistribution, buildBroadcastStats };
+module.exports = { successEmbed, errorEmbed, infoEmbed, buildPanelEmbed, buildReviewPanelEmbed, buildProfileEmbed, buildLeaderboardEmbed, colorByAverage, buildDistribution };

@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, RoleSelectMenuBuilder } = require('discord.js');
 const db = require('../db');
 const emb = require('../utils/embeds');
 
@@ -103,8 +103,101 @@ function makeModal(action, title, fields) {
 
 const val = (i, id) => i.fields.getTextInputValue(id).trim();
 
+function staffEmbed(interaction) {
+  const roles = require('../guildCfg').get(interaction.guild.id).staffRoles || [];
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('👮 رتب الإدارة')
+    .setDescription([
+      'الرتب المضافة هنا تستطيع استخدام أوامر البوت مثل `/rate` و`/ticket`.',
+      'لوحة التحكم نفسها تبقى **للأدمن (Administrator) فقط**.',
+      '',
+      '**رتب الإدارة الحالية:**',
+      roles.length ? roles.map(id => `<@&${id}>`).join(' ') : '`لا توجد رتب إدارة`',
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+async function showStaffPanel(interaction, addMode) {
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  if (!addMode) {
+    const addBtn = new ButtonBuilder().setCustomId('admn_staff_add').setLabel('➕ إضافة رتبة').setStyle(ButtonStyle.Success);
+    await interaction.update({
+      embeds: [staffEmbed(interaction)],
+      components: [
+        new ActionRowBuilder().addComponents(addBtn),
+        new ActionRowBuilder().addComponents(backBtn),
+      ],
+    });
+    return;
+  }
+  const roles = require('../guildCfg').get(interaction.guild.id).staffRoles || [];
+  const sel = new RoleSelectMenuBuilder()
+    .setCustomId('admn_staff_roles')
+    .setPlaceholder('👮 اختر رتب الأدمن الجديدة...')
+    .setMinValues(1);
+  if (roles.length) sel.setDefaultRoles(roles);
+  const cancelBtn = new ButtonBuilder().setCustomId('admn_staff').setLabel('↩️ رجوع').setStyle(ButtonStyle.Secondary);
+  await interaction.update({
+    embeds: [staffEmbed(interaction)],
+    components: [
+      new ActionRowBuilder().addComponents(sel),
+      new ActionRowBuilder().addComponents(cancelBtn, backBtn),
+    ],
+  });
+}
+
+async function handleStaffRolesSelect(interaction) {
+  const roleIds = interaction.values || [];
+  const g = require('../guildCfg').get(interaction.guild.id);
+  g.staffRoles = roleIds;
+  require('../guildCfg').set(interaction.guild.id, { staffRoles: roleIds });
+  await interaction.update({ embeds: [staffEmbed(interaction)], components: staffListComponents(interaction.guild) });
+  await interaction.followUp({
+    content: roleIds.length ? `✅ تم تعيين رتب الإدارة: ${roleIds.map(id => `<@&${id}>`).join(' ')}` : '✅ تم إفراغ القائمة.',
+    ephemeral: true,
+  });
+}
+
+function staffListComponents(guild) {
+  const addBtn = new ButtonBuilder().setCustomId('admn_staff_add').setLabel('➕ إضافة رتبة').setStyle(ButtonStyle.Success);
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(addBtn),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+// اختيار روم الإمبد/الرسالة: يخزن روم الانتظار ثم يفتح المودال
+const pendingMsgChannel = new Map(); // userId -> channelId
+
+function embedChannelRow() {
+  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const chSel = new ChannelSelectMenuBuilder()
+    .setCustomId('admn_embed_channel')
+    .setPlaceholder('📌 اختر الروم الذي تريد الإرسال فيه...')
+    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement);
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(chSel),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+async function handleEmbedChannelSelect(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  pendingMsgChannel.set(interaction.user.id, channelId);
+  const U = (id, label, ph, required = true, value) => ({ id, label, ph, required, value });
+  await interaction.showModal(makeModal('embed', '📋 إرسال إمبد', [
+    U('f_title', 'العنوان', 'عنوان الإمبد'), { id: 'f_desc', label: 'الوصف', ph: 'وصف الإمبد', required: true, long: true }]));
+}
+
 async function handleAdminButton(interaction) {
   const action = interaction.customId.replace('admn_', '');
+  if (action === 'cmdlist') return showCmdList(interaction);
+  if (action === 'staff' || action === 'staff_add') return showStaffPanel(interaction, action === 'staff_add');
   const cfg = ACTIONS.find(a => a[0] === action);
   if (!cfg) return;
   const [, , , perm] = cfg;
@@ -116,32 +209,8 @@ async function handleAdminButton(interaction) {
   const U = (id, label, ph, required = true, value) => ({ id, label, ph, required, value });
 
   switch (action) {
-    case 'embed': return interaction.showModal(makeModal('embed', '📋 إرسال إمبد', [
-      U('f_title', 'العنوان', 'عنوان الإمبد'), { id: 'f_desc', label: 'الوصف', ph: 'وصف الإمبد', required: true, long: true }]));
+    case 'embed': return interaction.update({ embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle('📋 إرسال إمبد').setDescription(['خطوة 1/2: اختر الروم الذي تريد إرسال الإمبد فيه.', '', '> ثم سيفتح لك نافذة لكتابة العنوان والوصف.'].join('\n')).setFooter({ text: 'NSR HUB - MoDy Dev' })], components: embedChannelRow() });
     case 'say': return interaction.showModal(makeModal('say', '📢 إرسال رسالة', [{ id: 'f_message', label: 'الرسالة', ph: 'النص', required: true, long: true }]));
-    case 'cmdlist': return showCmdList(interaction);
-    case 'staff': {
-      const { RoleSelectMenuBuilder } = require('discord.js');
-      const roles = require('../guildCfg').get(interaction.guild.id).staffRoles || [];
-      const sel = new RoleSelectMenuBuilder()
-        .setCustomId('bd_staff_roles')
-        .setPlaceholder(roles.length ? `✔ المحدد (${roles.length}): رتب إدارة` : '👮 اختر رتب الإدارة (يمكن أكثر من رتبة)...')
-        .setMinValues(0)
-        .setMaxValues(25);
-      if (roles.length) sel.setDefaultRoles(roles);
-      const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
-      await interaction.update({
-        embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle('👮 رتب الإدارة').setDescription([
-          'هذه الرتب تستطيع استخدام أوامر الإدارة مثل `/rate`.',
-          'لوحة التحكم نفسها تبقى **للأدمن (Administrator) فقط**.',
-          '',
-          '**رتب الإدارة الحالية:**',
-          roles.length ? roles.map(id => `<@&${id}>`).join(' ') : '`لا توجد`',
-        ].join('\n')).setFooter({ text: 'NSR HUB - MoDy Dev' }).setTimestamp()],
-        components: [new ActionRowBuilder().addComponents(sel), new ActionRowBuilder().addComponents(backBtn)],
-      });
-      return;
-    }
     case 'lock': return lockChannel(interaction, false);
     case 'unlock': return lockChannel(interaction, true);
     case 'rolespanel': return sendRolesPanel(interaction);
@@ -162,9 +231,6 @@ async function handleAdminButton(interaction) {
     case 'deleterole': return interaction.showModal(makeModal('deleterole', '🗑️ حذف رتبة', [U('f_role', 'اسم أو معرف الرتبة', 'اسم الرتبة')]));
     case 'role': return interaction.showModal(makeModal('role', '🎭 إعطاء/سحب رتبة', [
       U('f_user', 'معرف العضو', 'كليك يمين على العضو ← نسخ معرف المستخدم'), U('f_role', 'اسم أو معرف الرتبة', 'اسم الرتبة')]));
-    case 'say': return interaction.showModal(makeModal('say', '📢 إرسال رسالة', [{ id: 'f_message', label: 'الرسالة', ph: 'النص', required: true, long: true }]));
-    case 'embed': return interaction.showModal(makeModal('embed', '📋 إرسال إمبد', [
-      U('f_title', 'العنوان', 'عنوان الإمبد'), { id: 'f_desc', label: 'الوصف', ph: 'وصف الإمبد', required: true, long: true }]));
     case 'announce': return interaction.showModal(makeModal('announce', '📣 إعلان', [
       { id: 'f_message', label: 'الإعلان', ph: 'نص الإعلان', required: true, long: true }, U('f_role', 'رتبة المنشن (اختياري)', '', false)]));
     case 'poll': return interaction.showModal(makeModal('poll', '📊 استفتاء', [U('f_question', 'السؤال', 'سؤال الاستفتاء')]));
@@ -296,9 +362,13 @@ async function handleAdminModal(interaction) {
         return;
       }
       case 'embed': {
+        const targetChannel = pendingMsgChannel.get(interaction.user.id);
+        pendingMsgChannel.delete(interaction.user.id);
+        let channel = targetChannel ? interaction.guild.channels.cache.get(targetChannel) : interaction.channel;
+        if (!channel) channel = interaction.channel;
         const embed = new EmbedBuilder().setTitle(val(interaction, 'f_title')).setDescription(val(interaction, 'f_desc')).setColor('Blurple').setFooter({ text: interaction.user.tag });
-        await interaction.channel.send({ embeds: [embed] });
-        await interaction.reply({ content: '✅ تم الإرسال.', ephemeral: true });
+        await channel.send({ embeds: [embed] });
+        await interaction.reply({ content: `✅ تم الإرسال إلى <#${channel.id}>.`, ephemeral: true });
         return;
       }
       case 'announce': {
@@ -353,4 +423,4 @@ async function handleAdminModal(interaction) {
   }
 }
 
-module.exports = { systemRows, handleAdminButton, handleAdminModal };
+module.exports = { systemRows, handleAdminButton, handleAdminModal, handleStaffRolesSelect, handleEmbedChannelSelect };

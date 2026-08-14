@@ -4,6 +4,7 @@ const db = require('./db');
 const guildCfg = require('./guildCfg');
 const { systemRows } = require('./modules/adminPanel');
 const { getProducts, findProduct, saveRatingConfig } = require('./modules/ratings');
+const { messagesEmbed, messagesRows } = require('./modules/messages');
 
 const PAGES = {
   logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
@@ -11,9 +12,9 @@ const PAGES = {
   ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — عرض قائمة الأوامر وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
+  messages: { emoji: '💬', name: 'نظام الرسائل', desc: 'أرسل رسائل خاصة للأعضاء: رسالة، استدعاء، شكر، أو عرض خاص.\n\n> هناك تهدئة دقيقة واحدة بين كل رسالة لنفس الشخص.', commands: ['اختر نوع الرسالة من الأزرار بالأسفل ثم اكتب المعرّف والنص'] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
   commands: { emoji: '📜', name: 'قائمة الأوامر', desc: 'عرض جميع الأوامر وصلاحياتها. يمكن تعديل الكود في GitHub إذا لزم الأمر.', commands: [] },
-  broadcast: { emoji: '📢', name: 'نظام البرودكاست', desc: 'إرسال رسائل جماعية للأعضاء على الخاص مع شريط تقدم وتقرير.', commands: ['`/broadcast` — إرسال برودكاست', '`/bc_stats` — الإحصائيات', '`/reset_blocked` — مسح المحظورين'] },
   security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية من السبام، الرايد، النسف، والبوتات الخطرة مع مراقبة مستمرة.', commands: ['الحماية تعمل تلقائياً', '`/security status` — الحالة', '`/scan` — فحص شامل'] },
 };
 
@@ -719,7 +720,34 @@ function mainRows() {
     );
     rows.push(row);
   }
+  rows.push(new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت').setStyle(ButtonStyle.Secondary)
+  ));
   return rows;
+}
+
+async function handleSetLogo(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const modal = new ModalBuilder().setCustomId('bd_set_logo_modal').setTitle('🖼️ تغيير صورة البوت');
+  const input = new TextInputBuilder()
+    .setCustomId('logo_url')
+    .setLabel('حط رابط الصورة')
+    .setPlaceholder('https://example.com/image.png')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+  modal.addComponents(new ActionRowBuilder().addComponents(input));
+  await interaction.showModal(modal);
+}
+
+async function handleSetLogoModal(interaction) {
+  const url = interaction.fields.getTextInputValue('logo_url').trim();
+  if (!/^https?:\/\//i.test(url)) {
+    await interaction.reply({ content: '❌ الرابط غير صالح، ابدأ بـ `https://`.', ephemeral: true });
+    return;
+  }
+  const { setLogoUrl } = require('./utils/logo');
+  setLogoUrl(url);
+  await interaction.reply({ content: `✅ تم تحديث صورة البوت.\nالصورة الجديدة ستظهر في كل الرسائل.`, ephemeral: true });
 }
 
 function pageRows(pageId, guild) {
@@ -729,6 +757,7 @@ function pageRows(pageId, guild) {
   if (pageId === 'staff') return staffRows(guild);
   if (pageId === 'suggestions') return suggestionsRows(guild);
   if (pageId === 'commands') return commandsRows(guild);
+  if (pageId === 'messages') return messagesRows();
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -753,6 +782,8 @@ async function handleDashboard(interaction, client) {
   if (id === PROD_DEL) return handleProdDelete(interaction);
   if (id === PROD_CANCEL) return handleProdCancel(interaction);
 
+  if (id === 'bd_set_logo') return handleSetLogo(interaction);
+
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
     let embed;
@@ -760,6 +791,7 @@ async function handleDashboard(interaction, client) {
     else if (pageId === 'staff') embed = staffEmbed(interaction.client, interaction.guild);
     else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild, pendingCmdPage.get(interaction.user.id) || 0);
+    else if (pageId === 'messages') embed = messagesEmbed(interaction.client, interaction.guild);
     else embed = pageEmbed(interaction, pageId);
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
@@ -817,4 +849,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.reply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, handleSetLogoModal, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
