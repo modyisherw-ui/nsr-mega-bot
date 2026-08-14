@@ -745,9 +745,24 @@ async function handleSetLogoModal(interaction) {
     await interaction.reply({ content: '❌ الرابط غير صالح، ابدأ بـ `https://`.', ephemeral: true });
     return;
   }
-  const { setLogoUrl } = require('./utils/logo');
-  setLogoUrl(url);
-  await interaction.reply({ content: `✅ تم تحديث صورة البوت.\nالصورة الجديدة ستظهر في كل الرسائل.`, ephemeral: true });
+  const { setLogoUrl, uploadLogoFromUrl } = require('./utils/logo');
+  try {
+    const cdn = await uploadLogoFromUrl(interaction.client, url);
+    setLogoUrl(cdn);
+    await interaction.reply({
+      content: `✅ تم تحديث صورة البوت بنجاح.\nالصورة الجديدة ستظهر في كل الرسائل.`,
+      ephemeral: true,
+    });
+  } catch (err) {
+    log.warn('فشل رفع صورة اللوقو: ' + err.message);
+    setLogoUrl(url);
+    await interaction.reply({
+      content: `✅ تم حفظ الرابط، لكن تعذر رفعه على ديسكورد (${
+        err.message || 'خطأ'
+      })\nإذا لم تظهر الصورة فتأكد أن الرابط مباشر لصيغة png/jpg.`,
+      ephemeral: true,
+    });
+  }
 }
 
 function pageRows(pageId, guild) {

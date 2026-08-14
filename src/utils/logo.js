@@ -25,6 +25,28 @@ function setLogoUrl(url) {
   config.logoUrl = url;
 }
 
+// رفع صورة من رابط خارجي إلى CDN ديسكورد (يضمن ظهورها دائماً في الثمبنيل)
+async function uploadLogoFromUrl(client, url) {
+  const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!buf || buf.length === 0) throw new Error('صورة فارغة');
+  const guild = client.guilds.cache.first();
+  if (!guild) throw new Error('لا يوجد سيرفر');
+  const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has('SendMessages') && c.permissionsFor(guild.members.me)?.has('AttachFiles');
+  const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
+  let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
+    ? guild.channels.cache.get(memberJoinChannel) : null;
+  if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
+  if (!channel) channel = guild.channels.cache.find(canAttach);
+  if (!channel) throw new Error('لا يوجد روم يمكن رفع الصورة فيه');
+  const msg = await channel.send({ files: [{ attachment: buf, name: LOGO_NAME }] });
+  const cdn = msg.attachments.first()?.url;
+  msg.delete().catch(() => {});
+  if (!cdn) throw new Error('تعذر الحصول على رابط الصورة');
+  return cdn;
+}
+
 // إنشاء إيموجي من اللوقو لاستخدام رابطه كصورة دائمة (لا يخضع لتقييد رفع الملفات)
 async function ensureEmojiLogo(client, guild) {
   const existing = guild.emojis.cache.find((e) => e.name === 'nsrlogo');
@@ -107,4 +129,4 @@ function withLogo(payload) {
   return payload;
 }
 
-module.exports = { withLogo, ensureLogoUrl, hasLogo: HAS_LOGO };
+module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, hasLogo: HAS_LOGO };

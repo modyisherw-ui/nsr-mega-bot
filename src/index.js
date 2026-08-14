@@ -28,7 +28,7 @@ const client = new Client({
 });
 
 // حقن شعار البوت في كل إمبد (صورة صغيرة بالأعلى يمين/يسار حسب اللغة) + إزالة الإيموجي من العناوين
-const { TextChannel, DMChannel, NewsChannel, ThreadChannel, Interaction, MessageComponentInteraction } = require('discord.js');
+const { TextChannel, DMChannel, NewsChannel, ThreadChannel, Interaction, MessageComponentInteraction, Message } = require('discord.js');
 const { withLogo, ensureLogoUrl } = require('./utils/logo');
 function patchProto(cls, method) {
   if (!cls || typeof cls.prototype[method] !== 'function') return;
@@ -42,6 +42,7 @@ patchProto(Interaction, 'reply');
 patchProto(Interaction, 'editReply');
 patchProto(Interaction, 'followUp');
 patchProto(MessageComponentInteraction, 'update');
+patchProto(Message, 'edit');
 
 client.once('ready', async () => {
   log.ok(`✅ تم تسجيل الدخول باسم ${client.user.tag}`);

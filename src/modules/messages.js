@@ -6,10 +6,9 @@ const COOLDOWN_MS = 60000;
 const lastSent = new Map(); // "userId:guildId:targetId" -> timestamp
 
 const MSG_TYPES = {
-  send: { emoji: '💬', name: 'رسالة', title: '💬 رسالة خاصة', color: 0x5865F2, dmTitle: '💬 {{USER}} تواصل معك', description: '{{TEXT}}' },
-  summon: { emoji: '📣', name: 'استدعاء', title: '📣 استدعاء', color: 0xF1C40F, dmTitle: '📣 استدعاء لك', description: 'الرجاء الحضور في أسرع وقت.\n\n{{TEXT}}' },
-  thanks: { emoji: '🙏', name: 'شكر', title: '🙏 رسالة شكر', color: 0x57F287, dmTitle: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n{{TEXT}}' },
-  offer: { emoji: '🎁', name: 'عرض خاص', title: '🎁 عرض خاص', color: 0xEB459E, dmTitle: '🎁 عرض خاص لك', description: 'لدينا عرض خاص موجه لك.\n\n{{TEXT}}' },
+  send: { emoji: '💬', name: 'رسالة', title: '💬 رسالة خاصة', color: 0x5865F2, dmTitle: '💬 {{USER}} تواصل معك', description: '{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
+  summon: { emoji: '📣', name: 'استدعاء', title: '📣 استدعاء', color: 0xF1C40F, dmTitle: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
+  thanks: { emoji: '🙏', name: 'شكر', title: '🙏 رسالة شكر', color: 0x57F287, dmTitle: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
 };
 
 function messagesEmbed(client, guild) {
@@ -17,7 +16,7 @@ function messagesEmbed(client, guild) {
     .setColor(0x5865F2)
     .setTitle('💬 نظام الرسائل')
     .setDescription([
-      'أرسل رسالة خاصة لأي شخص في السيرفر، أو استدعاء، أو شكر، أو عرض خاص.',
+      'أرسل رسالة خاصة لأي شخص في السيرفر، أو استدعاء، أو شكر.',
       '',
       `> **تنبيه:** هناك تهدئة بمقدار دقيقة بين كل رسالة لنفس الشخص.`,
       '',
@@ -96,7 +95,7 @@ async function handleMessagesModal(interaction) {
   const dmEmbed = new EmbedBuilder()
     .setColor(t.color)
     .setTitle(t.dmTitle.replace('{{USER}}', interaction.guild.name))
-    .setDescription(t.description.replace('{{TEXT}}', text))
+    .setDescription(t.description.replace('{{TEXT}}', text).replace('{{GUILD}}', interaction.guild.name))
     .setFooter({ text: interaction.guild.name })
     .setTimestamp();
 
