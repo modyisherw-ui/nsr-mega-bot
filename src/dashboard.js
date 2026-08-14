@@ -744,8 +744,8 @@ async function handleSetLogo(interaction) {
       }
       const { setLogoUrl, uploadLogoFromUrl } = require('./utils/logo');
       // لا نمسح رسالة الصورة إلا بعد نجاح الرفع على CDN — رابط CDN دائم ولا يتأثر بالحذف
-      const finalUrl = await uploadLogoFromUrl(interaction.client, attach.url);
-      setLogoUrl(finalUrl);
+      const finalUrl = await uploadLogoFromUrl(interaction.client, attach.url, interaction.guild.id);
+      setLogoUrl(interaction.guild.id, finalUrl);
       m.delete().catch(() => {});
       // إعادة عرض لوحة التحكم فوراً بالصورة الجديدة
       try {
@@ -779,15 +779,15 @@ async function handleSetLogoModal(interaction) {
   }
   const { setLogoUrl, uploadLogoFromUrl } = require('./utils/logo');
   try {
-    const cdn = await uploadLogoFromUrl(interaction.client, url);
-    setLogoUrl(cdn);
+    const cdn = await uploadLogoFromUrl(interaction.client, url, interaction.guild.id);
+    setLogoUrl(interaction.guild.id, cdn);
     await interaction.reply({
       content: `✅ تم تحديث صورة البوت بنجاح.\nالصورة الجديدة ستظهر في كل الرسائل.`,
       ephemeral: true,
     });
   } catch (err) {
     log.warn('فشل رفع صورة اللوقو: ' + err.message);
-    setLogoUrl(url);
+    setLogoUrl(interaction.guild.id, url);
     await interaction.reply({
       content: `✅ تم حفظ الرابط، لكن تعذر رفعه على ديسكورد (${
         err.message || 'خطأ'

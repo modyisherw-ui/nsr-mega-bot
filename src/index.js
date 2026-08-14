@@ -34,7 +34,8 @@ function patchProto(cls, method) {
   if (!cls || typeof cls.prototype[method] !== 'function') return;
   const orig = cls.prototype[method];
   cls.prototype[method] = function (payload, ...rest) {
-    return orig.call(this, withLogo(payload), ...rest);
+    const guildId = this?.guildId || this?.guild?.id;
+    return orig.call(this, withLogo(payload, guildId), ...rest);
   };
 }
 [TextChannel, DMChannel, NewsChannel, ThreadChannel].forEach((c) => patchProto(c, 'send'));

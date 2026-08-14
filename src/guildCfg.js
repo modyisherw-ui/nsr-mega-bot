@@ -11,6 +11,7 @@ const DEFAULTS = {
   autoRoles: { memberRoleId: null, botRoleId: null },
   suggestions: { channelId: '' },
   commands: {},
+  logoUrl: '',
   rating: { reviewsChannelId: '', products: [] },
   ticket: {
     categoryId: '',

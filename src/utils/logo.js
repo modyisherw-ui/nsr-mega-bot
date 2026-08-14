@@ -8,30 +8,57 @@ const HAS_LOGO = fs.existsSync(LOGO_PATH);
 const LOGO_NAME = 'logo2.png';
 const LOGO_ATTACH = `attachment://${LOGO_NAME}`;
 
-let LOGO_URL = config.logoUrl || '';
-let HAS_URL = !!LOGO_URL;
-
-function setLogoUrl(url) {
-  try {
-    const fp = path.join(__dirname, '..', '..', 'config.json');
-    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
-    raw.logoUrl = url;
-    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
-  } catch (err) {
-    log.warn('فشل حفظ رابط اللوقو: ' + err.message);
+// إنشاء إيموجي من اللوقو لاستخدام رابطه كصورة دائمة (لا يخضع لتقييد رفع الملفات)
+async function ensureEmojiLogo(client, guild) {
+  const existing = guild.emojis.cache.find((e) => e.name === 'nsrlogo');
+  if (existing) {
+    const url = existing.imageURL({ size: 256, extension: 'png' });
+    if (url) setLogoUrl(null, url);
+    return true;
   }
-  LOGO_URL = url;
-  HAS_URL = true;
-  config.logoUrl = url;
+  try {
+    const emoji = await guild.emojis.create({ attachment: LOGO_PATH, name: 'nsrlogo' });
+    const url = emoji.imageURL({ size: 256, extension: 'png' });
+    if (url) setLogoUrl(null, url);
+    return true;
+  } catch (err) {
+    log.warn('تعذر إنشاء إيموجي اللوقو: ' + err.message);
+    return false;
+  }
+}
+
+// رفع اللوقو مرة واحدة إلى صورة ديسكورد دائمة (CDN) ثم حذف الرسالة
+async function ensureLogoUrl(client) {
+  if (!HAS_LOGO) return;
+  if (config.logoUrl) return;
+  const guild = client.guilds.cache.first();
+  if (!guild) return;
+  try {
+    const { PermissionsBitField } = require('discord.js');
+    const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
+    const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
+    const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
+    let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
+      ? guild.channels.cache.get(memberJoinChannel) : null;
+    if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
+    if (!channel) channel = guild.channels.cache.find(canAttach);
+    if (!channel) { await ensureEmojiLogo(client, guild); return; }
+    const msg = await channel.send({ files: [{ attachment: LOGO_PATH, name: LOGO_NAME }] });
+    const url = msg.attachments.first()?.url;
+    if (url) setLogoUrl(null, url);
+    msg.delete().catch(() => {});
+  } catch (err) {
+    await ensureEmojiLogo(client, guild);
+  }
 }
 
 // رفع صورة من رابط خارجي إلى CDN ديسكورد (يضمن ظهورها دائماً في الثمبنيل)
-async function uploadLogoFromUrl(client, url) {
+async function uploadLogoFromUrl(client, url, guildId) {
   const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const buf = Buffer.from(await res.arrayBuffer());
   if (!buf || buf.length === 0) throw new Error('صورة فارغة');
-  const guild = client.guilds.cache.first();
+  const guild = client.guilds.cache.get(guildId) || client.guilds.cache.first();
   if (!guild) throw new Error('لا يوجد سيرفر');
   const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has('SendMessages') && c.permissionsFor(guild.members.me)?.has('AttachFiles');
   const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
@@ -47,48 +74,38 @@ async function uploadLogoFromUrl(client, url) {
   return cdn;
 }
 
-// إنشاء إيموجي من اللوقو لاستخدام رابطه كصورة دائمة (لا يخضع لتقييد رفع الملفات)
-async function ensureEmojiLogo(client, guild) {
-  const existing = guild.emojis.cache.find((e) => e.name === 'nsrlogo');
-  if (existing) {
-    const url = existing.imageURL({ size: 256, extension: 'png' });
-    if (url) setLogoUrl(url);
-    return true;
+// رابط اللوقو للسيرفر المحدد، أو اللوقو الافتراضي إن لم يحدده السيرفر نفسه
+function getLogoUrl(guildId) {
+  if (guildId) {
+    try {
+      const g = require('../guildCfg').get(guildId);
+      if (g.logoUrl) return g.logoUrl;
+    } catch (err) {
+      log.warn('فشل قراءة لوقو السيرفر: ' + err.message);
+    }
   }
-  try {
-    const emoji = await guild.emojis.create({ attachment: LOGO_PATH, name: 'nsrlogo' });
-    const url = emoji.imageURL({ size: 256, extension: 'png' });
-    if (url) setLogoUrl(url);
-    return true;
-  } catch (err) {
-    log.warn('تعذر إنشاء إيموجي اللوقو: ' + err.message);
-    return false;
-  }
+  return config.logoUrl || '';
 }
 
-// رفع اللوقو مرة واحدة إلى صورة ديسكورد دائمة (CDN) ثم حذف الرسالة
-async function ensureLogoUrl(client) {
-  if (!HAS_LOGO) return;
-  if (config.logoUrl) { LOGO_URL = config.logoUrl; HAS_URL = true; return; }
-  const guild = client.guilds.cache.first();
-  if (!guild) return;
-  try {
-    const { PermissionsBitField } = require('discord.js');
-    const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
-    const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
-    const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
-    let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
-      ? guild.channels.cache.get(memberJoinChannel) : null;
-    if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
-    if (!channel) channel = guild.channels.cache.find(canAttach);
-    if (!channel) { await ensureEmojiLogo(client, guild); return; }
-    const msg = await channel.send({ files: [{ attachment: LOGO_PATH, name: LOGO_NAME }] });
-    const url = msg.attachments.first()?.url;
-    if (url) setLogoUrl(url);
-    msg.delete().catch(() => {});
-  } catch (err) {
-    await ensureEmojiLogo(client, guild);
+// حفظ اللوقو: مع guildId يُحفظ لكل سيرفر، بدون يُحفظ كافتراضي عام
+function setLogoUrl(guildId, url) {
+  if (guildId) {
+    try {
+      require('../guildCfg').set(guildId, { logoUrl: url });
+    } catch (err) {
+      log.warn('فشل حفظ لوقو السيرفر: ' + err.message);
+    }
+    return;
   }
+  try {
+    const fp = path.join(__dirname, '..', '..', 'config.json');
+    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    raw.logoUrl = url;
+    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+  } catch (err) {
+    log.warn('فشل حفظ رابط اللوقو: ' + err.message);
+  }
+  config.logoUrl = url;
 }
 
 const TITLE_EMOJI = /^\s*(\p{Extended_Pictographic}(\uFE0F)?\s*)+/u;
@@ -99,7 +116,7 @@ function stripTitleEmoji(title) {
   return cleaned ? cleaned : title;
 }
 
-function applyLogo(embed) {
+function applyLogo(embed, guildId) {
   if (!embed) return false;
   if (typeof embed.setTitle === 'function' && typeof embed.data.title === 'string') {
     const t = stripTitleEmoji(embed.data.title);
@@ -110,17 +127,19 @@ function applyLogo(embed) {
   }
   const hasThumb = embed.data ? embed.data.thumbnail : embed.thumbnail;
   if (hasThumb) return false;
-  const url = HAS_URL ? LOGO_URL : LOGO_ATTACH;
-  if (typeof embed.setThumbnail === 'function') embed.setThumbnail(url);
-  else embed.thumbnail = { url };
+  const url = getLogoUrl(guildId);
+  const finalUrl = url || (HAS_LOGO ? LOGO_ATTACH : '');
+  if (!finalUrl) return false;
+  if (typeof embed.setThumbnail === 'function') embed.setThumbnail(finalUrl);
+  else embed.thumbnail = { url: finalUrl };
   return true;
 }
 
-function withLogo(payload) {
+function withLogo(payload, guildId) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
   if (!Array.isArray(payload.embeds) || payload.embeds.length === 0) return payload;
-  const added = payload.embeds.some(applyLogo);
-  if (HAS_URL || !HAS_LOGO || !added) return payload;
+  const added = payload.embeds.some((e) => applyLogo(e, guildId));
+  if (getLogoUrl(guildId) || !HAS_LOGO || !added) return payload;
   const files = Array.isArray(payload.files) ? [...payload.files] : [];
   if (!files.some((f) => f && f.name === LOGO_NAME)) {
     files.push({ attachment: LOGO_PATH, name: LOGO_NAME });
@@ -129,4 +148,4 @@ function withLogo(payload) {
   return payload;
 }
 
-module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, hasLogo: HAS_LOGO };
+module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, getLogoUrl, hasLogo: HAS_LOGO };
