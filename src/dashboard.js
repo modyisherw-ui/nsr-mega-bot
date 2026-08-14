@@ -721,22 +721,45 @@ function mainRows() {
     rows.push(row);
   }
   rows.push(new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت').setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت (رفع ملف)').setStyle(ButtonStyle.Secondary)
   ));
   return rows;
 }
 
 async function handleSetLogo(interaction) {
-  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-  const modal = new ModalBuilder().setCustomId('bd_set_logo_modal').setTitle('🖼️ تغيير صورة البوت');
-  const input = new TextInputBuilder()
-    .setCustomId('logo_url')
-    .setLabel('حط رابط الصورة')
-    .setPlaceholder('https://example.com/image.png')
-    .setStyle(TextInputStyle.Short)
-    .setRequired(true);
-  modal.addComponents(new ActionRowBuilder().addComponents(input));
-  await interaction.showModal(modal);
+  const { MessageCollector } = require('discord.js');
+  await interaction.reply({
+    content: '🖼️ أرفق الصورة في رسالة في هذا الروم خلال **60 ثانية** وسأعتمدها كصورة البوت.\nالصيغ المدعومة: `png / jpg / jpeg / webp / gif`.',
+    ephemeral: true,
+  });
+  const filter = (m) => m.author.id === interaction.user.id && m.attachments.size > 0;
+  const collector = new MessageCollector(interaction.channel, { filter, time: 60000, max: 1 });
+  collector.on('collect', async (m) => {
+    try {
+      const attach = m.attachments.first();
+      if (!/^image\//i.test(attach.contentType || '')) {
+        await interaction.followUp({ content: '❌ الملف المرسل ليس صورة.', ephemeral: true });
+        m.delete().catch(() => {});
+        return;
+      }
+      const { setLogoUrl, uploadLogoFromUrl } = require('./utils/logo');
+      let finalUrl = attach.url;
+      try {
+        finalUrl = await uploadLogoFromUrl(interaction.client, attach.url);
+      } catch (_) {}
+      setLogoUrl(finalUrl);
+      await interaction.followUp({ content: '✅ تم تحديث صورة البوت بنجاح، وستظهر في كل الرسائل.', ephemeral: true });
+      m.delete().catch(() => {});
+    } catch (err) {
+      log.warn('فشل تحديث اللوقو من ملف: ' + err.message);
+      await interaction.followUp({ content: '❌ تعذر تحديث الصورة، تأكد من صيغة الملف.', ephemeral: true });
+    }
+  });
+  collector.on('end', async (collected) => {
+    if (collected.size === 0) {
+      await interaction.followUp({ content: '⏰ انتهت المهلة، لم يتم رفع أي صورة.', ephemeral: true });
+    }
+  });
 }
 
 async function handleSetLogoModal(interaction) {
