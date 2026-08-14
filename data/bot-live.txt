@@ -164,3 +164,8 @@
 [2026-08-14T11:29:13.365Z] 🟠 رابط اللوقو مكسور، جاري إعادة رفعه من الملف الطبيعي...
 [2026-08-14T11:29:15.389Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
 [2026-08-14T11:29:15.954Z] ✅ تم تسجيل 38 أوامر عامة في 2 سيرفر
+[2026-08-14T13:24:25.549Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-08-14T13:24:25.620Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-08-14T13:24:26.318Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.35570463335356794; waiting 14672ms
