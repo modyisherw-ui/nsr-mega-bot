@@ -306,9 +306,13 @@ function getAllCommandsList() {
   return list;
 }
 
-function commandsEmbed2(client, guild) {
+function commandsEmbed2(client, guild, page) {
   const cfg = guildCfg.get(guild.id).commands || {};
-  const lines = getAllCommandsList().map(c => {
+  const all = getAllCommandsList();
+  const p = page ?? 0;
+  const chunk = all.slice(p * CMD_PAGE_SIZE, (p + 1) * CMD_PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(all.length / CMD_PAGE_SIZE));
+  const lines = chunk.map(c => {
     const acc = cfg[c.name] || 'any';
     return `**/${c.name}** — ${c.desc}\n> ${ACCESS_LABELS[acc]}`;
   });
@@ -318,15 +322,18 @@ function commandsEmbed2(client, guild) {
     .setDescription([
       'هذه قائمة أوامر البوت. اختر أمراً من القائمة بالأسفل لتغيير من يستطيع استخدامه.',
       '',
-      '**الأوامر والصلاحيات الحالية:**',
+      `**الأوامر (صفحة ${p + 1}/${totalPages}):**`,
       '',
-      lines.join('\n'),
+      lines.length ? lines.join('\n') : '_لا توجد أوامر._',
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: `صفحة ${p + 1}/${totalPages} • لوحة التحكم • NSR BOT` })
     .setTimestamp();
 }
 
 const pendingCmd = new Map(); // userId -> command name
+const pendingCmdPage = new Map(); // userId -> page number
+
+const CMD_PAGE_SIZE = 24;
 
 function commandsRows(guild, state) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
@@ -359,17 +366,35 @@ function commandsRows(guild, state) {
     ];
   }
 
+  const page = state?.page ?? 0;
+  const totalPages = Math.max(1, Math.ceil(cmds.length / CMD_PAGE_SIZE));
+  const chunk = cmds.slice(page * CMD_PAGE_SIZE, (page + 1) * CMD_PAGE_SIZE);
   const cmdSel = new StringSelectMenuBuilder()
     .setCustomId('bd_cmd_pick')
-    .setPlaceholder('اختر أمراً لتغيير صلاحيته...')
-    .addOptions(cmds.map(c => new StringSelectMenuOptionBuilder()
+    .setPlaceholder(`اختر أمراً... (صفحة ${page + 1}/${totalPages})`)
+    .addOptions(chunk.map(c => new StringSelectMenuOptionBuilder()
       .setLabel(`/${c.name}`)
       .setDescription(c.desc.slice(0, 50))
       .setValue(c.name)));
+  const rowBtns = [backBtn];
+  if (totalPages > 1) {
+    rowBtns.unshift(
+      new ButtonBuilder().setCustomId('bd_cmd_prev').setLabel('◀ السابق').setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+      new ButtonBuilder().setCustomId('bd_cmd_next').setLabel('التالي ▶').setStyle(ButtonStyle.Secondary).setDisabled(page >= totalPages - 1),
+    );
+  }
   return [
     new ActionRowBuilder().addComponents(cmdSel),
-    new ActionRowBuilder().addComponents(backBtn),
+    new ActionRowBuilder().addComponents(...rowBtns),
   ];
+}
+
+async function handleCmdPage(interaction, dir) {
+  const cur = pendingCmdPage.get(interaction.user.id) || 0;
+  const totalPages = Math.max(1, Math.ceil(getAllCommandsList().length / CMD_PAGE_SIZE));
+  const next = dir === 'next' ? Math.min(totalPages - 1, cur + 1) : Math.max(0, cur - 1);
+  pendingCmdPage.set(interaction.user.id, next);
+  await interaction.update({ embeds: [commandsEmbed2(interaction.client, interaction.guild, next)], components: commandsRows(interaction.guild, { page: next }) });
 }
 
 async function handleCmdPick(interaction) {
@@ -695,7 +720,7 @@ async function handleDashboard(interaction, client) {
     if (pageId === 'ratings') embed = ratingsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'staff') embed = staffEmbed(interaction.client, interaction.guild);
     else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
-    else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild);
+    else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild, pendingCmdPage.get(interaction.user.id) || 0);
     else embed = pageEmbed(interaction, pageId);
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
@@ -707,6 +732,7 @@ async function handleDashboard(interaction, client) {
   if (id === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
   if (id === 'bd_cmd_pick') return handleCmdPick(interaction);
   if (id === 'bd_cmd_perm') return handleCmdPerm(interaction);
+  if (id === 'bd_cmd_next' || id === 'bd_cmd_prev') return handleCmdPage(interaction, id === 'bd_cmd_next' ? 'next' : 'prev');
 }
 
 async function sendTicketPanel(interaction) {
@@ -747,4 +773,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
