@@ -721,9 +721,64 @@ function mainRows() {
     rows.push(row);
   }
   rows.push(new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت (رفع ملف)').setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId('bd_botinfo').setLabel('🖌️ تغيير معلومات البوت').setStyle(ButtonStyle.Success)
   ));
   return rows;
+}
+
+function botInfoEmbed(client, guild) {
+  const g = guildCfg.get(guild.id);
+  const color = g.embedColor;
+  return new EmbedBuilder()
+    .setColor(color || 0x5865F2)
+    .setTitle('🖌️ تغيير معلومات البوت')
+    .setDescription([
+      'عدّل صورة البوت ولونه — التغييرات تطبق على **هذا السيرفر فقط**.',
+      '',
+      `> **صورة البوت:** ${g.logoUrl ? 'محددة ✔' : 'الافتراضية'}`,
+      `> **لون البوت:** ${color ? `\`#${color.toString(16).padStart(6, '0').toUpperCase()}\`` : 'الأزرق الافتراضي'}`,
+      '',
+      'اختر الخيار بالأسفل.'
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function botInfoRows() {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_set_logo').setLabel('🖼️ تغيير صورة البوت').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('bd_set_color').setLabel('🎨 تغيير لون البوت').setStyle(ButtonStyle.Primary),
+    ),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
+    ),
+  ];
+}
+
+async function handleSetColor(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const modal = new ModalBuilder().setCustomId('bd_set_color_modal').setTitle('🎨 تغيير لون البوت');
+  const input = new TextInputBuilder()
+    .setCustomId('embed_color')
+    .setLabel('اللون (Hex مثل #5865F2)')
+    .setPlaceholder('#5865F2')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(7);
+  modal.addComponents(new ActionRowBuilder().addComponents(input));
+  await interaction.showModal(modal);
+}
+
+async function handleSetColorModal(interaction) {
+  const val = interaction.fields.getTextInputValue('embed_color').trim().replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{6}$/.test(val)) {
+    await interaction.reply({ content: '❌ اللون غير صحيح، أدخل قيمة Hex من 6 خانات مثل `#FF0000`.', ephemeral: true });
+    return;
+  }
+  const color = parseInt(val, 16);
+  guildCfg.set(interaction.guild.id, { embedColor: color });
+  await interaction.reply({ content: `✅ تم تغيير لون البوت إلى **#${val.toUpperCase()}** في هذا السيرفر فقط.\nسيظهر من أول رسالة جديدة بعد الآن.`, ephemeral: true });
 }
 
 async function handleSetLogo(interaction) {
@@ -830,6 +885,11 @@ async function handleDashboard(interaction, client) {
   if (id === PROD_CANCEL) return handleProdCancel(interaction);
 
   if (id === 'bd_set_logo') return handleSetLogo(interaction);
+  if (id === 'bd_botinfo') {
+    await interaction.update({ embeds: [botInfoEmbed(client, interaction.guild)], components: botInfoRows() });
+    return;
+  }
+  if (id === 'bd_set_color') return handleSetColor(interaction);
 
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
@@ -896,4 +956,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.reply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };

@@ -116,8 +116,33 @@ function stripTitleEmoji(title) {
   return cleaned ? cleaned : title;
 }
 
+// لون السيرفر المخصص (مع اللوقو) — قراءة واحدة من إعدادات السيرفر
+function getGuildBrand(guildId) {
+  if (!guildId) return { logoUrl: config.logoUrl || '', embedColor: 0 };
+  try {
+    const g = require('../guildCfg').get(guildId);
+    return {
+      logoUrl: g.logoUrl || config.logoUrl || '',
+      embedColor: typeof g.embedColor === 'number' && g.embedColor ? g.embedColor : 0,
+    };
+  } catch (err) {
+    log.warn('فشل قراءة إعدادات السيرفر: ' + err.message);
+    return { logoUrl: config.logoUrl || '', embedColor: 0 };
+  }
+}
+
 function applyLogo(embed, guildId) {
   if (!embed) return false;
+  const brand = getGuildBrand(guildId);
+  // تغيير اللون الأزرق الافتراضي إلى لون السيرفر المخصص (كل الإمبدات الزرقاء تتغير)
+  if (brand.embedColor) {
+    const cur = embed.data ? embed.data.color : embed.color;
+    const curNum = (typeof cur === 'number') ? cur : null;
+    if (curNum === null || curNum === 0x5865F2 || cur === 'Blurple' || cur === 'Default') {
+      if (typeof embed.setColor === 'function') embed.setColor(brand.embedColor);
+      else embed.color = brand.embedColor;
+    }
+  }
   if (typeof embed.setTitle === 'function' && typeof embed.data.title === 'string') {
     const t = stripTitleEmoji(embed.data.title);
     if (t !== embed.data.title) embed.setTitle(t);
@@ -127,7 +152,7 @@ function applyLogo(embed, guildId) {
   }
   const hasThumb = embed.data ? embed.data.thumbnail : embed.thumbnail;
   if (hasThumb) return false;
-  const url = getLogoUrl(guildId);
+  const url = brand.logoUrl;
   const finalUrl = url || (HAS_LOGO ? LOGO_ATTACH : '');
   if (!finalUrl) return false;
   if (typeof embed.setThumbnail === 'function') embed.setThumbnail(finalUrl);
@@ -138,8 +163,9 @@ function applyLogo(embed, guildId) {
 function withLogo(payload, guildId) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
   if (!Array.isArray(payload.embeds) || payload.embeds.length === 0) return payload;
+  const g = getGuildBrand(guildId);
   const added = payload.embeds.some((e) => applyLogo(e, guildId));
-  if (getLogoUrl(guildId) || !HAS_LOGO || !added) return payload;
+  if (g.logoUrl || !HAS_LOGO || !added) return payload;
   const files = Array.isArray(payload.files) ? [...payload.files] : [];
   if (!files.some((f) => f && f.name === LOGO_NAME)) {
     files.push({ attachment: LOGO_PATH, name: LOGO_NAME });
@@ -148,4 +174,4 @@ function withLogo(payload, guildId) {
   return payload;
 }
 
-module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, getLogoUrl, hasLogo: HAS_LOGO };
+module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, getLogoUrl, getGuildBrand, hasLogo: HAS_LOGO };

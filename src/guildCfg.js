@@ -12,6 +12,7 @@ const DEFAULTS = {
   suggestions: { channelId: '' },
   commands: {},
   logoUrl: '',
+  embedColor: '',
   rating: { reviewsChannelId: '', products: [] },
   ticket: {
     categoryId: '',
@@ -58,17 +59,26 @@ function seedLegacy(guildId) {
   });
 }
 
+// ذاكرة مؤقتة لإعدادات السيرفرات — نتجنب قراءة قاعدة البيانات مع كل إمبد (مهم مع آلاف السيرفرات)
+const cfgCache = new Map();
+
 function get(guildId) {
   if (!guildId) return deepMerge(DEFAULTS, {});
+  const cached = cfgCache.get(guildId);
+  if (cached) return cached;
   seedLegacy(guildId);
   const stored = db.guildSettings.get(guildId) || {};
-  return deepMerge(DEFAULTS, stored);
+  const merged = deepMerge(DEFAULTS, stored);
+  cfgCache.set(guildId, merged);
+  return merged;
 }
 
 function set(guildId, patch) {
   if (!guildId || !patch) return;
   const cur = db.guildSettings.get(guildId) || {};
-  db.guildSettings.set(guildId, deepMerge(cur, patch));
+  const merged = deepMerge(cur, patch);
+  db.guildSettings.set(guildId, merged);
+  cfgCache.set(guildId, deepMerge(DEFAULTS, merged));
 }
 
 module.exports = { get, set, DEFAULTS };
