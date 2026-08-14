@@ -243,3 +243,11 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
 components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
 components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:39:09.745Z] خطأ في التفاعل: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:39:39.026Z] 💥 error: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
