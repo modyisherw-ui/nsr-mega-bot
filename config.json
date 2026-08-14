@@ -1,208 +1,206 @@
 {
-    "mainServerId":  "1409929493291991192",
-    "logServerId":  "1409929493291991192",
-    "owners":  [
-                   "1479172363768828086"
-               ],
-    "adminRoles":  [
-                       "1409931979692048394"
-                   ],
-    "autoRoles":  {
-                      "memberRoleId":  "1409932044607295529",
-                      "botRoleId":  null
-                  },
-    "gamesChannelId":  "",
-    "gamesPrefix":  "-",
-    "jailPrefix":  "$",
-    "logChannels":  {
-                        "memberJoin":  "",
-                        "memberLeave":  "",
-                        "deleteMessage":  "1409932456206799040",
-                        "editMessage":  "",
-                        "reactionAdd":  "",
-                        "reactionRemove":  "",
-                        "mediaMessage":  "",
-                        "voiceJoin":  "1409932438012170270",
-                        "voiceLeave":  "1409932438012170270",
-                        "voiceMove":  "",
-                        "voiceStateChange":  "",
-                        "timeoutAdd":  "",
-                        "timeoutRemove":  "",
-                        "roleAdd":  "",
-                        "roleRemove":  "",
-                        "roleCreate":  "",
-                        "roleDelete":  "",
-                        "roleUpdate":  "",
-                        "channelCreate":  "",
-                        "channelDelete":  "",
-                        "channelUpdate":  "",
-                        "banAdd":  "",
-                        "banRemove":  "",
-                        "kickAdd":  "",
-                        "protectedRoleViolation":  ""
-                    },
-    "protectedRoles":  [
-                           "1490204310980661470",
-                           "1490074333996122214"
-                       ],
-    "protectionBypassRoles":  [
-                                  "1490067785349333142"
-                              ],
-    "protectionAction":  "kick",
-    "security":  {
-                     "antiSpam":  {
-                                      "enabled":  true,
-                                      "maxMessages":  10,
-                                      "timeWindow":  5000,
-                                      "punishment":  "timeout",
-                                      "timeoutDuration":  600000,
-                                      "warningThreshold":  3,
-                                      "kickAfterWarnings":  5,
-                                      "banAfterWarnings":  7,
-                                      "deleteMessages":  true,
-                                      "immuneRoles":  [
-                                                          "1498348980411826226"
-                                                      ],
-                                      "immuneChannels":  [
-
-                                                         ]
-                                  },
-                     "antiRaid":  {
-                                      "enabled":  true,
-                                      "joinThreshold":  10,
-                                      "timeWindow":  10000,
-                                      "punishment":  "kick",
-                                      "lockdown":  true,
-                                      "lockdownDuration":  300000,
-                                      "accountAgeCheck":  true,
-                                      "minAccountAge":  604800000
-                                  },
-                     "antiNuke":  {
-                                      "enabled":  true,
-                                      "maxChannelDelete":  3,
-                                      "maxChannelCreate":  5,
-                                      "maxRoleDelete":  3,
-                                      "maxRoleCreate":  5,
-                                      "maxBans":  3,
-                                      "maxKicks":  5,
-                                      "timeWindow":  10000,
-                                      "punishment":  "ban",
-                                      "removePermissions":  true
-                                  },
-                     "antiBot":  {
-                                     "enabled":  true,
-                                     "autoKick":  true,
-                                     "requireApproval":  true,
-                                     "maxBots":  20,
-                                     "allowedBots":  [
-                                                         "1499736252046381156"
-                                                     ],
-                                     "dangerousPermissions":  [
-                                                                  "ADMINISTRATOR",
-                                                                  "KICK_MEMBERS",
-                                                                  "BAN_MEMBERS",
-                                                                  "MANAGE_CHANNELS",
-                                                                  "MANAGE_GUILD",
-                                                                  "MANAGE_ROLES"
-                                                              ]
-                                 }
-                 },
-    "jail":  {
-                 "jailRoleId":  "",
-                 "jailRoomId":  "",
-                 "jailLogId":  ""
-             },
-    "ticket":  {
-                   "maxPerUser":  2,
-                   "autoCloseHours":  24,
-                   "saveTranscript":  true,
-                   "pingSupport":  true,
-                   "nameFormat":  "ticket-{type}-{number}",
-                   "ticketTypes":  [
-                                       {
-                                           "id":  "purchase",
-                                           "label":  "Purchase",
-                                           "emoji":  "ðŸ›’",
-                                           "description":  "Inquire about buying a product or service",
-                                           "color":  5743424,
-                                           "questions":  [
-                                                             {
-                                                                 "id":  "product",
-                                                                 "label":  "Product / Service",
-                                                                 "placeholder":  "Enter the product or service name...",
-                                                                 "required":  true
-                                                             }
-                                                         ]
-                                       },
-                                       {
-                                           "id":  "inquiry",
-                                           "label":  "Inquiry",
-                                           "emoji":  "ðŸ’¬",
-                                           "description":  "General question or inquiry",
-                                           "color":  5793266,
-                                           "questions":  [
-                                                             {
-                                                                 "id":  "subject",
-                                                                 "label":  "Subject",
-                                                                 "placeholder":  "What would you like to ask about?",
-                                                                 "required":  true
-                                                             }
-                                                         ]
-                                       },
-                                       {
-                                           "id":  "problem",
-                                           "label":  "Problem",
-                                           "emoji":  "ðŸ”§",
-                                           "description":  "Report a bug or issue",
-                                           "color":  15548997,
-                                           "questions":  [
-                                                             {
-                                                                 "id":  "issue",
-                                                                 "label":  "Problem Description",
-                                                                 "placeholder":  "Describe the problem in detail...",
-                                                                 "required":  true
-                                                             }
-                                                         ]
-                                       }
-                                   ],
-                   "panel":  {
-                                 "title":  "ðŸŽ« Support Tickets",
-                                 "description":  "Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.",
-                                 "color":  5793266,
-                                 "footer":  "NSR BOT â€¢ Support System"
-                             }
-               },
-    "vacation":  {
-                     "controlChannelId":  "",
-                     "logChannelId":  "",
-                     "vacationRoleId":  "",
-                     "extraRoleName":  "Ù…ÙˆØ¸Ù Ø¨Ø¥Ø¬Ø§Ø²Ø©",
-                     "serverName":  "MAX"
-                 },
-    "suggestions":  {
-                        "targetUserId":  "1289311338727870476",
-                        "channelId":  ""
-                    },
-    "streak":  {
-                   "reactionEmoji":  "ðŸ”¥",
-                   "deleteOriginal":  true,
-                   "cardEnabled":  true,
-                   "cardBgColor":  "#020205",
-                   "cardAccent":  "#00F2FF"
-               },
-    "lines":  {
-                  "enabled":  false
-              },
-    "footerText":  "NSR BOT â€¢ Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…",
-    "logoUrl":  "",
-    "rating":  {
-                   "reviewsChannelId":  "1409932333519470694",
-                   "products":  [
-                                    {
-                                        "id":  "p_msrsehxg",
-                                        "name":  "Onesync",
-                                        "roleId":  "1409932029247619093"
-                                    }
-                                ]
-               }
+  "mainServerId": "1409929493291991192",
+  "logServerId": "1409929493291991192",
+  "owners": [
+    "1479172363768828086"
+  ],
+  "adminRoles": [
+    "1409931979692048394"
+  ],
+  "autoRoles": {
+    "memberRoleId": "1409932044607295529",
+    "botRoleId": null
+  },
+  "gamesChannelId": "",
+  "gamesPrefix": "-",
+  "jailPrefix": "$",
+  "logChannels": {
+    "memberJoin": "",
+    "memberLeave": "",
+    "deleteMessage": "1409932456206799040",
+    "editMessage": "",
+    "reactionAdd": "",
+    "reactionRemove": "",
+    "mediaMessage": "",
+    "voiceJoin": "1409932438012170270",
+    "voiceLeave": "1409932438012170270",
+    "voiceMove": "",
+    "voiceStateChange": "",
+    "timeoutAdd": "",
+    "timeoutRemove": "",
+    "roleAdd": "",
+    "roleRemove": "",
+    "roleCreate": "",
+    "roleDelete": "",
+    "roleUpdate": "",
+    "channelCreate": "",
+    "channelDelete": "",
+    "channelUpdate": "",
+    "banAdd": "",
+    "banRemove": "",
+    "kickAdd": "",
+    "protectedRoleViolation": ""
+  },
+  "protectedRoles": [
+    "1490204310980661470",
+    "1490074333996122214"
+  ],
+  "protectionBypassRoles": [
+    "1490067785349333142"
+  ],
+  "protectionAction": "kick",
+  "security": {
+    "antiSpam": {
+      "enabled": true,
+      "maxMessages": 10,
+      "timeWindow": 5000,
+      "punishment": "timeout",
+      "timeoutDuration": 600000,
+      "warningThreshold": 3,
+      "kickAfterWarnings": 5,
+      "banAfterWarnings": 7,
+      "deleteMessages": true,
+      "immuneRoles": [
+        "1498348980411826226"
+      ],
+      "immuneChannels": []
+    },
+    "antiRaid": {
+      "enabled": true,
+      "joinThreshold": 10,
+      "timeWindow": 10000,
+      "punishment": "kick",
+      "lockdown": true,
+      "lockdownDuration": 300000,
+      "accountAgeCheck": true,
+      "minAccountAge": 604800000
+    },
+    "antiNuke": {
+      "enabled": true,
+      "maxChannelDelete": 3,
+      "maxChannelCreate": 5,
+      "maxRoleDelete": 3,
+      "maxRoleCreate": 5,
+      "maxBans": 3,
+      "maxKicks": 5,
+      "timeWindow": 10000,
+      "punishment": "ban",
+      "removePermissions": true
+    },
+    "antiBot": {
+      "enabled": true,
+      "autoKick": true,
+      "requireApproval": true,
+      "maxBots": 20,
+      "allowedBots": [
+        "1499736252046381156"
+      ],
+      "dangerousPermissions": [
+        "ADMINISTRATOR",
+        "KICK_MEMBERS",
+        "BAN_MEMBERS",
+        "MANAGE_CHANNELS",
+        "MANAGE_GUILD",
+        "MANAGE_ROLES"
+      ]
+    }
+  },
+  "jail": {
+    "jailRoleId": "",
+    "jailRoomId": "",
+    "jailLogId": ""
+  },
+  "ticket": {
+    "maxPerUser": 2,
+    "autoCloseHours": 24,
+    "saveTranscript": true,
+    "pingSupport": true,
+    "nameFormat": "ticket-{type}-{number}",
+    "ticketTypes": [
+      {
+        "id": "purchase",
+        "label": "Purchase",
+        "emoji": "ðŸ›’",
+        "description": "Inquire about buying a product or service",
+        "color": 5743424,
+        "questions": [
+          {
+            "id": "product",
+            "label": "Product / Service",
+            "placeholder": "Enter the product or service name...",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "inquiry",
+        "label": "Inquiry",
+        "emoji": "ðŸ’¬",
+        "description": "General question or inquiry",
+        "color": 5793266,
+        "questions": [
+          {
+            "id": "subject",
+            "label": "Subject",
+            "placeholder": "What would you like to ask about?",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "problem",
+        "label": "Problem",
+        "emoji": "ðŸ”§",
+        "description": "Report a bug or issue",
+        "color": 15548997,
+        "questions": [
+          {
+            "id": "issue",
+            "label": "Problem Description",
+            "placeholder": "Describe the problem in detail...",
+            "required": true
+          }
+        ]
+      }
+    ],
+    "panel": {
+      "title": "ðŸŽ« Support Tickets",
+      "description": "Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.",
+      "color": 5793266,
+      "footer": "NSR BOT â€¢ Support System"
+    }
+  },
+  "vacation": {
+    "controlChannelId": "",
+    "logChannelId": "",
+    "vacationRoleId": "",
+    "extraRoleName": "Ù…ÙˆØ¸Ù Ø¨Ø¥Ø¬Ø§Ø²Ø©",
+    "serverName": "MAX"
+  },
+  "suggestions": {
+    "targetUserId": "1289311338727870476",
+    "channelId": ""
+  },
+  "streak": {
+    "reactionEmoji": "ðŸ”¥",
+    "deleteOriginal": true,
+    "cardEnabled": true,
+    "cardBgColor": "#020205",
+    "cardAccent": "#00F2FF"
+  },
+  "lines": {
+    "enabled": false
+  },
+  "footerText": "NSR BOT â€¢ Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…",
+  "logoUrl": "https://cdn.discordapp.com/emojis/1537843770911891466.png?size=256",
+  "rating": {
+    "reviewsChannelId": "1409932333519470694",
+    "products": [
+      {
+        "id": "p_msrsehxg",
+        "name": "Onesync",
+        "roleId": "1409932029247619093"
+      }
+    ]
+  }
 }
