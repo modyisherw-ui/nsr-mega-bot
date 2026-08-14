@@ -743,16 +743,25 @@ async function handleSetLogo(interaction) {
         return;
       }
       const { setLogoUrl, uploadLogoFromUrl } = require('./utils/logo');
-      let finalUrl = attach.url;
-      try {
-        finalUrl = await uploadLogoFromUrl(interaction.client, attach.url);
-      } catch (_) {}
+      // لا نمسح رسالة الصورة إلا بعد نجاح الرفع على CDN — رابط CDN دائم ولا يتأثر بالحذف
+      const finalUrl = await uploadLogoFromUrl(interaction.client, attach.url);
       setLogoUrl(finalUrl);
-      await interaction.followUp({ content: '✅ تم تحديث صورة البوت بنجاح، وستظهر في كل الرسائل.', ephemeral: true });
       m.delete().catch(() => {});
+      // إعادة عرض لوحة التحكم فوراً بالصورة الجديدة
+      try {
+        await interaction.message.edit({
+          embeds: [mainEmbed(interaction.client, interaction.guild)],
+          components: mainRows(),
+        });
+      } catch (_) {}
+      await interaction.followUp({ content: '✅ تم تحديث صورة البوت بنجاح، وستظهر في كل الرسائل.', ephemeral: true });
     } catch (err) {
       log.warn('فشل تحديث اللوقو من ملف: ' + err.message);
-      await interaction.followUp({ content: '❌ تعذر تحديث الصورة، تأكد من صيغة الملف.', ephemeral: true });
+      // فشل الرفع → لا نغيّر الصورة ولا نمسح رسالة المرفق حتى يبقى القديم ظاهراً
+      await interaction.followUp({
+        content: '❌ تعذر رفع الصورة على ديسكورد، حاول مرة أخرى أو استخدم صيغة png/jpg.',
+        ephemeral: true,
+      });
     }
   });
   collector.on('end', async (collected) => {
