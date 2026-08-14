@@ -4,7 +4,19 @@ const log = require('../utils/logger');
 
 let clientRef = null;
 
+const SUGGEST_COOLDOWN_MS = 10 * 60 * 1000; // 10 دقائق
+const lastSuggestion = new Map(); // userId -> timestamp
+
 async function handleSuggestion(interaction) {
+  const last = lastSuggestion.get(interaction.user.id) || 0;
+  const remaining = SUGGEST_COOLDOWN_MS - (Date.now() - last);
+  if (remaining > 0) {
+    const mins = Math.ceil(remaining / 60000);
+    const secs = Math.ceil((remaining % 60000) / 1000);
+    const wait = mins > 0 ? `${mins} دقيقة و ${secs} ثانية` : `${secs} ثانية`;
+    await interaction.reply({ content: `⏳ عليك الانتظار **${wait}** قبل إرسال اقتراح جديد.`, ephemeral: true });
+    return;
+  }
   const modal = new ModalBuilder()
     .setCustomId('suggestion_modal')
     .setTitle('📬 شارك اقتراحك');
@@ -28,6 +40,7 @@ async function handleSuggestionModal(interaction) {
     await interaction.editReply({ content: '❌ لا يمكنك إرسال اقتراح فارغ.' });
     return;
   }
+  lastSuggestion.set(interaction.user.id, Date.now());
 
   const guildCfg = require('../guildCfg').get(interaction.guild.id);
   const channelId = guildCfg.suggestions?.channelId || '';
