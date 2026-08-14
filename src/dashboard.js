@@ -57,6 +57,18 @@ function saveLogChannels(guildId) {
     stored.logChannels = g.logChannels || {};
     db.guildSettings.set(guildId, stored);
     guildCfg.set(guildId, { logChannels: stored.logChannels });
+    // كتابة إلى config.json حتى تنجو الحذفات من إعادة تشغيل البوت
+    // (data/bot.db غير متتبع في git وتُفقد في كل checkout جديد بالعملية)
+    try {
+      const fs2 = require('fs');
+      const path2 = require('path');
+      const fp = path2.join(__dirname, '..', 'config.json');
+      const raw = JSON.parse(fs2.readFileSync(fp, 'utf8'));
+      raw.logChannels = stored.logChannels;
+      fs2.writeFileSync(fp, JSON.stringify(raw, null, 2));
+    } catch (err2) {
+      log.warn('فشل حفظ logChannels في config.json: ' + err2.message);
+    }
   } catch (err) {
     log.warn('فشل حفظ إعدادات اللوقات: ' + err.message);
   }
