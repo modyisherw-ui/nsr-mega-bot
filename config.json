@@ -119,7 +119,7 @@
       {
         "id": "purchase",
         "label": "Purchase",
-        "emoji": "ðŸ›’",
+        "emoji": "🛒",
         "description": "Inquire about buying a product or service",
         "color": 5743424,
         "questions": [
@@ -134,7 +134,7 @@
       {
         "id": "inquiry",
         "label": "Inquiry",
-        "emoji": "ðŸ’¬",
+        "emoji": "💬",
         "description": "General question or inquiry",
         "color": 5793266,
         "questions": [
@@ -149,7 +149,7 @@
       {
         "id": "problem",
         "label": "Problem",
-        "emoji": "ðŸ”§",
+        "emoji": "🚧",
         "description": "Report a bug or issue",
         "color": 15548997,
         "questions": [
@@ -163,7 +163,7 @@
       }
     ],
     "panel": {
-      "title": "ðŸŽ« Support Tickets",
+      "title": "🎫 Support Tickets",
       "description": "Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.",
       "color": 5793266,
       "footer": "NSR BOT â€¢ Support System"
@@ -173,7 +173,7 @@
     "controlChannelId": "",
     "logChannelId": "",
     "vacationRoleId": "",
-    "extraRoleName": "Ù…ÙˆØ¸Ù Ø¨Ø¥Ø¬Ø§Ø²Ø©",
+    "extraRoleName": "موظف بإجازة",
     "serverName": "MAX"
   },
   "suggestions": {
@@ -181,7 +181,7 @@
     "channelId": ""
   },
   "streak": {
-    "reactionEmoji": "ðŸ”¥",
+    "reactionEmoji": "🔥",
     "deleteOriginal": true,
     "cardEnabled": true,
     "cardBgColor": "#020205",
@@ -190,7 +190,7 @@
   "lines": {
     "enabled": false
   },
-  "footerText": "NSR BOT â€¢ Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…",
+  "footerText": "NSR BOT • لوحة التحكم",
   "logoUrl": "https://cdn.discordapp.com/emojis/1537843770911891466.png?size=256",
   "rating": {
     "reviewsChannelId": "1409932333519470694",

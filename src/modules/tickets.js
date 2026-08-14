@@ -13,7 +13,12 @@ function rebuildPanelComponents(tcfg) {
   const select = new StringSelectMenuBuilder()
     .setCustomId('ticket_type_select')
     .setPlaceholder('Select a ticket type...')
-    .addOptions(types.map(tp => new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id).setEmoji(tp.emoji)));
+    .addOptions(types.map(tp => {
+      const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
+      // إيموجي صالح فقط (نقطة Unicode واحدة في النطاق الإيموجي) — نتجنب خطأ COMPONENT_INVALID_EMOJI
+      if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
+      return opt;
+    }));
   return [new ActionRowBuilder().addComponents(select)];
 }
 

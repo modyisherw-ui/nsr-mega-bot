@@ -49,6 +49,12 @@ const LOG_EVENTS = [
 const pendingLogEvent = new Map(); // userId -> [eventIds]
 const pendingLogChannel = new Map(); // userId -> channelId
 
+// لون اللوحة يتبع لون السيرفر المخصص (embedColor) أو الأزرق الافتراضي
+function panelColor(guild) {
+  const c = guild && guild.id ? guildCfg.get(guild.id).embedColor : null;
+  return c || 0x5865F2;
+}
+
 function saveLogChannels(guildId) {
   try {
     const g = guildCfg.get(guildId);
@@ -89,7 +95,7 @@ function logsEmbed(client, guild) {
     ? used.map(x => `${x.ev.emoji} **${x.ev.name}** → <#${x.ch.id}>`).join('\n')
     : 'لا توجد أحداث مربوطة بعد.';
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('📋 إعداد رومات اللوقات')
     .setDescription([
       'اختر الحدث من القوائم بالأسفل، ثم اختر القناة التي تصل إليه.',
@@ -217,7 +223,7 @@ function staffEmbed(client, guild) {
     ? roles.map(id => (guild?.roles?.cache?.get(id) ? `<@&${id}>` : `<@&${id}>`)).join(' ')
     : '`لا توجد رتب إدارة محددة`';
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('👮 رتب الإدارة')
     .setDescription([
       'هذه الرتب تستطيع استخدام أوامر الإدارة مثل `/rate` و`/ticket panel` وغيرها.',
@@ -263,7 +269,7 @@ function suggestionsEmbed(client, guild) {
   const channelId = guildCfg.get(guild.id).suggestions?.channelId || '';
   const channel = channelId ? guild?.channels?.cache?.get(channelId) : null;
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('💡 نظام الاقتراحات')
     .setDescription([
       `**روم الاقتراحات:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`,
@@ -369,7 +375,7 @@ function commandsEmbed2(client, guild, page) {
     return `**/${c.name}** — ${c.desc}\n> ${ACCESS_LABELS[acc]}`;
   });
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('📜 قائمة الأوامر والصلاحيات')
     .setDescription([
       'هذه قائمة أوامر البوت. اختر أمراً من القائمة بالأسفل لتغيير من يستطيع استخدامه.',
@@ -474,7 +480,7 @@ function pageEmbed(interaction, pageId) {
   const parts = [p.desc];
   if (p.commands && p.commands.length) parts.push(`\n**الأوامر:**\n${p.commands.map(c => c).join('\n')}`);
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(interaction.guild))
     .setTitle(`${p.emoji} ${p.name}`)
     .setDescription(parts.join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
@@ -496,7 +502,7 @@ function autorolesEmbed(client, guild) {
   const memberRole = ar.memberRoleId ? guild?.roles?.cache?.get(ar.memberRoleId) : null;
   const botRole = ar.botRoleId ? guild?.roles?.cache?.get(ar.botRoleId) : null;
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('🤖 الرولات التلقائية')
     .setDescription([
       'اختر من القوائم بالأسفل، ويُحفظ فوراً.',
@@ -557,7 +563,7 @@ function ratingsEmbed(client, guild) {
       }).join('\n')
     : 'لا توجد منتجات بعد. اضغط **إضافة منتج** بالأسفل.';
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('🛍️ المنتجات والتقييمات')
     .setDescription([
       `**روم التقييمات:** ${room ? `<#${room.id}>` : '`غير محدد`'}`,
@@ -711,7 +717,7 @@ async function handleProdCancel(interaction) {
 
 function mainEmbed(client, guild) {
   return new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(guild))
     .setTitle('🎛️ لوحة التحكم الرئيسية')
     .setDescription([
       'اختر النظام الذي تريد الدخول إليه:',
@@ -938,7 +944,12 @@ async function sendTicketPanel(interaction) {
   const select = new StringSelectMenuBuilder()
     .setCustomId('ticket_type_select')
     .setPlaceholder('Select a ticket type...')
-    .addOptions(types.map(tp => new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id).setEmoji(tp.emoji)));
+    .addOptions(types.map(tp => {
+      const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
+      // إيموجي صالح فقط — نتجنب خطأ COMPONENT_INVALID_EMOJI من الإيموجيات التالفة في config.json
+      if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
+      return opt;
+    }));
   const embed = new EmbedBuilder()
     .setColor(tcfg.panel?.color || 0x5865F2)
     .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
@@ -950,7 +961,7 @@ async function sendTicketPanel(interaction) {
 
 async function sendSuggestionsPanel(interaction, opts) {
   const embed = new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(panelColor(interaction.guild))
     .setTitle('📬 Suggestion Box | صندوق الاقتراحات')
     .setDescription([
       '**English**',
