@@ -219,3 +219,27 @@
 [2026-08-14T17:22:40.104Z] 📡 متصل في 2 سيرفر
 [2026-08-14T17:22:40.140Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
 [2026-08-14T17:22:40.718Z] ✅ تم تسجيل 38 أوامر عامة في 2 سيرفر
+[2026-08-14T17:36:47.280Z] 💥 error: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:37:09.380Z] خطأ في التفاعل: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:37:17.533Z] 💥 error: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:37:57.740Z] خطأ في التفاعل: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:38:19.974Z] خطأ في التفاعل: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+[2026-08-14T17:38:41.713Z] 💥 error: Invalid Form Body
+components[0].components[0].options[0].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[1].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
+components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Invalid emoji
