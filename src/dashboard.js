@@ -52,7 +52,11 @@ const pendingLogChannel = new Map(); // userId -> channelId
 function saveLogChannels(guildId) {
   try {
     const g = guildCfg.get(guildId);
-    guildCfg.set(guildId, { logChannels: g.logChannels || {} });
+    // استبدال كامل بدل الدمج حتى تنجح عمليات الحذف (deepMerge لا يزيل مفاتيح موجودة)
+    const stored = db.guildSettings.get(guildId) || {};
+    stored.logChannels = g.logChannels || {};
+    db.guildSettings.set(guildId, stored);
+    guildCfg.set(guildId, { logChannels: stored.logChannels });
   } catch (err) {
     log.warn('فشل حفظ إعدادات اللوقات: ' + err.message);
   }
