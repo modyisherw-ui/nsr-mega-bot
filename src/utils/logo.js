@@ -27,10 +27,35 @@ async function ensureEmojiLogo(client, guild) {
   }
 }
 
+// مسح اللوقو العالمي المكسور من config.json وفي الذاكرة
+function clearGlobalLogo() {
+  try {
+    const fp = path.join(__dirname, '..', '..', 'config.json');
+    const raw = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    raw.logoUrl = '';
+    fs.writeFileSync(fp, JSON.stringify(raw, null, 2));
+  } catch (err) {
+    log.warn('فشل مسح اللوقو المكسور: ' + err.message);
+  }
+}
+
 // رفع اللوقو مرة واحدة إلى صورة ديسكورد دائمة (CDN) ثم حذف الرسالة
 async function ensureLogoUrl(client) {
   if (!HAS_LOGO) return;
-  if (config.logoUrl) return;
+  // التحقق أن الرابط المحفوظ ما زال شغالاً — لو مكسور نعيد رفعه من الملف الطبيعي
+  if (config.logoUrl) {
+    try {
+      const res = await fetch(config.logoUrl, { method: 'GET', signal: AbortSignal.timeout(8000) });
+      if (res.ok) return;
+      log.warn('🟠 رابط اللوقو مكسور، جاري إعادة رفعه من الملف الطبيعي...');
+      config.logoUrl = '';
+      clearGlobalLogo();
+    } catch (err) {
+      log.warn('🟠 تعذر التحقق من رابط اللوقو، جاري إعادة رفعه...');
+      config.logoUrl = '';
+      clearGlobalLogo();
+    }
+  }
   const guild = client.guilds.cache.first();
   if (!guild) return;
   try {
