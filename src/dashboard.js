@@ -939,24 +939,45 @@ async function handleDashboard(interaction, client) {
 async function sendTicketPanel(interaction) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
   const { tickets } = db;
-  const tcfg = guildCfg.get(interaction.guild.id).ticket || {};
-  const types = tcfg.ticketTypes || [];
-  const select = new StringSelectMenuBuilder()
-    .setCustomId('ticket_type_select')
-    .setPlaceholder('Select a ticket type...')
-    .addOptions(types.map(tp => {
-      const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
-      // إيموجي صالح فقط — نتجنب خطأ COMPONENT_INVALID_EMOJI من الإيموجيات التالفة في config.json
-      if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
-      return opt;
-    }));
-  const embed = new EmbedBuilder()
-    .setColor(tcfg.panel?.color || 0x5865F2)
-    .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
-    .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
-    .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
-  await interaction.channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
-  await interaction.reply({ content: '✅ تم إرسال لوحة التذاكر!', ephemeral: true });
+  // تفاعل الأزرار والأوامر يجب أن يُجاب خلال 3 ثوانٍ — نعترف فوراً ثم نرسل اللوحة
+  try {
+    await interaction.deferReply({ ephemeral: true });
+    const tcfg = guildCfg.get(interaction.guild.id).ticket || {};
+    const types = tcfg.ticketTypes || [];
+    if (!types.length) {
+      await interaction.editReply({ content: '❌ لا توجد أنواع تذاكر مضبوطة في هذا السيرفر. حدد الأنواع من إعدادات التذاكر أولاً.', ephemeral: true });
+      return;
+    }
+    const select = new StringSelectMenuBuilder()
+      .setCustomId('ticket_type_select')
+      .setPlaceholder('Select a ticket type...')
+      .addOptions(types.map(tp => {
+        const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
+        // إيموجي صالح فقط — نتجنب خطأ COMPONENT_INVALID_EMOJI من الإيموجيات التالفة في config.json
+        if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
+        return opt;
+      }));
+    const embed = new EmbedBuilder()
+      .setColor(tcfg.panel?.color || 0x5865F2)
+      .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
+      .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
+      .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
+    const target = interaction.channel;
+    if (!target || !target.send) {
+      await interaction.editReply({ content: '❌ لا يمكن الإرسال في هذا الروم — استخدم الأمر في روم نصي.', ephemeral: true });
+      return;
+    }
+    await target.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+    await interaction.editReply({ content: `✅ تم إرسال لوحة التذاكر إلى <#${target.id}>!`, ephemeral: true });
+  } catch (err) {
+    log.warn('فشل إرسال لوحة التذاكر: ' + err.message);
+    try {
+      await interaction.editReply({
+        content: `❌ تعذر إرسال لوحة التذاكر في هذا الروم.\nتأكد أن البوت يملك صلاحية **إرسال الرسائل** هنا وأن الروم نصي.\n\n\`${err.message}\``,
+        ephemeral: true,
+      });
+    } catch (_) {}
+  }
 }
 
 async function sendSuggestionsPanel(interaction, opts) {
@@ -977,9 +998,12 @@ async function sendSuggestionsPanel(interaction, opts) {
   );
   // لو مررنا روم محدد نرسل فيه، وإلا نرسل في الروم الحالي
   const target = opts?.targetChannel || interaction.channel;
+  if (!target || !target.send) throw new Error('الروم المستهدف غير صالح');
+  // المستدعي من الزر في اللوحة: نعترف أولاً حتى لا ينتهي تفاعل الزر (3 ثوانٍ)
+  if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: true });
   await target.send({ embeds: [embed], components: [row] });
   if (opts?.silent) return;
-  await interaction.reply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
+  await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
 module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };

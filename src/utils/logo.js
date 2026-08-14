@@ -104,7 +104,7 @@ async function uploadLogoFromUrl(client, url, guildId) {
   if (!channel) throw new Error('لا يوجد روم يمكن رفع الصورة فيه');
   const msg = await channel.send({ files: [{ attachment: buf, name: LOGO_NAME }] });
   const cdn = msg.attachments.first()?.url;
-  msg.delete().catch(() => {});
+  // ⚠️ لا نحذف الرسالة إطلاقاً: حذف الرسالة يبطل رابط المرفق على CDN ويجعل اللوقو يختفي
   if (!cdn) throw new Error('تعذر الحصول على رابط الصورة');
   return cdn;
 }

@@ -1,5 +1,10 @@
 const db = require('./db');
 const { config } = require('./config');
+const fs = require('fs');
+const path = require('path');
+const log = require('./utils/logger');
+
+const CFG_PATH = path.join(__dirname, '..', 'config.json');
 
 // إعدادات افتراضية لكل سيرفر جديد
 const DEFAULTS = {
@@ -44,6 +49,13 @@ function deepMerge(base, patch) {
 
 // ترحيل إعدادات السيرفر الأصلي (config.json) إلى قاعدة البيانات مرة واحدة
 function seedLegacy(guildId) {
+  // أي سيرفر: استرجاع إعداداته المحفوظة في config.json (نجت من إعادة التشغيل السابقة)
+  const saved = config.serverSettings && config.serverSettings[guildId];
+  if (saved && Object.keys(saved).length) {
+    const stored = db.guildSettings.get(guildId) || {};
+    db.guildSettings.set(guildId, deepMerge(saved, stored));
+    return;
+  }
   if (!config.mainServerId || String(guildId) !== String(config.mainServerId)) return;
   const stored = db.guildSettings.get(guildId);
   if (stored && Object.keys(stored).length) return;
@@ -57,6 +69,22 @@ function seedLegacy(guildId) {
     rating: config.rating ? { reviewsChannelId: config.rating.reviewsChannelId || '', products: config.rating.products || [] } : {},
     ticket: config.ticket || {},
   });
+}
+
+// كتابة إعدادات السيرفر في config.json (ملف متتبع في git) حتى تنجو من إعادة التشغيل
+// لأن data/bot.db gitignored ويُفقد في كل تشغيل جديد على GitHub Actions
+function persistToConfig(guildId, settings) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(CFG_PATH, 'utf8'));
+    if (!raw.serverSettings) raw.serverSettings = {};
+    const prev = raw.serverSettings[guildId] || {};
+    raw.serverSettings[guildId] = deepMerge(prev, settings);
+    fs.writeFileSync(CFG_PATH, JSON.stringify(raw, null, 2));
+    if (!config.serverSettings) config.serverSettings = {};
+    config.serverSettings[guildId] = raw.serverSettings[guildId];
+  } catch (err) {
+    log.warn('فشل حفظ إعدادات السيرفر في config.json: ' + err.message);
+  }
 }
 
 // ذاكرة مؤقتة لإعدادات السيرفرات — نتجنب قراءة قاعدة البيانات مع كل إمبد (مهم مع آلاف السيرفرات)
@@ -79,6 +107,7 @@ function set(guildId, patch) {
   const merged = deepMerge(cur, patch);
   db.guildSettings.set(guildId, merged);
   cfgCache.set(guildId, deepMerge(DEFAULTS, merged));
+  persistToConfig(guildId, merged);
 }
 
 module.exports = { get, set, DEFAULTS };

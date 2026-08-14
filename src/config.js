@@ -58,6 +58,7 @@ const config = {
   logChannelId: process.env.LOG_CHANNEL_ID || '',
   feedChannelId: process.env.FEED_CHANNEL_ID || '',
   reviewChannelId: process.env.REVIEW_CHANNEL_ID || '',
+  serverSettings: raw.serverSettings || {},
 };
 
 function isOwner(userId) {
