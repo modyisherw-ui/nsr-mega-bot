@@ -16,9 +16,9 @@ function findProduct(guildId, idOrName) {
     getProducts(guildId).find(p => p.name.toLowerCase() === String(idOrName).toLowerCase());
 }
 
-function saveRatingConfig(guildId) {
+function saveRatingConfig(guildId, rating) {
   try {
-    const cur = ratingCfg(guildId);
+    const cur = rating || ratingCfg(guildId);
     require('../guildCfg').set(guildId, { rating: { reviewsChannelId: cur.reviewsChannelId || '', products: cur.products || [] } });
   } catch (err) {
     log.warn('فشل حفظ إعدادات التقييمات: ' + err.message);

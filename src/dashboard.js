@@ -574,7 +574,7 @@ async function handleRatingChannelSelect(interaction) {
   const g = guildCfg.get(interaction.guild.id);
   if (!g.rating) g.rating = {};
   g.rating.reviewsChannelId = channelId;
-  saveRatingConfig(interaction.guild.id);
+  saveRatingConfig(interaction.guild.id, g.rating);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط روم التقييمات: <#${channelId}>`, ephemeral: true });
 }
@@ -605,7 +605,7 @@ async function handleProdModal(interaction) {
   const id = 'p_' + Date.now().toString(36);
   g.rating.products.push({ id, name, roleId: null });
   pendingProductRole.set(interaction.user.id, id);
-  saveRatingConfig(interaction.guild.id);
+  saveRatingConfig(interaction.guild.id, g.rating);
   await interaction.deferUpdate();
   await interaction.message.edit({
     embeds: [ratingsEmbed(interaction.client, interaction.guild)],
@@ -618,14 +618,17 @@ async function handleProdRoleSelect(interaction) {
   const roleId = interaction.values[0];
   if (!roleId) return;
   const productId = pendingProductRole.get(interaction.user.id);
-  const product = findProduct(interaction.guild.id, productId);
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.rating) g.rating = {};
+  if (!Array.isArray(g.rating.products)) g.rating.products = [];
+  const product = g.rating.products.find(p => p.id === productId);
   if (!product) {
     await interaction.reply({ content: '⚠️ المنتج غير موجود، جرّب مرة أخرى.', ephemeral: true });
     return;
   }
   product.roleId = roleId;
   pendingProductRole.delete(interaction.user.id);
-  saveRatingConfig(interaction.guild.id);
+  saveRatingConfig(interaction.guild.id, g.rating);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ربط رول <@&${roleId}> بمنتج **«${product.name}»**.`, ephemeral: true });
 }
@@ -641,10 +644,10 @@ async function handleProdDelete(interaction) {
 async function handleProdDeleteSelect(interaction) {
   const productId = interaction.values[0];
   if (!productId) return;
-  const product = findProduct(interaction.guild.id, productId);
   const g = guildCfg.get(interaction.guild.id);
+  const product = (g.rating?.products || []).find(p => p.id === productId);
   if (g.rating) g.rating.products = (g.rating.products || []).filter(p => p.id !== productId);
-  saveRatingConfig(interaction.guild.id);
+  saveRatingConfig(interaction.guild.id, g.rating);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
   await interaction.followUp({ content: `🗑️ تم حذف المنتج **«${product?.name || ''}»**.`, ephemeral: true });
 }
