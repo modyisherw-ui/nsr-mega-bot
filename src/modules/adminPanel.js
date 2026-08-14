@@ -68,7 +68,7 @@ async function showCmdList(interaction) {
     .setColor(0x5865F2)
     .setTitle('📜 الأوامر والصلاحيات')
     .setDescription(lines.join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' });
+    .setFooter({ text: 'NSR HUB - MoDy Dev' });
   await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
@@ -137,7 +137,7 @@ async function handleAdminButton(interaction) {
           '',
           '**رتب الإدارة الحالية:**',
           roles.length ? roles.map(id => `<@&${id}>`).join(' ') : '`لا توجد`',
-        ].join('\n')).setFooter({ text: 'لوحة التحكم • NSR BOT' }).setTimestamp()],
+        ].join('\n')).setFooter({ text: 'NSR HUB - MoDy Dev' }).setTimestamp()],
         components: [new ActionRowBuilder().addComponents(sel), new ActionRowBuilder().addComponents(backBtn)],
       });
       return;

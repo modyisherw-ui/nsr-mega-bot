@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 const db = require('../db');
 const log = require('../utils/logger');
 
@@ -6,6 +6,15 @@ let clientRef = null;
 
 function ticketConfig(guildId) {
   return require('../guildCfg').get(guildId).ticket || {};
+}
+
+function rebuildPanelComponents(tcfg) {
+  const types = tcfg.ticketTypes || [];
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('ticket_type_select')
+    .setPlaceholder('Select a ticket type...')
+    .addOptions(types.map(tp => new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id).setEmoji(tp.emoji)));
+  return [new ActionRowBuilder().addComponents(select)];
 }
 
 function ticketColor(typeId, guildId) {
@@ -24,6 +33,14 @@ async function handleTicketSelect(interaction) {
   if (existing.length > 0) {
     await interaction.reply({ content: `⚠️ لديك تذكرة مفتوحة بالفعل: <#${existing[0].channel_id}>\nأغلقها أولاً قبل فتح تذكرة جديدة.`, ephemeral: true });
     return;
+  }
+
+  // إعادة تعيين قائمة الاختيار باللوحة حتى يتمكن المستخدم من اختيار نفس النوع مرة أخرى
+  const panelMsg = interaction.message;
+  if (panelMsg) {
+    try {
+      await panelMsg.edit({ components: rebuildPanelComponents(tcfg) });
+    } catch {}
   }
 
   const number = db.tickets.nextNumber(interaction.guild.id);
@@ -92,7 +109,7 @@ async function handleTicketClaim(interaction) {
         .setColor(0x57F287)
         .setTitle('📥 Your ticket has been claimed!')
         .setDescription(`Your ticket **#${ticket.number}** has been claimed by the support team.\nتم استلام تذكرتك **رقم ${ticket.number}** من قبل فريق الدعم.\n\n<@${interaction.user.id}>`)
-        .setFooter({ text: 'NSR BOT' })
+        .setFooter({ text: 'NSR HUB - MoDy Dev' })
         .setTimestamp()],
     }).catch(() => {});
   }
@@ -119,7 +136,7 @@ async function handleTicketSummon(interaction) {
         .setColor(0xF1C40F)
         .setTitle('📣 Please reply to your ticket!')
         .setDescription(`Please reply to your ticket **#${ticket.number}**.\nالرجاء الرد على تذكرتك **رقم ${ticket.number}**.\n\n${link}`)
-        .setFooter({ text: 'NSR BOT' })
+        .setFooter({ text: 'NSR HUB - MoDy Dev' })
         .setTimestamp()],
     }).catch(() => {});
   }
@@ -171,7 +188,7 @@ async function handleTicketClose(interaction) {
         .setColor('Red')
         .setTitle('🔒 Your ticket has been closed')
         .setDescription(`Your ticket **#${record.number}** has been closed. If you need more help, feel free to open a new ticket!\nتم قفل تذكرتك **رقم ${record.number}**، إذا كنت بحاجة لأي مساعدة يمكنك فتح تذكرة جديدة.`)
-        .setFooter({ text: 'NSR BOT' })
+        .setFooter({ text: 'NSR HUB - MoDy Dev' })
         .setTimestamp()],
       files: transcript ? [{ attachment: Buffer.from(transcript), name: `ticket-${record.number}-transcript.txt` }] : undefined,
     }).catch(() => {});

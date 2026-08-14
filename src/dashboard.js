@@ -84,7 +84,7 @@ function logsEmbed(client, guild) {
       '**📌 الأحداث المستخدمة حالياً في الرومات:**',
       usedList,
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -210,7 +210,7 @@ function staffEmbed(client, guild) {
       `**رتب الإدارة الحالية:**`,
       list,
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -254,7 +254,7 @@ function suggestionsEmbed(client, guild) {
       '',
       'عندما يرسل أحدهم اقتراحاً سيصلك على الخاص **ومعه نسخة في الروم** المحدد بالأسفل.',
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -362,7 +362,7 @@ function commandsEmbed2(client, guild, page) {
       '',
       lines.length ? lines.join('\n') : '_لا توجد أوامر._',
     ].join('\n'))
-    .setFooter({ text: `صفحة ${p + 1}/${totalPages} • لوحة التحكم • NSR BOT` })
+    .setFooter({ text: `صفحة ${p + 1}/${totalPages} • NSR HUB - MoDy Dev` })
     .setTimestamp();
 }
 
@@ -461,7 +461,7 @@ function pageEmbed(interaction, pageId) {
     .setColor(0x5865F2)
     .setTitle(`${p.emoji} ${p.name}`)
     .setDescription(parts.join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -490,7 +490,7 @@ function autorolesEmbed(client, guild) {
       '',
       '> سيحصل أي عضو/بوت يدخل السيرفر على رتبته تلقائياً.',
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -549,7 +549,7 @@ function ratingsEmbed(client, guild) {
       '**المنتجات المسجلة:**',
       lines,
     ].join('\n'))
-    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -704,7 +704,7 @@ function mainEmbed(client, guild) {
       '',
       `> السيرفر: **${guild?.name || '-'}**`,
     ].join('\n'))
-    .setFooter({ text: 'اضغط على أي زر للدخول للنظام' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
@@ -789,7 +789,7 @@ async function sendTicketPanel(interaction) {
     .setColor(tcfg.panel?.color || 0x5865F2)
     .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
     .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
-    .setFooter({ text: tcfg.panel?.footer || 'NSR BOT' });
+    .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
   await interaction.channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
   await interaction.reply({ content: '✅ تم إرسال لوحة التذاكر!', ephemeral: true });
 }
@@ -805,7 +805,7 @@ async function sendSuggestionsPanel(interaction, opts) {
       '**العربية**',
       'هل لديك فكرة أو ملاحظات؟ اضغط على الزر وشاركها!',
     ].join('\n'))
-    .setFooter({ text: 'Your feedback matters 💙 | رأيك يهمنا 💙' })
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Primary)

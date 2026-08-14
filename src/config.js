@@ -51,7 +51,7 @@ const config = {
     reactionGameEnabled: raw.games?.reactionGameEnabled ?? true,
     quizEnabled: raw.games?.quizEnabled ?? true,
   },
-  footerText: raw.footerText || 'NSR BOT',
+  footerText: raw.footerText || 'NSR HUB - MoDy Dev',
   logoUrl: raw.logoUrl || '',
   activity: raw.activity || '',
   status: raw.status || 'online',
