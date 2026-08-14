@@ -87,7 +87,7 @@ async function handleSuggestionModal(interaction) {
     log.warn('فشل إرسال الاقتراح للمالك: ' + err.message);
   }
 
-  await interaction.editReply({ content: `✅ تم إرسال اقتراحك بنجاح إلى ${sentTo.join(' و ')}` });
+  await interaction.editReply({ content: '✅ تم إرسال اقتراحك إلى المالك.' });
 }
 
 module.exports = { handleSuggestion, handleSuggestionModal };

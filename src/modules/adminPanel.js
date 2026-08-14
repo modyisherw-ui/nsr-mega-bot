@@ -48,16 +48,39 @@ const ACTIONS = [
   ['giveaway', '🎁 جيفاواي', ButtonStyle.Success, PermissionFlagsBits.ManageMessages],
 ];
 
-function systemRows() {
-  const rows = [];
-  for (let i = 0; i < ACTIONS.length; i += 5) {
-    rows.push(new ActionRowBuilder().addComponents(
-      ACTIONS.slice(i, i + 5).map(([id, label]) =>
-        new ButtonBuilder().setCustomId(`admn_${id}`).setLabel(label).setStyle(ButtonStyle.Secondary)
-      )
-    ));
+async function showCmdList(interaction) {
+  const fs = require('fs');
+  const path = require('path');
+  const cfg = require('../guildCfg').get(interaction.guild.id).commands || {};
+  const labels = { any: '✓ عام', staff: '👮 رتب الإدارة', admin: '🔒 أدمن', off: '⛔ معطّل' };
+  const cmdDir = path.join(__dirname, '..', 'commands');
+  const files = fs.readdirSync(cmdDir).filter(f => f.endsWith('.js') && f !== 'index.js');
+  const lines = [];
+  for (const f of files) {
+    const mod = require(path.join(cmdDir, f));
+    if (!mod.commands) continue;
+    for (const c of mod.commands) {
+      const acc = cfg[c.data.name] || 'any';
+      lines.push(`/${c.data.name} — ${labels[acc] || acc}`);
+    }
   }
-  return rows;
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('📜 الأوامر والصلاحيات')
+    .setDescription(lines.join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' });
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+function systemRows() {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('admn_embed').setLabel('📋 إمبد').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('admn_cmdlist').setLabel('📜 الأوامر').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('admn_say').setLabel('📢 رسالة').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('admn_staff').setLabel('👮 رتبة الإدارة').setStyle(ButtonStyle.Primary),
+    ),
+  ];
 }
 
 // f = { id, label, ph, required(true), long(false), value }
@@ -93,6 +116,32 @@ async function handleAdminButton(interaction) {
   const U = (id, label, ph, required = true, value) => ({ id, label, ph, required, value });
 
   switch (action) {
+    case 'embed': return interaction.showModal(makeModal('embed', '📋 إرسال إمبد', [
+      U('f_title', 'العنوان', 'عنوان الإمبد'), { id: 'f_desc', label: 'الوصف', ph: 'وصف الإمبد', required: true, long: true }]));
+    case 'say': return interaction.showModal(makeModal('say', '📢 إرسال رسالة', [{ id: 'f_message', label: 'الرسالة', ph: 'النص', required: true, long: true }]));
+    case 'cmdlist': return showCmdList(interaction);
+    case 'staff': {
+      const { RoleSelectMenuBuilder } = require('discord.js');
+      const roles = require('../guildCfg').get(interaction.guild.id).staffRoles || [];
+      const sel = new RoleSelectMenuBuilder()
+        .setCustomId('bd_staff_roles')
+        .setPlaceholder(roles.length ? `✔ المحدد (${roles.length}): رتب إدارة` : '👮 اختر رتب الإدارة (يمكن أكثر من رتبة)...')
+        .setMinValues(0)
+        .setMaxValues(25);
+      if (roles.length) sel.setDefaultRoles(roles);
+      const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+      await interaction.update({
+        embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle('👮 رتب الإدارة').setDescription([
+          'هذه الرتب تستطيع استخدام أوامر الإدارة مثل `/rate`.',
+          'لوحة التحكم نفسها تبقى **للأدمن (Administrator) فقط**.',
+          '',
+          '**رتب الإدارة الحالية:**',
+          roles.length ? roles.map(id => `<@&${id}>`).join(' ') : '`لا توجد`',
+        ].join('\n')).setFooter({ text: 'لوحة التحكم • NSR BOT' }).setTimestamp()],
+        components: [new ActionRowBuilder().addComponents(sel), new ActionRowBuilder().addComponents(backBtn)],
+      });
+      return;
+    }
     case 'lock': return lockChannel(interaction, false);
     case 'unlock': return lockChannel(interaction, true);
     case 'rolespanel': return sendRolesPanel(interaction);

@@ -10,7 +10,7 @@ const PAGES = {
   autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
   ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
-  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
+  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — عرض قائمة الأوامر وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
   commands: { emoji: '📜', name: 'قائمة الأوامر', desc: 'عرض جميع الأوامر وصلاحياتها. يمكن تعديل الكود في GitHub إذا لزم الأمر.', commands: [] },
   broadcast: { emoji: '📢', name: 'نظام البرودكاست', desc: 'إرسال رسائل جماعية للأعضاء على الخاص مع شريط تقدم وتقرير.', commands: ['`/broadcast` — إرسال برودكاست', '`/bc_stats` — الإحصائيات', '`/reset_blocked` — مسح المحظورين'] },
@@ -258,19 +258,55 @@ function suggestionsEmbed(client, guild) {
     .setTimestamp();
 }
 
-function suggestionsRows(guild) {
+function suggestionsRows(guild, state) {
   const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
   const channelId = guildCfg.get(guild.id).suggestions?.channelId || '';
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+
+  // وضع اختيار الروم لإرسال اللوحة
+  if (state?.mode === 'panel') {
+    const chSel = new ChannelSelectMenuBuilder()
+      .setCustomId('bd_send_panel_channel')
+      .setPlaceholder('اختر الروم لإرسال لوحة الاقتراحات...')
+      .addChannelTypes(ChannelType.GuildText);
+    return [
+      new ActionRowBuilder().addComponents(chSel),
+      new ActionRowBuilder().addComponents(backBtn),
+    ];
+  }
+
   const chSel = new ChannelSelectMenuBuilder()
     .setCustomId('bd_suggestions_channel')
     .setPlaceholder(channelId && guild?.channels?.cache?.get(channelId) ? `روم الاقتراحات: #${guild.channels.cache.get(channelId).name}` : 'اختر روم الاقتراحات...')
     .addChannelTypes(ChannelType.GuildText);
   if (channelId && guild?.channels?.cache?.get(channelId)) chSel.setDefaultChannels([channelId]);
-  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  const sendBtn = new ButtonBuilder().setCustomId('bd_send_panel').setLabel('📨 إرسال لوحة الاقتراحات').setStyle(ButtonStyle.Success);
   return [
     new ActionRowBuilder().addComponents(chSel),
-    new ActionRowBuilder().addComponents(backBtn),
+    new ActionRowBuilder().addComponents(sendBtn, backBtn),
   ];
+}
+
+async function handleSendPanel(interaction) {
+  await interaction.update({ embeds: [suggestionsEmbed(interaction.client, interaction.guild)], components: suggestionsRows(interaction.guild, { mode: 'panel' }) });
+  await interaction.followUp({ content: '📨 اختر الروم من القائمة بالأسفل لإرسال لوحة الاقتراحات.', ephemeral: true });
+}
+
+async function handleSendPanelChannel(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  const ch = interaction.guild.channels.cache.get(channelId);
+  await interaction.update({ embeds: [suggestionsEmbed(interaction.client, interaction.guild)], components: suggestionsRows(interaction.guild) });
+  if (!ch) {
+    await interaction.followUp({ content: '❌ الروم غير موجود.', ephemeral: true });
+    return;
+  }
+  try {
+    await sendSuggestionsPanel({ interaction, targetChannel: ch }, { silent: true });
+    await interaction.followUp({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${ch.id}>`, ephemeral: true });
+  } catch (err) {
+    await interaction.followUp({ content: '❌ فشل الإرسال: ' + err.message, ephemeral: true });
+  }
 }
 
 async function handleSuggestionsChannelSelect(interaction) {
@@ -731,6 +767,8 @@ async function handleDashboard(interaction, client) {
 
   if (id === 'bd_send_ticket_panel') return sendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
+  if (id === 'bd_send_panel') return handleSendPanel(interaction);
+  if (id === 'bd_send_panel_channel') return handleSendPanelChannel(interaction);
   if (id === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
   if (id === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
   if (id === 'bd_cmd_pick') return handleCmdPick(interaction);
@@ -756,7 +794,7 @@ async function sendTicketPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة التذاكر!', ephemeral: true });
 }
 
-async function sendSuggestionsPanel(interaction) {
+async function sendSuggestionsPanel(interaction, opts) {
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('📬 Suggestion Box | صندوق الاقتراحات')
@@ -772,8 +810,11 @@ async function sendSuggestionsPanel(interaction) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Primary)
   );
-  await interaction.channel.send({ embeds: [embed], components: [row] });
-  await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
+  // لو مررنا روم محدد نرسل فيه، وإلا نرسل في الروم الحالي
+  const target = opts?.targetChannel || interaction.channel;
+  await target.send({ embeds: [embed], components: [row] });
+  if (opts?.silent) return;
+  await interaction.reply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };

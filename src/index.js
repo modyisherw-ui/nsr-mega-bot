@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -219,6 +219,7 @@ client.on('interactionCreate', async interaction => {
       if (interaction.customId === 'bd_logs_channel') return handleLogsChannelSelect(interaction);
       if (interaction.customId === 'bd_rating_channel') return handleRatingChannelSelect(interaction);
       if (interaction.customId === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
+      if (interaction.customId === 'bd_send_panel_channel') return handleSendPanelChannel(interaction);
       return;
     }
   } catch (err) {
