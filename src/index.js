@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -173,6 +173,7 @@ client.on('interactionCreate', async interaction => {
       const id = interaction.customId;
       if (id.startsWith('admn_')) return handleAdminButton(interaction);
       if (id === 'bd_logs_apply') return handleLogsApply(interaction);
+      if (id === 'bd_logs_delete') return handleLogsDelete(interaction);
       if (id.startsWith('bd_')) return handleDashboard(interaction, client);
       if (id.startsWith('rate_lang_')) return handleLangButton(interaction);
       if (id.startsWith('rate_star_')) return handleStarButton(interaction);

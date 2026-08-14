@@ -119,11 +119,12 @@ function logsRows(guild, state) {
     if (ch) chSel.setDefaultChannels([ch.id]);
   }
   const applyBtn = new ButtonBuilder().setCustomId('bd_logs_apply').setLabel('✅ تطبيق').setStyle(ButtonStyle.Success);
+  const delBtn = new ButtonBuilder().setCustomId('bd_logs_delete').setLabel('🗑️ حذف الحدث').setStyle(ButtonStyle.Danger);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   return [
     new ActionRowBuilder().addComponents(evtSel),
     new ActionRowBuilder().addComponents(chSel),
-    new ActionRowBuilder().addComponents(applyBtn, backBtn),
+    new ActionRowBuilder().addComponents(applyBtn, delBtn, backBtn),
   ];
 }
 
@@ -168,6 +169,29 @@ async function handleLogsApply(interaction) {
   saveLogChannels(interaction.guild.id);
   await interaction.update({ embeds: [logsEmbed(interaction.client, interaction.guild)], components: logsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط **${evs.length}** أحداث: ${evs.map(ev => ev.emoji).join(' ')} <#${channelId}>`, ephemeral: true });
+}
+
+async function handleLogsDelete(interaction) {
+  const eventIds = pendingLogEvent.get(interaction.user.id) || [];
+  const evs = eventIds.map(id => LOG_EVENTS.find(x => x.id === id)).filter(Boolean);
+  if (!evs.length) {
+    await interaction.reply({ content: '⚠️ اختر الأحداث أولاً من القائمة الأولى.', ephemeral: true });
+    return;
+  }
+  pendingLogEvent.delete(interaction.user.id);
+  pendingLogChannel.delete(interaction.user.id);
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.logChannels) g.logChannels = {};
+  const removedEvs = [];
+  for (const ev of evs) {
+    if (g.logChannels[ev.id]) {
+      delete g.logChannels[ev.id];
+      removedEvs.push(ev);
+    }
+  }
+  saveLogChannels(interaction.guild.id);
+  await interaction.update({ embeds: [logsEmbed(interaction.client, interaction.guild)], components: logsRows(interaction.guild) });
+  await interaction.followUp({ content: removedEvs.length > 0 ? `🗑️ تم حذف رومات اللوقات لـ **${removedEvs.length}** حدث: ${removedEvs.map(ev => ev.emoji).join(' ')}` : '✅ الأحداث المحددة لم يكن أي منها مربوطاً بروم.', ephemeral: true });
 }
 
 // ═══════════ رتب الإدارة (staffRoles) ═══════════
@@ -723,4 +747,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, sendTicketPanel, sendSuggestionsPanel };
