@@ -10,6 +10,7 @@ const DEFAULTS = {
   staffRoles: [],
   autoRoles: { memberRoleId: null, botRoleId: null },
   suggestions: { channelId: '' },
+  commands: {},
   rating: { reviewsChannelId: '', products: [] },
   ticket: {
     categoryId: '',

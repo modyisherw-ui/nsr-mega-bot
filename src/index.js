@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect } = require('./dashboard');
+const { handleDashboard, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -148,7 +148,24 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isCommand()) {
       const { loadCommands } = require('./commands');
       const cmd = loadCommands.get(interaction.commandName);
-      if (cmd) await cmd.execute(interaction);
+      if (!cmd) return;
+      // فحص صلاحية الأمر المخصصة من لوحة التحكم
+      const guildCfg = require('./guildCfg').get(interaction.guild.id);
+      const access = (guildCfg.commands || {})[interaction.commandName];
+      const { isAdmin, isOwner } = require('./config');
+      if (access === 'off') {
+        await interaction.reply({ content: '⛔ هذا الأمر معطّل حالياً من لوحة التحكم.', ephemeral: true });
+        return;
+      }
+      if (access === 'admin' && !isAdmin(interaction.member) && !isOwner(interaction.user.id)) {
+        await interaction.reply({ content: '❌ هذا الأمر لأدمن السيرفر فقط.', ephemeral: true });
+        return;
+      }
+      if (access === 'staff' && !isAdmin(interaction.member) && !isOwner(interaction.user.id)) {
+        await interaction.reply({ content: '❌ هذا الأمر لرتب الإدارة فقط.', ephemeral: true });
+        return;
+      }
+      await cmd.execute(interaction);
       return;
     }
 
@@ -185,6 +202,8 @@ client.on('interactionCreate', async interaction => {
       if (interaction.customId === 'ticket_type_select') return handleTicketSelect(interaction);
       if (interaction.customId === 'bd_logs_evt') return handleLogsSelect(interaction);
       if (interaction.customId === 'bd_prod_del_sel') return handleProdDeleteSelect(interaction);
+      if (interaction.customId === 'bd_cmd_pick') return handleCmdPick(interaction);
+      if (interaction.customId === 'bd_cmd_perm') return handleCmdPerm(interaction);
       return;
     }
 

@@ -12,7 +12,7 @@ const PAGES = {
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات المودريشن كلها بالأزرار:\n\n**⚙️ العقوبات** — طرد، باند، تحذير، فترة صمت، فك باند.\n**📁 القنوات والرتب** — إنشاء/حذف روم، إنشاء/حذف رتبة، إعطاء رتبة لعضو.\n**📝 الرسائل** — إرسال رسالة، إمبد، إعلان، استفتاء، مسح رسائل.\n**🛠️ أدوات** — قفل/فتح القناة، وضع بطيء، لوحة الرتب، جيفاواي.\n\nاضغط أي زر وسيطلب منك البيانات المطلوبة.', commands: [] },
   tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
-  staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'حدد رتبة أو أكثر (الأدمنز) الذين يستطيعون استخدام أوامر الإدارة مثل `/rate`. لوحة التحكم نفسها تبقى للأدمن (Administrator) فقط.', commands: ['اختر رتب الإدارة من القائمة بالأسفل — يمكن اختيار أكثر من رتبة'] },
+  commands: { emoji: '📜', name: 'قائمة الأوامر', desc: 'عرض جميع الأوامر وصلاحياتها. يمكن تعديل الكود في GitHub إذا لزم الأمر.', commands: [] },
   broadcast: { emoji: '📢', name: 'نظام البرودكاست', desc: 'إرسال رسائل جماعية للأعضاء على الخاص مع شريط تقدم وتقرير.', commands: ['`/broadcast` — إرسال برودكاست', '`/bc_stats` — الإحصائيات', '`/reset_blocked` — مسح المحظورين'] },
   security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية من السبام، الرايد، النسف، والبوتات الخطرة مع مراقبة مستمرة.', commands: ['الحماية تعمل تلقائياً', '`/security status` — الحالة', '`/scan` — فحص شامل'] },
 };
@@ -258,6 +258,114 @@ async function handleSuggestionsChannelSelect(interaction) {
   guildCfg.set(interaction.guild.id, { suggestions: { channelId } });
   await interaction.update({ embeds: [suggestionsEmbed(interaction.client, interaction.guild)], components: suggestionsRows(interaction.guild) });
   await interaction.followUp({ content: `✅ تم ضبط روم الاقتراحات: <#${channelId}>`, ephemeral: true });
+}
+
+// ═══════════ ضبط صلاحيات الأوامر ═══════════
+const ACCESS_LABELS = {
+  any: '✓ عام (الجميع)',
+  staff: '👮 رتب الإدارة فقط',
+  admin: '🔒 أدمن فقط',
+  off: '⛔ معطّل',
+};
+
+function getAllCommandsList() {
+  const fs = require('fs');
+  const path = require('path');
+  const cmdDir = path.join(__dirname, 'commands');
+  const files = fs.readdirSync(cmdDir).filter(f => f.endsWith('.js') && f !== 'index.js');
+  const list = [];
+  for (const f of files) {
+    const mod = require(path.join(cmdDir, f));
+    if (!mod.commands) continue;
+    for (const c of mod.commands) list.push({ name: c.data.name, desc: c.data.description || '' });
+  }
+  return list;
+}
+
+function commandsEmbed2(client, guild) {
+  const cfg = guildCfg.get(guild.id).commands || {};
+  const lines = getAllCommandsList().map(c => {
+    const acc = cfg[c.name] || 'any';
+    return `**/${c.name}** — ${c.desc}\n> ${ACCESS_LABELS[acc]}`;
+  });
+  return new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('📜 قائمة الأوامر والصلاحيات')
+    .setDescription([
+      'هذه قائمة أوامر البوت. اختر أمراً من القائمة بالأسفل لتغيير من يستطيع استخدامه.',
+      '',
+      '**الأوامر والصلاحيات الحالية:**',
+      '',
+      lines.join('\n'),
+    ].join('\n'))
+    .setFooter({ text: 'لوحة التحكم • NSR BOT' })
+    .setTimestamp();
+}
+
+const pendingCmd = new Map(); // userId -> command name
+
+function commandsRows(guild, state) {
+  const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+  const cfg = guildCfg.get(guild.id).commands || {};
+  const cmds = getAllCommandsList();
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+
+  if (state?.mode === 'perm') {
+    const target = state.command;
+    const cur = cfg[target] || 'any';
+    const permSel = new StringSelectMenuBuilder()
+      .setCustomId('bd_cmd_perm')
+      .setPlaceholder(`التحديد الحالي: ${ACCESS_LABELS[cur]}`)
+      .addOptions(
+        new StringSelectMenuOptionBuilder().setLabel(ACCESS_LABELS.any).setValue('any').setDescription('يستطيع كل الأعضاء استخدامه'),
+        new StringSelectMenuOptionBuilder().setLabel(ACCESS_LABELS.staff).setValue('staff').setDescription('رتب الإدارة أو المالك فقط'),
+        new StringSelectMenuOptionBuilder().setLabel(ACCESS_LABELS.admin).setValue('admin').setDescription('صلاحية Administrator أو المالك فقط'),
+        new StringSelectMenuOptionBuilder().setLabel(ACCESS_LABELS.off).setValue('off').setDescription('إيقاف الأمر نهائياً'),
+      );
+    return [
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('bd_cmd_pick_dummy')
+          .setDisabled(true)
+          .setPlaceholder(`الأمر المحدد: /${target}`)
+          .addOptions(new StringSelectMenuOptionBuilder().setLabel(`/${target}`).setValue(target)),
+      ),
+      new ActionRowBuilder().addComponents(permSel),
+      new ActionRowBuilder().addComponents(backBtn),
+    ];
+  }
+
+  const cmdSel = new StringSelectMenuBuilder()
+    .setCustomId('bd_cmd_pick')
+    .setPlaceholder('اختر أمراً لتغيير صلاحيته...')
+    .addOptions(cmds.map(c => new StringSelectMenuOptionBuilder()
+      .setLabel(`/${c.name}`)
+      .setDescription(c.desc.slice(0, 50))
+      .setValue(c.name)));
+  return [
+    new ActionRowBuilder().addComponents(cmdSel),
+    new ActionRowBuilder().addComponents(backBtn),
+  ];
+}
+
+async function handleCmdPick(interaction) {
+  const cmdName = interaction.values[0];
+  if (!cmdName) return;
+  pendingCmd.set(interaction.user.id, cmdName);
+  await interaction.update({ embeds: [commandsEmbed2(interaction.client, interaction.guild)], components: commandsRows(interaction.guild, { mode: 'perm', command: cmdName }) });
+}
+
+async function handleCmdPerm(interaction) {
+  const access = interaction.values[0];
+  const cmdName = pendingCmd.get(interaction.user.id);
+  if (!cmdName) return;
+  pendingCmd.delete(interaction.user.id);
+  const g = guildCfg.get(interaction.guild.id);
+  if (!g.commands) g.commands = {};
+  g.commands[cmdName] = access;
+  guildCfg.set(interaction.guild.id, { commands: g.commands });
+  await interaction.update({ embeds: [commandsEmbed2(interaction.client, interaction.guild)], components: commandsRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ضبط صلاحية **/${cmdName}** إلى: ${ACCESS_LABELS[access]}`, ephemeral: true });
 }
 
 function pageEmbed(interaction, pageId) {
@@ -532,6 +640,7 @@ function pageRows(pageId, guild) {
   if (pageId === 'ratings') return ratingsRows(guild);
   if (pageId === 'staff') return staffRows(guild);
   if (pageId === 'suggestions') return suggestionsRows(guild);
+  if (pageId === 'commands') return commandsRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -558,7 +667,12 @@ async function handleDashboard(interaction, client) {
 
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
-    const embed = pageId === 'ratings' ? ratingsEmbed(interaction.client, interaction.guild) : (pageId === 'staff' ? staffEmbed(interaction.client, interaction.guild) : (pageId === 'suggestions' ? suggestionsEmbed(interaction.client, interaction.guild) : pageEmbed(interaction, pageId)));
+    let embed;
+    if (pageId === 'ratings') embed = ratingsEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'staff') embed = staffEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild);
+    else embed = pageEmbed(interaction, pageId);
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
   }
@@ -567,6 +681,8 @@ async function handleDashboard(interaction, client) {
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
   if (id === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
   if (id === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
+  if (id === 'bd_cmd_pick') return handleCmdPick(interaction);
+  if (id === 'bd_cmd_perm') return handleCmdPerm(interaction);
 }
 
 async function sendTicketPanel(interaction) {
@@ -607,4 +723,4 @@ async function sendSuggestionsPanel(interaction) {
   await interaction.reply({ content: '✅ تم إرسال لوحة الاقتراحات!', ephemeral: true });
 }
 
-module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, mainEmbed, mainRows, PAGES, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleCmdPick, handleCmdPerm, sendTicketPanel, sendSuggestionsPanel };
