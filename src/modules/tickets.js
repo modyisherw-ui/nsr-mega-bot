@@ -9,7 +9,8 @@ function ticketConfig(guildId) {
 }
 
 function rebuildPanelComponents(tcfg) {
-  const types = tcfg.ticketTypes || [];
+  // الأنواع المفعّلة فقط تظهر (نظام إخفاء الأنواع من لوحة التحكم)
+  const types = (tcfg.ticketTypes || []).filter(tp => tp.enabled !== false);
   const select = new StringSelectMenuBuilder()
     .setCustomId('ticket_type_select')
     .setPlaceholder('Select a ticket type...')
@@ -32,7 +33,15 @@ async function handleTicketSelect(interaction) {
   const typeId = interaction.values[0];
   const tcfg = ticketConfig(interaction.guild.id);
   const type = (tcfg.ticketTypes || []).find(tp => tp.id === typeId);
-  if (!type) return;
+  if (!type) {
+    const disabled = (tcfg.ticketTypes || []).some(tp => tp.id === typeId && tp.enabled === false);
+    if (disabled) {
+      // النوع مُطفأ من لوحة التحكم — العضو ما زال يرى لوحة قديمة
+      await interaction.reply({ content: '❌ هذا النوع معطّل حالياً من إعدادات التذاكر. انتظر إعادة إرسال اللوحة.', ephemeral: true });
+      return;
+    }
+    return;
+  }
 
   const existing = db.tickets.getUserOpen(interaction.user.id, interaction.guild.id);
   if (existing.length > 0) {

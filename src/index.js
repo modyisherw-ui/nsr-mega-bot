@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleSetLogoModal, handleSetColorModal, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal } = require('./dashboard');
+const { handleDashboard, handleSetLogoModal, handleSetColorModal, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketAddModal } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -206,6 +206,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (id === 'ticket_add_modal' || id === 'ticket_remove_modal') return handleTicketModal(interaction);
       if (id === 'bd_welcome_msg_modal') return handleWelcomeMsgModal(interaction);
       if (id === 'bd_welcome_img_modal') return handleWelcomeImgModal(interaction);
+      if (id === 'bd_tk_add_modal') return handleTicketAddModal(interaction);
       return;
     }
 

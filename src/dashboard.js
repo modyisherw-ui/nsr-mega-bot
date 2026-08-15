@@ -793,6 +793,131 @@ async function handleWelcomeCountToggle(interaction) {
   await interaction.deferUpdate();
 }
 
+// ═══════════ نظام التذاكر (لوحة إدارة من اللوحة) ═══════════
+function ticketsEmbed(client, guild) {
+  const t = guildCfg.get(guild.id).ticket || {};
+  const types = t.ticketTypes || [];
+  const enabled = types.filter(x => x.enabled !== false);
+  const lines = types.length
+    ? types.map((tp, i) => `${tp.enabled === false ? '❌' : '✅'} ${tp.emoji || ''} **${tp.label}** — ${tp.description}`).join('\n')
+    : 'لا توجد أنواع بعد. اضغط **➕ إضافة نوع** بالأسفل.';
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle('🎫 نظام التذاكر')
+    .setDescription([
+      'تحكم بأنواع التذاكر التي تظهر للعضو (أظهر/أخفِ أي نوع):',
+      '',
+      `**عنوان اللوحة:** ${t.panel?.title || '🎫 Support Tickets'}`,
+      `**الحالة:** ${enabled.length} نوع مفعّل من ${types.length || 0}`,
+      '',
+      '**الأنواع:**',
+      lines,
+      '',
+      '⚠️ الأنواع المطفأة (❌) لا تظهر في لوحة التذاكر.',
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function ticketsRows(guild) {
+  const t = guildCfg.get(guild.id).ticket || {};
+  const types = t.ticketTypes || [];
+  const rows = [];
+  // 5 أزرار كحد أقصى في كل صف — نقسّم الأنواع على صفوف
+  for (let i = 0; i < types.length; i += 5) {
+    const rowBtns = types.slice(i, i + 5).map(tp => {
+      const btn = new ButtonBuilder()
+        .setCustomId(`bd_tk_toggle_${tp.id}`)
+        .setLabel(tp.label)
+        .setStyle(tp.enabled === false ? ButtonStyle.Secondary : ButtonStyle.Success);
+      if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) btn.setEmoji(tp.emoji.trim());
+      return btn;
+    });
+    rows.push(new ActionRowBuilder().addComponents(rowBtns));
+  }
+  rows.push(new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('bd_tk_add').setLabel('➕ إضافة نوع').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('bd_send_ticket_panel').setLabel('📨 إرسال لوحة التذاكر').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
+  ));
+  return rows;
+}
+
+function saveTicketCfg(guildId, t) {
+  guildCfg.set(guildId, { ticket: t || {} });
+}
+
+async function handleTicketToggle(interaction) {
+  const typeId = interaction.customId.replace('bd_tk_toggle_', '');
+  const g = guildCfg.get(interaction.guild.id);
+  const t = g.ticket || {};
+  const types = t.ticketTypes || [];
+  const tp = types.find(x => x.id === typeId);
+  if (!tp) {
+    await interaction.reply({ content: '❌ النوع غير موجود.', ephemeral: true });
+    return;
+  }
+  tp.enabled = tp.enabled === false ? true : false;
+  saveTicketCfg(interaction.guild.id, t);
+  await interaction.message.edit({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) });
+  await interaction.deferUpdate();
+  await interaction.followUp({ content: `${tp.enabled === false ? '❌ تم إخفاء' : '✅ تم إظهار'} نوع «${tp.label}».\nأعد إرسال لوحة التذاكر لتطبيق التغيير.`, ephemeral: true });
+}
+
+async function handleTicketAdd(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const modal = new ModalBuilder().setCustomId('bd_tk_add_modal').setTitle('➕ إضافة نوع تذكرة');
+  const nameInput = new TextInputBuilder()
+    .setCustomId('tk_name')
+    .setLabel('اسم النوع')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(50)
+    .setPlaceholder('مثال: Purchase');
+  const descInput = new TextInputBuilder()
+    .setCustomId('tk_desc')
+    .setLabel('الوصف')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(100)
+    .setPlaceholder('مثال: Inquire about buying a product or service');
+  const emojiInput = new TextInputBuilder()
+    .setCustomId('tk_emoji')
+    .setLabel('الإيموجي (حرف واحد)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(4)
+    .setPlaceholder('مثال: 🛒');
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(nameInput),
+    new ActionRowBuilder().addComponents(descInput),
+    new ActionRowBuilder().addComponents(emojiInput),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleTicketAddModal(interaction) {
+  const name = interaction.fields.getTextInputValue('tk_name').trim();
+  const desc = interaction.fields.getTextInputValue('tk_desc').trim();
+  const emoji = interaction.fields.getTextInputValue('tk_emoji').trim();
+  if (!name || !desc) {
+    await interaction.reply({ content: '❌ اسم النوع والوصف مطلوبان.', ephemeral: true });
+    return;
+  }
+  const g = guildCfg.get(interaction.guild.id);
+  const t = g.ticket || {};
+  if (!t.ticketTypes) t.ticketTypes = [];
+  const id = 'c' + Date.now().toString(36);
+  const tp = { id, label: name, description: desc, color: 0x5793266, enabled: true };
+  // إيموجي صالح فقط (نقطة Unicode واحدة في النطاق الإيموجي) وإلا لا نضيفه
+  if (emoji && /^\p{Extended_Pictographic}$/u.test(emoji)) tp.emoji = emoji;
+  else if (emoji) tp.emoji = '';
+  t.ticketTypes.push(tp);
+  saveTicketCfg(interaction.guild.id, t);
+  await interaction.reply({ content: `✅ تم إضافة نوع «${name}». أرسل اللوحة لتطبيق التغيير.`, ephemeral: true });
+  await interaction.message?.edit({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) }).catch(() => {});
+}
+
 async function handleProdAdd(interaction) {
   const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
   const modal = new ModalBuilder().setCustomId('bd_prod_modal').setTitle('إضافة منتج جديد');
@@ -1103,10 +1228,10 @@ function pageRows(pageId, guild) {
   if (pageId === 'commands') return commandsRows(guild);
   if (pageId === 'messages') return messagesRows();
   if (pageId === 'welcome') return welcomeRows(guild);
+  if (pageId === 'tickets') return ticketsRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
-  if (pageId === 'tickets') row.addComponents(new ButtonBuilder().setCustomId('bd_send_ticket_panel').setLabel('إرسال لوحة التذاكر').setStyle(ButtonStyle.Success));
   if (pageId === 'suggestions') row.addComponents(new ButtonBuilder().setCustomId('bd_send_suggestions_panel').setLabel('إرسال لوحة الاقتراحات').setStyle(ButtonStyle.Success));
   return [row];
 }
@@ -1135,6 +1260,8 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_welcome_mode') return handleWelcomeMode(interaction);
   if (id === 'bd_welcome_img_toggle') return handleWelcomeImgToggle(interaction);
   if (id === 'bd_welcome_count') return handleWelcomeCountToggle(interaction);
+  if (id.startsWith('bd_tk_toggle_')) return handleTicketToggle(interaction);
+  if (id === 'bd_tk_add') return handleTicketAdd(interaction);
   if (id === 'bd_botinfo') {
     await interaction.update({ embeds: [botInfoEmbed(client, interaction.guild)], components: botInfoRows() });
     return;
@@ -1149,6 +1276,7 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
     else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild, pendingCmdPage.get(interaction.user.id) || 0);
     else if (pageId === 'messages') embed = messagesEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'tickets') embed = ticketsEmbed(interaction.client, interaction.guild);
     else embed = pageEmbed(interaction, pageId);
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
@@ -1172,9 +1300,10 @@ async function sendTicketPanel(interaction) {
   try {
     await interaction.deferReply({ ephemeral: true });
     const tcfg = guildCfg.get(interaction.guild.id).ticket || {};
-    const types = tcfg.ticketTypes || [];
+    // الأنواع المفعّلة فقط تظهر للعضو (الأنواع المطفأة من لوحة التحكم تُخفى)
+    const types = (tcfg.ticketTypes || []).filter(tp => tp.enabled !== false);
     if (!types.length) {
-      await interaction.editReply({ content: '❌ لا توجد أنواع تذاكر مضبوطة في هذا السيرفر. حدد الأنواع من إعدادات التذاكر أولاً.', ephemeral: true });
+      await interaction.editReply({ content: '❌ لا توجد أنواع تذاكر مفعّلة في هذا السيرفر. فعّل نوعاً واحداً على الأقل من إعدادات التذاكر.', ephemeral: true });
       return;
     }
     const select = new StringSelectMenuBuilder()
@@ -1235,4 +1364,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal };

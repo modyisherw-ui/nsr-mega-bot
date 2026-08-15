@@ -283,16 +283,17 @@
         "panel": {
           "title": "🎫 Support Tickets",
           "description": "Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.",
-          "color": 5793266,
-          "footer": "NSR BOT â€¢ Support System"
+          "footer": "NSR HUB - MoDy Dev",
+          "color": 5763719
         },
         "ticketTypes": [
           {
             "id": "purchase",
             "label": "Purchase",
-            "emoji": "🛒",
             "description": "Inquire about buying a product or service",
-            "color": 5743424,
+            "emoji": "🛒",
+            "color": 91501604,
+            "enabled": true,
             "questions": [
               {
                 "id": "product",
@@ -305,9 +306,10 @@
           {
             "id": "inquiry",
             "label": "Inquiry",
-            "emoji": "💬",
             "description": "General question or inquiry",
-            "color": 5793266,
+            "emoji": "💬",
+            "color": 91828838,
+            "enabled": true,
             "questions": [
               {
                 "id": "subject",
@@ -320,9 +322,10 @@
           {
             "id": "problem",
             "label": "Problem",
-            "emoji": "🚧",
             "description": "Report a bug or issue",
-            "color": 15548997,
+            "emoji": "🚧",
+            "color": 357861783,
+            "enabled": true,
             "questions": [
               {
                 "id": "issue",
@@ -331,6 +334,14 @@
                 "required": true
               }
             ]
+          },
+          {
+            "id": "report",
+            "label": "Report a User",
+            "description": "Report a user or issue",
+            "emoji": "🚨",
+            "color": 15548997,
+            "enabled": true
           }
         ]
       }
