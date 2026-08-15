@@ -798,8 +798,9 @@ function ticketsEmbed(client, guild) {
   const t = guildCfg.get(guild.id).ticket || {};
   const types = t.ticketTypes || [];
   const enabled = types.filter(x => x.enabled !== false);
+  const custom = types.filter(x => String(x.id || '').startsWith('c'));
   const lines = types.length
-    ? types.map((tp, i) => `${tp.enabled === false ? '❌' : '✅'} ${tp.emoji || ''} **${tp.label}** — ${tp.description}`).join('\n')
+    ? types.map((tp, i) => `${tp.enabled === false ? '❌' : '✅'} ${tp.emoji || ''} **${tp.label}** — ${tp.description}${String(tp.id || '').startsWith('c') ? ' *(مخصص)*' : ''}`).join('\n')
     : 'لا توجد أنواع بعد. اضغط **➕ إضافة نوع** بالأسفل.';
   return new EmbedBuilder()
     .setColor(panelColor(guild))
@@ -814,15 +815,36 @@ function ticketsEmbed(client, guild) {
       lines,
       '',
       '⚠️ الأنواع المطفأة (❌) لا تظهر في لوحة التذاكر.',
+      '🗑️ الزر الأخضر بحذف **الأنواع المخصصة فقط** — العامة (الافتراضية) لا تُحذف.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
 
-function ticketsRows(guild) {
+function ticketsRows(guild, state) {
+  const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
   const t = guildCfg.get(guild.id).ticket || {};
   const types = t.ticketTypes || [];
   const rows = [];
+
+  // وضع الحذف: نعرض الأنواع المخصصة فقط للاختيار
+  if (state?.mode === 'del') {
+    const custom = types.filter(x => String(x.id || '').startsWith('c'));
+    const sel = new StringSelectMenuBuilder()
+      .setCustomId('bd_tk_del_sel')
+      .setPlaceholder('اختر النوع المخصص الذي تريد حذفه...')
+      .addOptions(custom.map(tp => {
+        const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
+        if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
+        return opt;
+      }));
+    rows.push(new ActionRowBuilder().addComponents(sel));
+    rows.push(new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع').setStyle(ButtonStyle.Secondary),
+    ));
+    return rows;
+  }
+
   // 5 أزرار كحد أقصى في كل صف — نقسّم الأنواع على صفوف
   for (let i = 0; i < types.length; i += 5) {
     const rowBtns = types.slice(i, i + 5).map(tp => {
@@ -837,6 +859,7 @@ function ticketsRows(guild) {
   }
   rows.push(new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('bd_tk_add').setLabel('➕ إضافة نوع').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('bd_tk_del').setLabel('🗑️ حذف نوع').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('bd_send_ticket_panel').setLabel('📨 إرسال لوحة التذاكر').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
   ));
@@ -916,6 +939,39 @@ async function handleTicketAddModal(interaction) {
   saveTicketCfg(interaction.guild.id, t);
   await interaction.reply({ content: `✅ تم إضافة نوع «${name}». أرسل اللوحة لتطبيق التغيير.`, ephemeral: true });
   await interaction.message?.edit({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) }).catch(() => {});
+}
+
+// زر حذف نوع: يدخل وضع اختيار النوع المخصص فقط (العامة لا تُحذف)
+async function handleTicketDel(interaction) {
+  const g = guildCfg.get(interaction.guild.id);
+  const types = (g.ticket || {}).ticketTypes || [];
+  const custom = types.filter(x => String(x.id || '').startsWith('c'));
+  if (!custom.length) {
+    await interaction.update({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) });
+    await interaction.followUp({ content: '🗑️ لا توجد أنواع مخصصة للحذف — الأنواع العامة لا تُحذف.', ephemeral: true });
+    return;
+  }
+  await interaction.update({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild, { mode: 'del' }) });
+  await interaction.followUp({ content: '🗑️ اختر النوع المخصص الذي تريد حذفه من القائمة بالأسفل.', ephemeral: true });
+}
+
+async function handleTicketDelSelect(interaction) {
+  const typeId = interaction.values[0];
+  if (!typeId) return;
+  // حماية: لا يُحذف إلا النوع المخصص (معرّفه يبدأ بـ c)
+  const g = guildCfg.get(interaction.guild.id);
+  const t = g.ticket || {};
+  const types = t.ticketTypes || [];
+  const tp = types.find(x => x.id === typeId);
+  if (!tp || !String(tp.id || '').startsWith('c')) {
+    await interaction.update({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) });
+    await interaction.followUp({ content: '❌ هذا النوع عام ولا يمكن حذفه.', ephemeral: true });
+    return;
+  }
+  t.ticketTypes = types.filter(x => x.id !== typeId);
+  saveTicketCfg(interaction.guild.id, t);
+  await interaction.update({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) });
+  await interaction.followUp({ content: `🗑️ تم حذف نوع «${tp.label}». أرسل اللوحة لتطبيق التغيير.`, ephemeral: true });
 }
 
 async function handleProdAdd(interaction) {
@@ -1262,6 +1318,7 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_welcome_count') return handleWelcomeCountToggle(interaction);
   if (id.startsWith('bd_tk_toggle_')) return handleTicketToggle(interaction);
   if (id === 'bd_tk_add') return handleTicketAdd(interaction);
+  if (id === 'bd_tk_del') return handleTicketDel(interaction);
   if (id === 'bd_botinfo') {
     await interaction.update({ embeds: [botInfoEmbed(client, interaction.guild)], components: botInfoRows() });
     return;
@@ -1409,4 +1466,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect };
