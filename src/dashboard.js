@@ -621,6 +621,7 @@ function ratingsRows(guild, state) {
   rows.push(new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(PROD_ADD).setLabel('➕ إضافة منتج').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(PROD_DEL).setLabel('🗑️ حذف منتج').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('bd_send_rate').setLabel('📨 إرسال تقييم').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
   ));
   return rows;
@@ -713,6 +714,71 @@ async function handleProdDeleteSelect(interaction) {
 async function handleProdCancel(interaction) {
   pendingProductRole.delete(interaction.user.id);
   await interaction.update({ embeds: [ratingsEmbed(interaction.client, interaction.guild)], components: ratingsRows(interaction.guild) });
+}
+
+// ═══════════ زر «إرسال تقييم» — نفس عمل /rate بدون كتابة الأمر ═══════════
+const pendingRate = new Map(); // userId -> { type: 'user' | 'product' }
+
+async function handleSendRate(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const prods = getProducts(interaction.guild.id);
+  if (!prods.length) {
+    await interaction.reply({ content: '❌ لا توجد منتجات بعد — أضف منتجاً أولاً.', ephemeral: true });
+    return;
+  }
+  const modal = new ModalBuilder().setCustomId('bd_rate_modal').setTitle('📨 إرسال تقييم');
+  const userInput = new TextInputBuilder()
+    .setCustomId('rate_target')
+    .setLabel('معرف العميل أو منشن (User ID)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setPlaceholder('مثال: 123456789012345678');
+  const productInput = new TextInputBuilder()
+    .setCustomId('rate_product')
+    .setLabel('اسم المنتج')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setPlaceholder(prods.map(p => p.name).join(' | '));
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(userInput),
+    new ActionRowBuilder().addComponents(productInput),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleRateModal(interaction) {
+  const { sendPurchaseDM } = require('./modules/ratings');
+  await interaction.deferReply({ ephemeral: true });
+  const rawTarget = interaction.fields.getTextInputValue('rate_target').trim();
+  const targetId = String(rawTarget).replace(/[^0-9]/g, '');
+  const target = await interaction.guild.members.fetch(targetId).catch(() => null);
+  const member = await interaction.client.users.fetch(targetId).catch(() => null);
+  if (!target || !member) {
+    await interaction.editReply({ content: '❌ العضو غير موجود — تأكد من معرفه (User ID).', ephemeral: true });
+    return;
+  }
+  if (member.bot) {
+    await interaction.editReply({ content: '❌ اختر عميلاً حقيقياً (وليس بوتاً).', ephemeral: true });
+    return;
+  }
+  const rawProd = interaction.fields.getTextInputValue('rate_product').trim();
+  const product = findProduct(interaction.guild.id, rawProd);
+  if (!product) {
+    await interaction.editReply({
+      content: '❌ المنتج غير موجود. المنتجات المتاحة:\n' + getProducts(interaction.guild.id).map(p => `• **${p.name}**`).join('\n'),
+      ephemeral: true,
+    });
+    return;
+  }
+  const ok = await sendPurchaseDM(member, product, interaction.client, interaction.guild);
+  if (!ok) {
+    await interaction.editReply({ content: `❌ تعذر إرسال رسالة خاصة إلى ${member} — ربما قفل الخاص.`, ephemeral: true });
+    return;
+  }
+  await interaction.editReply({
+    content: `✅ تم إرسال رسالة تقييم **«${product.name}»** إلى ${member} على الخاص.`,
+    ephemeral: true,
+  });
 }
 
 function mainEmbed(client, guild) {
@@ -901,9 +967,11 @@ async function handleDashboard(interaction, client) {
     return handleAutoRoleSelect(interaction);
   }
 
-  if (id === PROD_ADD) return handleProdAdd(interaction);
+if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === PROD_DEL) return handleProdDelete(interaction);
+  if (id === PROD_ROLE) return handleProdRoleSelect(interaction);
   if (id === PROD_CANCEL) return handleProdCancel(interaction);
+  if (id === 'bd_send_rate') return handleSendRate(interaction);
 
   if (id === 'bd_set_logo') return handleSetLogo(interaction);
   if (id === 'bd_botinfo') {
@@ -1006,4 +1074,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal };
