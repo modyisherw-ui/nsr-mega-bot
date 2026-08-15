@@ -15,6 +15,14 @@ const DEFAULTS = {
   staffRoles: [],
   autoRoles: { memberRoleId: null, botRoleId: null },
   suggestions: { channelId: '' },
+  welcome: {
+    channelId: '',
+    message: 'أهلاً بك {user} في سيرفر {server}! 🎉',
+    imageUrl: '',
+    mode: 'room', // room = روم السيرفر | dm = رسالة خاصة
+    withImage: true,
+    showCount: true,
+  },
   commands: {},
   logoUrl: '',
   embedColor: '',

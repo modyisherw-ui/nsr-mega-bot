@@ -9,6 +9,7 @@ const { messagesEmbed, messagesRows } = require('./modules/messages');
 const PAGES = {
   logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
   autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
+  welcome: { emoji: '👋', name: 'نظام الترحيب', desc: 'رسالة ترحيب تلقائية للأعضاء الجدد: اختر الروم أو الخاص، اكتب الرسالة، أضف صورة، وحدد محتواها.', commands: ['اختر **الروم** من القائمة بالأسفل', '✏️ عدّل **الرسالة** (كلمات: {user} منشن العضو، {count} رقم العضو)', '🖼️ ضع **صورة/بنر** للرسالة', '📩 اختر **خاص أو روم** للاستقبال'] },
   ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
   suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
   system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — قائمة الأوامر الكاملة وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
@@ -638,6 +639,160 @@ async function handleRatingChannelSelect(interaction) {
   await interaction.followUp({ content: `✅ تم ضبط روم التقييمات: <#${channelId}>`, ephemeral: true });
 }
 
+// ═══════════ نظام الترحيب ═══════════
+function welcomeEmbed(client, guild) {
+  const w = guildCfg.get(guild.id).welcome || {};
+  const channel = w.channelId ? guild?.channels?.cache?.get(w.channelId) : null;
+  const preview = (w.message || '')
+    .replace(/{user}/g, `@${client.user?.username || 'العضو'}`)
+    .replace(/{count}/g, String(guild.memberCount))
+    .replace(/{server}/g, guild.name);
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle('👋 نظام الترحيب')
+    .setDescription([
+      'رسالة ترحيب تلقائية لكل عضو جديد يدخل السيرفر.',
+      '',
+      `**📢 الروم:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`,
+      `**📩 الاستقبال:** ${w.mode === 'dm' ? 'رسالة خاصة (DM)' : 'روم السيرفر'}`,
+      `**🖼️ مع صورة:** ${w.withImage ? (w.imageUrl ? 'نعم ✅' : 'نعم (بدون رابط صورة بعد) ⚠️') : 'لا ❌'}`,
+      `**🔢 مع رقم العضو:** ${w.showCount ? 'نعم ✅' : 'لا ❌'}`,
+      '',
+      '**💬 الرسالة (معاينة):**',
+      `> ${preview || '`لا توجد رسالة بعد`'}`,
+      '',
+      '**كلمات جاهزة:** `{user}` = منشن العضو، `{count}` = رقم العضو، `{server}` = اسم السيرفر.',
+      'إذا فعّلت **رقم العضو** تُضاف تلقائياً: "أنت العضو رقم **{count}**".',
+      w.mode === 'dm' ? '⚠️ في وضع **DM** تُرسل على الخاص — إن أغلق العضو الخاص، تُحول لحالة فشل صامتة.' : '',
+    ].filter(Boolean).join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function welcomeRows(guild) {
+  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const w = guildCfg.get(guild.id).welcome || {};
+  const chSel = new ChannelSelectMenuBuilder()
+    .setCustomId('bd_welcome_channel')
+    .setPlaceholder(w.channelId && guild?.channels?.cache?.get(w.channelId) ? `روم الترحيب: #${guild.channels.cache.get(w.channelId).name}` : 'اختر روم الترحيب...')
+    .addChannelTypes(ChannelType.GuildText);
+  if (w.channelId && guild?.channels?.cache?.get(w.channelId)) chSel.setDefaultChannels([w.channelId]);
+  const modeBtn = new ButtonBuilder()
+    .setCustomId('bd_welcome_mode')
+    .setLabel(w.mode === 'dm' ? '📩 خاص (DM)' : '📢 روم السيرفر')
+    .setStyle(ButtonStyle.Secondary);
+  const imgBtn = new ButtonBuilder()
+    .setCustomId('bd_welcome_img_toggle')
+    .setLabel(w.withImage ? '🖼️ مع صورة: نعم' : '🖼️ مع صورة: لا')
+    .setStyle(ButtonStyle.Secondary);
+  const countBtn = new ButtonBuilder()
+    .setCustomId('bd_welcome_count')
+    .setLabel(w.showCount ? '🔢 رقم العضو: نعم' : '🔢 رقم العضو: لا')
+    .setStyle(ButtonStyle.Secondary);
+  return [
+    new ActionRowBuilder().addComponents(chSel),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_welcome_msg').setLabel('✏️ تعديل الرسالة').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_welcome_img').setLabel(w.imageUrl ? '🖼️ تغيير الصورة' : '🖼️ إضافة صورة').setStyle(ButtonStyle.Secondary),
+    ),
+    new ActionRowBuilder().addComponents(modeBtn, imgBtn, countBtn),
+    new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary)),
+  ];
+}
+
+function saveWelcome(guildId, w) {
+  guildCfg.set(guildId, { welcome: w || {} });
+}
+
+async function handleWelcomeChannelSelect(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.channelId = channelId;
+  saveWelcome(interaction.guild.id, w);
+  await interaction.update({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ضبط روم الترحيب: <#${channelId}>`, ephemeral: true });
+}
+
+async function handleWelcomeMsg(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const w = guildCfg.get(interaction.guild.id).welcome || {};
+  const modal = new ModalBuilder().setCustomId('bd_welcome_msg_modal').setTitle('💬 رسالة الترحيب');
+  const msgInput = new TextInputBuilder()
+    .setCustomId('wel_msg')
+    .setLabel('نص الرسالة — استخدم {user} و {count} و {server}')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true)
+    .setMaxLength(1000)
+    .setValue(w.message || '')
+    .setPlaceholder('أهلاً بك {user} في سيرفر {server}! 🎉');
+  modal.addComponents(new ActionRowBuilder().addComponents(msgInput));
+  await interaction.showModal(modal);
+}
+
+async function handleWelcomeMsgModal(interaction) {
+  const text = interaction.fields.getTextInputValue('wel_msg').trim();
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.message = text;
+  saveWelcome(interaction.guild.id, w);
+  await interaction.reply({ content: '✅ تم حفظ رسالة الترحيب.', ephemeral: true });
+  await interaction.message?.edit({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) }).catch(() => {});
+}
+
+async function handleWelcomeImg(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const w = guildCfg.get(interaction.guild.id).welcome || {};
+  const modal = new ModalBuilder().setCustomId('bd_welcome_img_modal').setTitle('🖼️ صورة الترحيب');
+  const imgInput = new TextInputBuilder()
+    .setCustomId('wel_img')
+    .setLabel('رابط الصورة (png/jpg) — اتركه فارغاً لحذفها')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setValue(w.imageUrl || '')
+    .setPlaceholder('https://...');
+  modal.addComponents(new ActionRowBuilder().addComponents(imgInput));
+  await interaction.showModal(modal);
+}
+
+async function handleWelcomeImgModal(interaction) {
+  const url = interaction.fields.getTextInputValue('wel_img').trim();
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.imageUrl = url;
+  saveWelcome(interaction.guild.id, w);
+  await interaction.reply({ content: url ? `✅ تم حفظ صورة الترحيب.` : '🗑️ تم حذف الصورة.', ephemeral: true });
+  await interaction.message?.edit({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) }).catch(() => {});
+}
+
+async function handleWelcomeMode(interaction) {
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.mode = w.mode === 'dm' ? 'room' : 'dm';
+  saveWelcome(interaction.guild.id, w);
+  await interaction.message.edit({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) });
+  await interaction.deferUpdate();
+}
+
+async function handleWelcomeImgToggle(interaction) {
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.withImage = !w.withImage;
+  saveWelcome(interaction.guild.id, w);
+  await interaction.message.edit({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) });
+  await interaction.deferUpdate();
+}
+
+async function handleWelcomeCountToggle(interaction) {
+  const g = guildCfg.get(interaction.guild.id);
+  const w = g.welcome || {};
+  w.showCount = !w.showCount;
+  saveWelcome(interaction.guild.id, w);
+  await interaction.message.edit({ embeds: [welcomeEmbed(interaction.client, interaction.guild)], components: welcomeRows(interaction.guild) });
+  await interaction.deferUpdate();
+}
+
 async function handleProdAdd(interaction) {
   const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
   const modal = new ModalBuilder().setCustomId('bd_prod_modal').setTitle('إضافة منتج جديد');
@@ -947,6 +1102,7 @@ function pageRows(pageId, guild) {
   if (pageId === 'suggestions') return suggestionsRows(guild);
   if (pageId === 'commands') return commandsRows(guild);
   if (pageId === 'messages') return messagesRows();
+  if (pageId === 'welcome') return welcomeRows(guild);
   const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
   if (pageId === 'system') return [...systemRows(), new ActionRowBuilder().addComponents(backBtn)];
   const row = new ActionRowBuilder().addComponents(backBtn);
@@ -974,6 +1130,11 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_send_rate') return handleSendRate(interaction);
 
   if (id === 'bd_set_logo') return handleSetLogo(interaction);
+  if (id === 'bd_welcome_msg') return handleWelcomeMsg(interaction);
+  if (id === 'bd_welcome_img') return handleWelcomeImg(interaction);
+  if (id === 'bd_welcome_mode') return handleWelcomeMode(interaction);
+  if (id === 'bd_welcome_img_toggle') return handleWelcomeImgToggle(interaction);
+  if (id === 'bd_welcome_count') return handleWelcomeCountToggle(interaction);
   if (id === 'bd_botinfo') {
     await interaction.update({ embeds: [botInfoEmbed(client, interaction.guild)], components: botInfoRows() });
     return;
@@ -1074,4 +1235,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal };
