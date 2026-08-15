@@ -211,12 +211,12 @@
         "botRoleId": null
       },
       "welcome": {
-        "channelId": "",
+        "channelId": "1431738900115750913",
         "message": "أهلاً بك {user} في سيرفر {server}! 🎉",
         "imageUrl": "",
         "mode": "room",
-        "withImage": true,
-        "showCount": true
+        "withImage": false,
+        "showCount": false
       }
     },
     "1409929493291991192": {
