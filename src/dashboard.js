@@ -1282,7 +1282,7 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
     return;
   }
 
-  if (id === 'bd_send_ticket_panel') return sendTicketPanel(interaction);
+  if (id === 'bd_send_ticket_panel') return handleSendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
   if (id === 'bd_send_panel') return handleSendPanel(interaction);
   if (id === 'bd_send_panel_channel') return handleSendPanelChannel(interaction);
@@ -1293,17 +1293,19 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_cmd_next' || id === 'bd_cmd_prev') return handleCmdPage(interaction, id === 'bd_cmd_next' ? 'next' : 'prev');
 }
 
-async function sendTicketPanel(interaction) {
+async function sendTicketPanel(interaction, opts) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
   const { tickets } = db;
   // تفاعل الأزرار والأوامر يجب أن يُجاب خلال 3 ثوانٍ — نعترف فوراً ثم نرسل اللوحة
   try {
-    await interaction.deferReply({ ephemeral: true });
+    if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: true });
     const tcfg = guildCfg.get(interaction.guild.id).ticket || {};
     // الأنواع المفعّلة فقط تظهر للعضو (الأنواع المطفأة من لوحة التحكم تُخفى)
     const types = (tcfg.ticketTypes || []).filter(tp => tp.enabled !== false);
     if (!types.length) {
-      await interaction.editReply({ content: '❌ لا توجد أنواع تذاكر مفعّلة في هذا السيرفر. فعّل نوعاً واحداً على الأقل من إعدادات التذاكر.', ephemeral: true });
+      const msg = '❌ لا توجد أنواع تذاكر مفعّلة في هذا السيرفر. فعّل نوعاً واحداً على الأقل من إعدادات التذاكر.';
+      if (interaction.replied || interaction.deferred) await interaction.followUp({ content: msg, ephemeral: true }).catch(() => {});
+      else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
       return;
     }
     const select = new StringSelectMenuBuilder()
@@ -1320,21 +1322,64 @@ async function sendTicketPanel(interaction) {
       .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
       .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
       .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
-    const target = interaction.channel;
+    // لو مررنا روم محدد نرسل فيه (من لوحة التحكم)، وإلا نرسل في الروم الحالي
+    const target = opts?.targetChannel || interaction.channel;
     if (!target || !target.send) {
-      await interaction.editReply({ content: '❌ لا يمكن الإرسال في هذا الروم — استخدم الأمر في روم نصي.', ephemeral: true });
+      const msg = '❌ لا يمكن الإرسال في هذا الروم — استخدم الأمر في روم نصي.';
+      if (interaction.replied || interaction.deferred) await interaction.followUp({ content: msg, ephemeral: true }).catch(() => {});
+      else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
       return;
     }
     await target.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
-    await interaction.editReply({ content: `✅ تم إرسال لوحة التذاكر إلى <#${target.id}>!`, ephemeral: true });
+    if (opts?.silent) return;
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply({ content: `✅ تم إرسال لوحة التذاكر إلى <#${target.id}>!`, ephemeral: true }).catch(() => {});
+    } else {
+      await interaction.reply({ content: `✅ تم إرسال لوحة التذاكر إلى <#${target.id}>!`, ephemeral: true }).catch(() => {});
+    }
   } catch (err) {
     log.warn('فشل إرسال لوحة التذاكر: ' + err.message);
+    const msg = `❌ تعذر إرسال لوحة التذاكر في هذا الروم.\nتأكد أن البوت يملك صلاحية **إرسال الرسائل** هنا وأن الروم نصي.\n\n\`${err.message}\``;
     try {
-      await interaction.editReply({
-        content: `❌ تعذر إرسال لوحة التذاكر في هذا الروم.\nتأكد أن البوت يملك صلاحية **إرسال الرسائل** هنا وأن الروم نصي.\n\n\`${err.message}\``,
-        ephemeral: true,
-      });
+      if (interaction.replied || interaction.deferred) await interaction.followUp({ content: msg, ephemeral: true }).catch(() => {});
+      else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     } catch (_) {}
+  }
+}
+
+// زر إرسال لوحة التذاكر من لوحة التحكم: يطلب اختيار الروم أولاً ثم يرسل فيه
+async function handleSendTicketPanel(interaction) {
+  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const backBtn = new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary);
+  const chSel = new ChannelSelectMenuBuilder()
+    .setCustomId('bd_send_ticket_panel_channel')
+    .setPlaceholder('اختر الروم لإرسال لوحة التذاكر...')
+    .addChannelTypes(ChannelType.GuildText);
+  await interaction.update({
+    embeds: [ticketsEmbed(interaction.client, interaction.guild)],
+    components: [
+      new ActionRowBuilder().addComponents(chSel),
+      new ActionRowBuilder().addComponents(backBtn),
+    ],
+  });
+  await interaction.followUp({ content: '📨 اختر الروم من القائمة بالأسفل لإرسال لوحة التذاكر إليه.', ephemeral: true });
+}
+
+async function handleSendTicketPanelChannel(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  const ch = interaction.guild.channels.cache.get(channelId);
+  await interaction.update({ embeds: [ticketsEmbed(interaction.client, interaction.guild)], components: ticketsRows(interaction.guild) });
+  if (!ch) {
+    await interaction.followUp({ content: '❌ الروم غير موجود.', ephemeral: true });
+    return;
+  }
+  try {
+    await sendTicketPanel(interaction, { targetChannel: ch, silent: true });
+    await interaction.followUp({ content: `✅ تم إرسال لوحة التذاكر إلى <#${ch.id}>!`, ephemeral: true });
+  } catch (err) {
+    log.warn('فشل إرسال لوحة التذاكر لروم محدد: ' + err.message);
+    await interaction.followUp({ content: `❌ تعذر الإرسال إلى <#${ch.id}>: ${err.message}`, ephemeral: true });
   }
 }
 
@@ -1364,4 +1409,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal };

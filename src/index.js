@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { config } = require('./config');
 const log = require('./utils/logger');
 const db = require('./db');
-const { handleDashboard, handleSetLogoModal, handleSetColorModal, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketAddModal } = require('./dashboard');
+const { handleDashboard, handleSetLogoModal, handleSetColorModal, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketAddModal, handleSendTicketPanelChannel } = require('./dashboard');
 const { handleLangButton, handleStarButton, handleCommentModal } = require('./modules/ratings');
 const { handleSuggestion, handleSuggestionModal } = require('./modules/suggestions');
 const { handleTicketSelect, handleTicketClose, handleTicketActions, handleTicketModal, handleTicketClaim, handleTicketSummon } = require('./modules/tickets');
@@ -234,6 +234,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (interaction.customId === 'bd_suggestions_channel') return handleSuggestionsChannelSelect(interaction);
       if (interaction.customId === 'bd_send_panel_channel') return handleSendPanelChannel(interaction);
       if (interaction.customId === 'bd_welcome_channel') return handleWelcomeChannelSelect(interaction);
+      if (interaction.customId === 'bd_send_ticket_panel_channel') return handleSendTicketPanelChannel(interaction);
       return;
     }
   } catch (err) {
