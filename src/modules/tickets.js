@@ -30,6 +30,13 @@ function ticketColor(typeId, guildId) {
 
 async function handleTicketSelect(interaction) {
   if (interaction.customId !== 'ticket_type_select') return;
+  // نعترف بالتفاعل فوراً — إنشاء الروم (channels.create) قد يتعدى 3 ثوانٍ
+  // ويسبب "didn't respond in time"، فنتفاعل بانتظار ثم نرد بالنص بعد الإنجاز
+  try {
+    await interaction.deferReply({ ephemeral: true });
+  } catch (err) {
+    log.warn('تعذر تأجيل رد فتح التذكرة: ' + err.message);
+  }
   const typeId = interaction.values[0];
   const tcfg = ticketConfig(interaction.guild.id);
   const type = (tcfg.ticketTypes || []).find(tp => tp.id === typeId);
@@ -37,15 +44,16 @@ async function handleTicketSelect(interaction) {
     const disabled = (tcfg.ticketTypes || []).some(tp => tp.id === typeId && tp.enabled === false);
     if (disabled) {
       // النوع مُطفأ من لوحة التحكم — العضو ما زال يرى لوحة قديمة
-      await interaction.reply({ content: '❌ هذا النوع معطّل حالياً من إعدادات التذاكر. انتظر إعادة إرسال اللوحة.', ephemeral: true });
+      await interaction.editReply({ content: '❌ هذا النوع معطّل حالياً من إعدادات التذاكر. انتظر إعادة إرسال اللوحة.', ephemeral: true }).catch(() => {});
       return;
     }
+    await interaction.editReply({ content: '❌ نوع التذكرة غير موجود.', ephemeral: true }).catch(() => {});
     return;
   }
 
   const existing = db.tickets.getUserOpen(interaction.user.id, interaction.guild.id);
   if (existing.length > 0) {
-    await interaction.reply({ content: `⚠️ لديك تذكرة مفتوحة بالفعل: <#${existing[0].channel_id}>\nأغلقها أولاً قبل فتح تذكرة جديدة.`, ephemeral: true });
+    await interaction.editReply({ content: `⚠️ لديك تذكرة مفتوحة بالفعل: <#${existing[0].channel_id}>\nأغلقها أولاً قبل فتح تذكرة جديدة.`, ephemeral: true }).catch(() => {});
     return;
   }
 
@@ -57,34 +65,42 @@ async function handleTicketSelect(interaction) {
     } catch {}
   }
 
-  const number = db.tickets.nextNumber(interaction.guild.id);
-  const staffRoleIds = tcfg.staffRoles || [];
-  const category = interaction.guild.channels.cache.get(tcfg.categoryId);
-  const channel = await interaction.guild.channels.create({
-    name: `${type.emoji || '🎫'} ticket-${number}`,
-    parent: category || undefined,
-    permissionOverwrites: [
-      { id: interaction.guild.id, deny: ['ViewChannel'] },
-      { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] },
-      ...staffRoleIds.map(rid => ({ id: rid, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] })),
-    ],
-  });
+  try {
+    const number = db.tickets.nextNumber(interaction.guild.id);
+    const staffRoleIds = tcfg.staffRoles || [];
+    const category = interaction.guild.channels.cache.get(tcfg.categoryId);
+    const channel = await interaction.guild.channels.create({
+      name: `${type.emoji || '🎫'} ticket-${number}`,
+      parent: category || undefined,
+      permissionOverwrites: [
+        { id: interaction.guild.id, deny: ['ViewChannel'] },
+        { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] },
+        ...staffRoleIds.map(rid => ({ id: rid, allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'] })),
+      ],
+    });
 
-  db.tickets.create({ channelId: channel.id, guildId: interaction.guild.id, userId: interaction.user.id, type: typeId, number, answers: {} });
+    db.tickets.create({ channelId: channel.id, guildId: interaction.guild.id, userId: interaction.user.id, type: typeId, number, answers: {} });
 
-  const controlEmbed = new EmbedBuilder()
-    .setTitle(`${type.emoji || '🎫'} ${type.label} #${number}`)
-    .setDescription(`Welcome <@${interaction.user.id}>!\nPlease describe your issue and our staff will assist you shortly.`)
-    .setColor(ticketColor(typeId, interaction.guild.id))
-    .setTimestamp();
-  const controlRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('ticket_claim_btn').setLabel('📥 Claim').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('ticket_summon_btn').setLabel('📣 Summon').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('ticket_close_btn').setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger),
-  );
+    const controlEmbed = new EmbedBuilder()
+      .setTitle(`${type.emoji || '🎫'} ${type.label} #${number}`)
+      .setDescription(`Welcome <@${interaction.user.id}>!\nPlease describe your issue and our staff will assist you shortly.`)
+      .setColor(ticketColor(typeId, interaction.guild.id))
+      .setTimestamp();
+    const controlRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('ticket_claim_btn').setLabel('📥 Claim').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('ticket_summon_btn').setLabel('📣 Summon').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('ticket_close_btn').setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger),
+    );
 
-  await channel.send({ content: `<@${interaction.user.id}>`, embeds: [controlEmbed], components: [controlRow] });
-  await interaction.reply({ content: `✅ تم فتح تذكرتك: <#${channel.id}>`, ephemeral: true });
+    await channel.send({ content: `<@${interaction.user.id}>`, embeds: [controlEmbed], components: [controlRow] });
+    await interaction.editReply({ content: `✅ تم فتح تذكرتك: <#${channel.id}>`, ephemeral: true }).catch(() => {});
+  } catch (err) {
+    log.warn('فشل فتح التذكرة: ' + err.message);
+    await interaction.editReply({
+      content: `❌ تعذر فتح التذكرة.\nتأكد أن البوت لديه صلاحية **إنشاء الرومات** وصلاحية **عرض/إدارة** الكاتيجوري المحددة.\n\n\`${err.message}\``,
+      ephemeral: true,
+    }).catch(() => {});
+  }
 }
 
 function canManageTicket(member, guildId) {
