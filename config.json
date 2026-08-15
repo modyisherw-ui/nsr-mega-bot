@@ -210,6 +210,122 @@
         "memberRoleId": "1431735878669045962",
         "botRoleId": null
       }
+    },
+    "1409929493291991192": {
+      "logChannels": {
+        "memberJoin": "1530565626245021868",
+        "memberLeave": "1530565626245021868",
+        "deleteMessage": "1530565626245021868",
+        "editMessage": "1530565626245021868",
+        "reactionAdd": "1530565626245021868",
+        "reactionRemove": "1530565626245021868",
+        "mediaMessage": "1530565626245021868",
+        "voiceLeave": "1530565626245021868",
+        "voiceJoin": "1530565626245021868",
+        "voiceMove": "1530565626245021868",
+        "timeoutAdd": "1530565626245021868",
+        "timeoutRemove": "1530565626245021868",
+        "roleAdd": "1530565626245021868",
+        "roleRemove": "1530565626245021868",
+        "roleCreate": "1530565626245021868",
+        "roleDelete": "1530565626245021868",
+        "roleUpdate": "1530565626245021868",
+        "channelCreate": "1530565626245021868",
+        "channelDelete": "1530565626245021868",
+        "channelUpdate": "1530565626245021868",
+        "banAdd": "1530565626245021868",
+        "banRemove": "1530565626245021868",
+        "kickAdd": "1530565626245021868",
+        "protectedRoleViolation": "1530565626245021868"
+      },
+      "protectedRoles": [
+        "1490204310980661470",
+        "1490074333996122214"
+      ],
+      "protectionBypassRoles": [
+        "1490067785349333142"
+      ],
+      "protectionAction": "kick",
+      "staffRoles": [
+        "1409931979692048394"
+      ],
+      "autoRoles": {
+        "memberRoleId": "1409932044607295529",
+        "botRoleId": null
+      },
+      "rating": {
+        "reviewsChannelId": "1409932333519470694",
+        "products": [
+          {
+            "id": "p_msrsehxg",
+            "name": "Onesync",
+            "roleId": "1409932029247619093"
+          },
+          {
+            "id": "p_msu53gm3",
+            "name": "NSR V2",
+            "roleId": "1409931997807251727"
+          }
+        ]
+      },
+      "ticket": {
+        "categoryId": "",
+        "logChannelId": "",
+        "staffRoles": [],
+        "panel": {
+          "title": "🎫 Support Tickets",
+          "description": "Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.",
+          "color": 5793266,
+          "footer": "NSR BOT â€¢ Support System"
+        },
+        "ticketTypes": [
+          {
+            "id": "purchase",
+            "label": "Purchase",
+            "emoji": "🛒",
+            "description": "Inquire about buying a product or service",
+            "color": 5743424,
+            "questions": [
+              {
+                "id": "product",
+                "label": "Product / Service",
+                "placeholder": "Enter the product or service name...",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "inquiry",
+            "label": "Inquiry",
+            "emoji": "💬",
+            "description": "General question or inquiry",
+            "color": 5793266,
+            "questions": [
+              {
+                "id": "subject",
+                "label": "Subject",
+                "placeholder": "What would you like to ask about?",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "problem",
+            "label": "Problem",
+            "emoji": "🚧",
+            "description": "Report a bug or issue",
+            "color": 15548997,
+            "questions": [
+              {
+                "id": "issue",
+                "label": "Problem Description",
+                "placeholder": "Describe the problem in detail...",
+                "required": true
+              }
+            ]
+          }
+        ]
+      }
     }
   }
 }
