@@ -721,12 +721,12 @@ async function handleWelcomeMsg(interaction) {
   const modal = new ModalBuilder().setCustomId('bd_welcome_msg_modal').setTitle('💬 رسالة الترحيب');
   const msgInput = new TextInputBuilder()
     .setCustomId('wel_msg')
-    .setLabel('نص الرسالة — استخدم {user} و {count} و {server}')
+    .setLabel('نص الرسالة')
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(true)
     .setMaxLength(1000)
     .setValue(w.message || '')
-    .setPlaceholder('أهلاً بك {user} في سيرفر {server}! 🎉');
+    .setPlaceholder('أهلاً بك {user} في سيرفر {server}! 🎉 (كلمات: {user} منشن، {count} العدد، {server} الاسم)');
   modal.addComponents(new ActionRowBuilder().addComponents(msgInput));
   await interaction.showModal(modal);
 }

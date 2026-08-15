@@ -28,7 +28,9 @@ const client = new Client({
 });
 
 // حقن شعار البوت في كل إمبد (صورة صغيرة بالأعلى يمين/يسار حسب اللغة) + إزالة الإيموجي من العناوين
-const { TextChannel, DMChannel, NewsChannel, ThreadChannel, Interaction, MessageComponentInteraction, Message } = require('discord.js');
+// ملاحظة: في discord.js 14.27 لا يوجد تصدير باسم Interaction — كل نوع له reply في بروتو الخاص به،
+// لذا نربطها على الأنواع الموجودة فعلاً وإلا لن تُطبَّق على أول رد للأمر (كان اللوقو يظهر فقط بعد التنقل)
+const { TextChannel, DMChannel, NewsChannel, ThreadChannel, CommandInteraction, MessageComponentInteraction, ModalSubmitInteraction, Message } = require('discord.js');
 const { withLogo, ensureLogoUrl } = require('./utils/logo');
 function patchProto(cls, method) {
   if (!cls || typeof cls.prototype[method] !== 'function') return;
@@ -39,9 +41,12 @@ function patchProto(cls, method) {
   };
 }
 [TextChannel, DMChannel, NewsChannel, ThreadChannel].forEach((c) => patchProto(c, 'send'));
-patchProto(Interaction, 'reply');
-patchProto(Interaction, 'editReply');
-patchProto(Interaction, 'followUp');
+[CommandInteraction, MessageComponentInteraction, ModalSubmitInteraction].forEach((c) => {
+  patchProto(c, 'reply');
+  patchProto(c, 'editReply');
+  patchProto(c, 'followUp');
+  patchProto(c, 'deferReply');
+});
 patchProto(MessageComponentInteraction, 'update');
 patchProto(Message, 'edit');
 
