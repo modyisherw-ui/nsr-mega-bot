@@ -259,7 +259,7 @@
             "description": "Report a user or issue",
             "emoji": "🚨",
             "color": 15548997,
-            "enabled": false
+            "enabled": true
           }
         ]
       }
