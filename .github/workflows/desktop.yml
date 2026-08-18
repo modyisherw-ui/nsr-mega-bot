@@ -36,11 +36,21 @@ jobs:
 
       - name: Build installer
         working-directory: desktop
-        run: npm run dist
+        run: |
+          npm run dist *>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Print build log on failure
+        if: failure()
+        working-directory: desktop
+        run: |
+          Get-Content build.log -Tail 80
+          Get-ChildItem dist -ErrorAction SilentlyContinue | Select-Object Name, Length
+
       - name: Upload to GitHub Releases
+        if: success()
         working-directory: desktop
         run: |
           gh release create desktop --title "NSR Dashboard" --notes "لوحة تحكم سطح المكتب للبوت — أحدث إصدار" --latest=false || true
