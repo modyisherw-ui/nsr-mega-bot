@@ -48,6 +48,13 @@ jobs:
         run: |
           Get-Content build.log -Tail 80
           Get-ChildItem dist -ErrorAction SilentlyContinue | Select-Object Name, Length
+          git config user.name "nsr-bot"
+          git config user.email "nsr-bot@users.noreply.github.com"
+          Copy-Item build.log build-error.log -Force
+          git add build-error.log
+          git commit -m "debug: desktop build error log" || true
+          git pull --rebase origin main --no-edit || true
+          git push origin main || true
 
       - name: Upload to GitHub Releases
         if: success()
