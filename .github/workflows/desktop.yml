@@ -48,10 +48,18 @@ jobs:
         working-directory: desktop
         run: |
           Get-Content build.log -Tail 80
-          $log = Get-Content build.log -Raw
-          if ($log.Length -gt 18000) { $log = $log.Substring($log.Length - 18000) }
-          $body = "DESKTOP BUILD FAILED at $(Get-Date -Format o)`n``````" + $log + "``````"
-          gh issue create --title "desktop build error" --body $body || true
+          Copy-Item build.log build-error.log -Force
+          git config user.name "nsr-bot"
+          git config user.email "nsr-bot@users.noreply.github.com"
+          for ($i = 0; $i -lt 6; $i++) {
+            git pull --rebase origin main --no-edit 2>$null | Out-Null
+            git add -f build-error.log
+            git commit -m "debug: desktop build error log" 2>$null | Out-Null
+            git push origin main 2>$null
+            if ($LASTEXITCODE -eq 0) { break }
+            Start-Sleep -Seconds 15
+          }
+          Get-Content build-error.log -Tail 5
 
       - name: Upload to GitHub Releases
         if: success()
