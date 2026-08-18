@@ -29,6 +29,10 @@ jobs:
         working-directory: desktop
         run: npm ci
 
+      - name: Enable developer mode (symlinks for winCodeSign)
+        run: |
+          reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense /t REG_DWORD /d 1 /f
+
       - name: Build installer
         working-directory: desktop
         run: npm run dist
