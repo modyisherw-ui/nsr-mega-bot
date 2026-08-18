@@ -1,0 +1,15 @@
+// NSR Dashboard — الجسر بين الواجهة والعملية الرئيسية
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+  login: (settings) => ipcRenderer.invoke('auth:login', settings),
+  getSession: () => ipcRenderer.invoke('auth:session'),
+  logout: () => ipcRenderer.invoke('auth:logout'),
+  bridgeConnect: (key) => ipcRenderer.invoke('bridge:connect', key),
+  bridgeCommand: (data) => ipcRenderer.invoke('bridge:command', data),
+  bridgeStatus: () => ipcRenderer.invoke('bridge:status'),
+  onBridgeStatus: (cb) => ipcRenderer.on('bridge:status', (e, s) => cb(s)),
+  onBridgeEvent: (cb) => ipcRenderer.on('bridge:event', (e, m) => cb(m)),
+});

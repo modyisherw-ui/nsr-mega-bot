@@ -1,0 +1,46 @@
+name: Build Desktop App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install deps
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build installer
+        working-directory: desktop
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to GitHub Releases
+        working-directory: desktop
+        run: |
+          gh release create desktop --title "NSR Dashboard" --notes "لوحة تحكم سطح المكتب للبوت — أحدث إصدار" --latest=false || true
+          gh release upload desktop dist/NSR-Dashboard-Setup-*.exe --clobber
+
+      - name: Show artifacts
+        working-directory: desktop
+        run: Get-ChildItem dist | Select-Object Name, Length

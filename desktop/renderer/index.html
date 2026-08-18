@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src none" />
+  <title>NSR Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- شاشة الإعدادات/تسجيل الدخول -->
+  <section id="screen-login" class="screen active">
+    <div class="login-card">
+      <img id="login-logo" class="login-logo" src="https://cdn.discordapp.com/emojis/1537843770911891466.png?size=128" alt="logo" />
+      <h1 class="brand">NSR <span>Dashboard</span></h1>
+      <p class="subtitle">لوحة تحكم سطح المكتب — تحكم في بوتك من برنامجك</p>
+
+      <div class="field-row">
+        <label>معرف تطبيق Discord (Client ID)</label>
+        <input id="inp-clientid" type="text" placeholder="1537394763328786572" />
+      </div>
+      <div class="field-row">
+        <label>مفتاح الجسر (Bridge Key)</label>
+        <input id="inp-bridgekey" type="password" placeholder="المفتاح المشترك بين التطبيق والبوت" />
+        <button id="btn-toggle-key" class="mini-btn" type="button">👁</button>
+      </div>
+
+      <button id="btn-login" class="btn primary big">تسجيل الدخول عبر Discord</button>
+      <p class="hint">🔴 مهم: في Discord Developer Portal → OAuth2 → Redirects أضف:<br/><code>http://127.0.0.1:19563/callback</code></p>
+      <p id="login-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- شاشة السيرفرات -->
+  <section id="screen-servers" class="screen">
+    <header class="topbar">
+      <div class="user-chip">
+        <img id="user-avatar" class="avatar" alt="avatar" />
+        <span id="user-name">—</span>
+        <button id="btn-logout2" class="mini-btn" title="تسجيل خروج">🚪</button>
+      </div>
+      <div class="bridge-status">
+        <span id="bridge-dot" class="dot off"></span>
+        <span id="bridge-text">الجسر غير متصل</span>
+      </div>
+    </header>
+
+    <h2 class="page-title">اختر سيرفرك لإدارة اللوحة <span class="divider"></span></h2>
+    <div id="servers-grid" class="servers-grid"></div>
+    <p id="servers-empty" class="empty hidden">لا توجد سيرفرات تملك فيها صلاحية أدمن مع وجود البوت فيها.</p>
+  </section>
+
+  <!-- شاشة اللوحة -->
+  <section id="screen-dashboard" class="screen">
+    <header class="topbar">
+      <button id="btn-back" class="btn ghost">🔙 السيرفرات</button>
+      <div class="guild-chip">
+        <img id="guild-icon" class="avatar" alt="guild" />
+        <span id="guild-name">—</span>
+      </div>
+      <div class="bridge-status">
+        <span id="bridge-dot2" class="dot off"></span>
+        <span id="bridge-text2">الجسر غير متصل</span>
+      </div>
+    </header>
+
+    <nav id="dash-nav" class="dash-nav">
+      <button data-page="home" class="nav-btn active">🏠 الرئيسية</button>
+      <button data-page="welcome" class="nav-btn">👋 الترحيب</button>
+      <button data-page="tickets" class="nav-btn">🎫 التذاكر</button>
+      <button data-page="suggestions" class="nav-btn">💡 الاقتراحات</button>
+      <button data-page="send" class="nav-btn">📨 إرسال اللوحات</button>
+      <button data-page="auth" class="nav-btn">👔 الصلاحيات</button>
+      <button data-page="brand" class="nav-btn">🎨 المظهر</button>
+    </nav>
+
+    <main id="dash-main" class="dash-main"></main>
+  </section>
+
+  <!-- شريط إشعارات -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1127,6 +1127,8 @@ function mainEmbed(client, guild) {
       Object.entries(PAGES).map(([id, p]) => `${p.emoji} **${p.name}**`).join('\n'),
       '',
       `> السيرفر: **${guild?.name || '-'}**`,
+      '',
+      '💻 **تطبيق سطح المكتب:** حمّل البرنامج من الزر بالأسفل وتحكم في البوت من جهازك مباشرة مع الحركات والأصوات.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -1144,7 +1146,8 @@ function mainRows() {
     rows.push(row);
   }
   rows.push(new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('bd_botinfo').setLabel('🖌️ تغيير معلومات البوت').setStyle(ButtonStyle.Success)
+    new ButtonBuilder().setCustomId('bd_botinfo').setLabel('🖌️ تغيير معلومات البوت').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setLabel('💻 تحميل التطبيق').setURL('https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-Dashboard-Setup-1.0.0.exe').setStyle(ButtonStyle.Link)
   ));
   return rows;
 }
