@@ -11,6 +11,7 @@ const security = require('./modules/security');
 const giveaway = require('./modules/giveaway');
 const roles = require('./modules/roles');
 const registerLogs = require('./modules/logs');
+const bridge = require('./modules/bridge');
 const { handleAdminButton, handleAdminModal, handleStaffRolesSelect: handleAdminStaffSelect, handleEmbedChannelSelect } = require('./modules/adminPanel');
 const { handleMessagesButton, handleMessagesModal } = require('./modules/messages');
 
@@ -65,6 +66,7 @@ client.once('ready', async () => {
   await ensureLogoUrl(client);
   registerLogs(client);
   giveaway.setClient(client);
+  bridge.start(client);
 
   // نبضة قلب: ملف زمني يثبت أن البوت حي (يشاركه الريبو ليتأكد أي مراقب)
   const fs = require('fs');

@@ -1350,9 +1350,47 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_cmd_next' || id === 'bd_cmd_prev') return handleCmdPage(interaction, id === 'bd_cmd_next' ? 'next' : 'prev');
 }
 
-async function sendTicketPanel(interaction, opts) {
+// حمالة لوحة التذاكر (تُستخدم من اللوحة ومن التطبيق عبر الجسر)
+function buildTicketPanelPayload(guild, tcfg) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
-  const { tickets } = db;
+  const types = (tcfg.ticketTypes || []).filter(tp => tp.enabled !== false);
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('ticket_type_select')
+    .setPlaceholder('Select a ticket type...')
+    .addOptions(types.map(tp => {
+      const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
+      if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
+      return opt;
+    }));
+  const embed = new EmbedBuilder()
+    .setColor(tcfg.panel?.color || 0x5865F2)
+    .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
+    .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
+    .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
+  return { embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] };
+}
+
+// حمالة لوحة الاقتراحات
+function buildSuggestionsPanelPayload() {
+  const embed = new EmbedBuilder()
+    .setColor(panelColor)
+    .setTitle('📬 Suggestion Box | صندوق الاقتراحات')
+    .setDescription([
+      '**English**',
+      'Have an idea or feedback? Hit the button and share it!',
+      '',
+      '**العربية**',
+      'هل لديك فكرة أو ملاحظات؟ اضغط على الزر وشاركها!',
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Secondary)
+  );
+  return { embeds: [embed], components: [row] };
+}
+
+async function sendTicketPanel(interaction, opts) {
   // تفاعل الأزرار والأوامر يجب أن يُجاب خلال 3 ثوانٍ — نعترف فوراً ثم نرسل اللوحة
   try {
     if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: true });
@@ -1365,20 +1403,6 @@ async function sendTicketPanel(interaction, opts) {
       else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
       return;
     }
-    const select = new StringSelectMenuBuilder()
-      .setCustomId('ticket_type_select')
-      .setPlaceholder('Select a ticket type...')
-      .addOptions(types.map(tp => {
-        const opt = new StringSelectMenuOptionBuilder().setLabel(tp.label).setDescription(tp.description).setValue(tp.id);
-        // إيموجي صالح فقط — نتجنب خطأ COMPONENT_INVALID_EMOJI من الإيموجيات التالفة في config.json
-        if (tp.emoji && /^\p{Extended_Pictographic}$/u.test(tp.emoji.trim())) opt.setEmoji(tp.emoji.trim());
-        return opt;
-      }));
-    const embed = new EmbedBuilder()
-      .setColor(tcfg.panel?.color || 0x5865F2)
-      .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
-      .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
-      .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });
     // لو مررنا روم محدد نرسل فيه (من لوحة التحكم)، وإلا نرسل في الروم الحالي
     const target = opts?.targetChannel || interaction.channel;
     if (!target || !target.send) {
@@ -1387,7 +1411,7 @@ async function sendTicketPanel(interaction, opts) {
       else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
       return;
     }
-    await target.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+    await target.send(buildTicketPanelPayload(interaction.guild, tcfg));
     if (opts?.silent) return;
     if (interaction.replied || interaction.deferred) {
       await interaction.editReply({ content: `✅ تم إرسال لوحة التذاكر إلى <#${target.id}>!`, ephemeral: true }).catch(() => {});
@@ -1441,29 +1465,14 @@ async function handleSendTicketPanelChannel(interaction) {
 }
 
 async function sendSuggestionsPanel(interaction, opts) {
-  const embed = new EmbedBuilder()
-    .setColor(panelColor(interaction.guild))
-    .setTitle('📬 Suggestion Box | صندوق الاقتراحات')
-    .setDescription([
-      '**English**',
-      'Have an idea or feedback? Hit the button and share it!',
-      '',
-      '**العربية**',
-      'هل لديك فكرة أو ملاحظات؟ اضغط على الزر وشاركها!',
-    ].join('\n'))
-    .setFooter({ text: 'NSR HUB - MoDy Dev' })
-    .setTimestamp();
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('open_suggestion_modal').setLabel('✏️ Submit a Suggestion | قدّم اقتراحاً').setStyle(ButtonStyle.Secondary)
-  );
   // لو مررنا روم محدد نرسل فيه، وإلا نرسل في الروم الحالي
   const target = opts?.targetChannel || interaction.channel;
   if (!target || !target.send) throw new Error('الروم المستهدف غير صالح');
   // المستدعي من الزر في اللوحة: نعترف أولاً حتى لا ينتهي تفاعل الزر (3 ثوانٍ)
   if (!interaction.replied && !interaction.deferred) await interaction.deferReply({ ephemeral: true });
-  await target.send({ embeds: [embed], components: [row] });
+  await target.send(buildSuggestionsPanelPayload());
   if (opts?.silent) return;
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect, buildTicketPanelPayload, buildSuggestionsPanelPayload };
