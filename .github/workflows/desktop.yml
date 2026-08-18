@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build:
@@ -47,18 +48,10 @@ jobs:
         working-directory: desktop
         run: |
           Get-Content build.log -Tail 80
-          Copy-Item build.log build-error.log -Force
-          Get-Content build-error.log -Tail 40 | Out-File -Append -Encoding utf8 build-error.log
-          git config user.name "nsr-bot"
-          git config user.email "nsr-bot@users.noreply.github.com"
-          for ($i = 0; $i -lt 5; $i++) {
-            git add build-error.log
-            git commit -m "debug: desktop build error log" 2>$null | Out-Null
-            git pull --rebase origin main --no-edit 2>$null | Out-Null
-            git push origin main 2>$null
-            if ($LASTEXITCODE -eq 0) { break }
-            Start-Sleep -Seconds 10
-          }
+          $log = Get-Content build.log -Raw
+          if ($log.Length -gt 18000) { $log = $log.Substring($log.Length - 18000) }
+          $body = "DESKTOP BUILD FAILED at $(Get-Date -Format o)`n``````" + $log + "``````"
+          gh issue create --title "desktop build error" --body $body || true
 
       - name: Upload to GitHub Releases
         if: success()
