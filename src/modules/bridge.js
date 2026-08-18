@@ -132,6 +132,13 @@ async function handleMessage(msg, key) {
       break;
     }
 
+    case 'guilds': {
+      reply(key, msg, {
+        guilds: Array.from(discordClient.guilds.cache.values()).map(g => ({ id: g.id, name: g.name, iconUrl: g.iconURL({ size: 128 }) })),
+      });
+      break;
+    }
+
     case 'sendTicketPanel': {
       const channel = guild.channels.cache.get(msg.channelId);
       if (!channel || !channel.send) {
