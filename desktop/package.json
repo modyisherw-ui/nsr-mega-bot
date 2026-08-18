@@ -5,6 +5,10 @@
   "main": "main.js",
   "author": "MoDy",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/modyisherw-ui/nsr-mega-bot.git"
+  },
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder"
