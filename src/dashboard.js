@@ -1203,6 +1203,10 @@ async function handleSetColorModal(interaction) {
     return;
   }
   const color = parseInt(val, 16);
+  if (color < 0 || color > 0xFFFFFF) {
+    await interaction.reply({ content: '❌ اللون خارج النطاق المسموح.', ephemeral: true });
+    return;
+  }
   guildCfg.set(interaction.guild.id, { embedColor: color });
   await interaction.reply({ content: `✅ تم تغيير لون البوت إلى **#${val.toUpperCase()}** في هذا السيرفر فقط.\nسيظهر من أول رسالة جديدة بعد الآن.`, ephemeral: true });
 }

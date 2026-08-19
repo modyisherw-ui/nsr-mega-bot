@@ -192,7 +192,7 @@ async function handleMessage(msg, key) {
 
     case 'setColor': {
       const color = Number(msg.color);
-      if (isNaN(color)) { reply(key, msg, null, 'لون غير صالح'); break; }
+      if (isNaN(color) || color < 0 || color > 0xFFFFFF) { reply(key, msg, null, 'لون غير صالح (يجب أن يكون بين 0 و 16777215)'); break; }
       guildCfg.set(guild.id, { embedColor: color });
       reply(key, msg, { color });
       break;
@@ -214,11 +214,13 @@ async function handleMessage(msg, key) {
 
     case 'setTicketPanel': {
       const p = msg.panel || {};
+      const rawColor = Number(p.color);
+      const color = (Number.isInteger(rawColor) && rawColor >= 0 && rawColor <= 0xFFFFFF) ? rawColor : (tcfg.panel?.color || 0x5865F2);
       const panel = {
         title: p.title || tcfg.panel?.title || '🎫 Support Tickets',
         description: p.description || tcfg.panel?.description || '',
         footer: p.footer || tcfg.panel?.footer || 'NSR HUB - MoDy Dev',
-        color: Number(p.color) || tcfg.panel?.color || 0x5865F2,
+        color,
       };
       guildCfg.set(guild.id, { ticket: { ...tcfg, panel } });
       reply(key, msg, { panel });
@@ -246,7 +248,7 @@ async function handleMessage(msg, key) {
         label,
         description: String(msg.description || '').trim() || 'Support',
         emoji: String(msg.emoji || '').trim() || '🔹',
-        color: 0x57F287,
+        color: 0x5865F2,
         enabled: true,
       };
       const types = [...(tcfg.ticketTypes || []), newType];

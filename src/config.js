@@ -26,7 +26,7 @@ const config = {
     categoryId: raw.ticket?.categoryId || '',
     logChannelId: raw.ticket?.logChannelId || '',
     staffRoles: raw.ticket?.staffRoles || [],
-    panel: raw.ticket?.panel || { title: '🎫 Support Tickets', description: 'Select a ticket type to get support.', footer: 'NSR BOT', color: 0x57F287 },
+    panel: raw.ticket?.panel || { title: '🎫 Support Tickets', description: 'Select a ticket type to get support.', footer: 'NSR BOT', color: 0x5865F2 },
     ticketTypes: raw.ticket?.ticketTypes || [
       { id: 'general', label: '💬 General Support', description: 'General questions and help', emoji: '💬', color: 0x5865F2 },
       { id: 'billing', label: '💳 Billing & Payments', description: 'Payment and billing issues', emoji: '💳', color: 0xF1C40F },

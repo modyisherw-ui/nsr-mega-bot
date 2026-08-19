@@ -24,11 +24,7 @@ function rebuildPanelComponents(tcfg) {
 }
 
 function ticketColor(typeId, guildId) {
-  const t = (ticketConfig(guildId).ticketTypes || []).find(tp => tp.id === typeId);
-  const c = t?.color;
-  // عصبية: أي لون خارج النطاق (0 - 0xFFFFFF) أو نص أو رقم كبير مكتوب بالغلط → لون افتراضي آمن
-  if (typeof c === 'number' && Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF) return c;
-  return 0x57F287;
+  return 0x5865F2; // أزرق ثابت للوحة التذاكر
 }
 
 async function handleTicketSelect(interaction) {
@@ -54,18 +50,18 @@ async function handleTicketSelect(interaction) {
     return;
   }
 
-  const existing = db.tickets.getUserOpen(interaction.user.id, interaction.guild.id);
-  if (existing.length > 0) {
-    await interaction.editReply({ content: `⚠️ لديك تذكرة مفتوحة بالفعل: <#${existing[0].channel_id}>\nأغلقها أولاً قبل فتح تذكرة جديدة.`, ephemeral: true }).catch(() => {});
-    return;
-  }
-
-  // إعادة تعيين قائمة الاختيار باللوحة حتى يتمكن المستخدم من اختيار نفس النوع مرة أخرى
+  // إعادة تعيين قائمة الاختيار باللوحة دائماً (حتى لو فشل الفتح) ليتمكن المستخدم من اختيار نوع آخر مباشرة
   const panelMsg = interaction.message;
   if (panelMsg) {
     try {
       await panelMsg.edit({ components: rebuildPanelComponents(tcfg) });
     } catch {}
+  }
+
+  const existing = db.tickets.getUserOpen(interaction.user.id, interaction.guild.id);
+  if (existing.length > 0) {
+    await interaction.editReply({ content: `⚠️ لديك تذكرة مفتوحة بالفعل: <#${existing[0].channel_id}>\nأغلقها أولاً قبل فتح تذكرة جديدة.`, ephemeral: true }).catch(() => {});
+    return;
   }
 
   try {

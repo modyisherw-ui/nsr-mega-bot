@@ -156,9 +156,11 @@ function getGuildBrand(guildId) {
   if (!guildId) return { logoUrl: config.logoUrl || '', embedColor: 0 };
   try {
     const g = require('../guildCfg').get(guildId);
+    const ec = g.embedColor;
+    const validColor = typeof ec === 'number' && Number.isInteger(ec) && ec >= 0 && ec <= 0xFFFFFF ? ec : 0;
     return {
       logoUrl: g.logoUrl || config.logoUrl || '',
-      embedColor: typeof g.embedColor === 'number' && g.embedColor ? g.embedColor : 0,
+      embedColor: validColor,
     };
   } catch (err) {
     log.warn('فشل قراءة إعدادات السيرفر: ' + err.message);
@@ -170,7 +172,8 @@ function applyLogo(embed, guildId) {
   if (!embed) return false;
   const brand = getGuildBrand(guildId);
   // تغيير اللون الأزرق الافتراضي إلى لون السيرفر المخصص (كل الإمبدات الزرقاء تتغير)
-  if (brand.embedColor) {
+  const brandColor = (typeof brand.embedColor === 'number' && Number.isInteger(brand.embedColor) && brand.embedColor >= 0 && brand.embedColor <= 0xFFFFFF) ? brand.embedColor : 0;
+  if (brandColor) {
     const cur = embed.data ? embed.data.color : embed.color;
     const curNum = (typeof cur === 'number') ? cur : null;
     if (curNum === null || curNum === 0x5865F2 || cur === 'Blurple' || cur === 'Default') {

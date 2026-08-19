@@ -31,9 +31,9 @@ const DEFAULTS = {
     categoryId: '',
     logChannelId: '',
     staffRoles: [],
-    panel: { title: '🎫 Support Tickets', description: 'Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.', footer: 'NSR HUB - MoDy Dev', color: 0x57F287 },
+    panel: { title: '🎫 Support Tickets', description: 'Welcome to our support system!\nSelect a ticket type from the menu below and a private channel will be created for you.', footer: 'NSR HUB - MoDy Dev', color: 0x5865F2 },
     ticketTypes: [
-      { id: 'purchase', label: 'Purchase', description: 'Inquire about buying a product or service', emoji: '🛒', color: 0x57F287, enabled: true },
+      { id: 'purchase', label: 'Purchase', description: 'Inquire about buying a product or service', emoji: '🛒', color: 0x5865F2, enabled: true },
       { id: 'inquiry', label: 'Inquiry', description: 'General question or inquiry', emoji: '💬', color: 0xF1C40F, enabled: true },
       { id: 'problem', label: 'Problem', description: 'Report a bug or issue', emoji: '🚧', color: 0xED4245, enabled: true },
       { id: 'report', label: 'Report a User', description: 'Report a user or issue', emoji: '🚨', color: 0xED4245, enabled: true },
