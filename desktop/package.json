@@ -1,6 +1,6 @@
 {
   "name": "nsr-hub",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "NSR HUB — لوحة تحكم سطح المكتب للبوت",
   "main": "main.js",
   "author": "NSR HUB",

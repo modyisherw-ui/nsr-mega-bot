@@ -20,12 +20,14 @@ function showScreen(id) {
 }
 
 // ---------- شريط العنوان ----------
-$('#tb-min').addEventListener('click', () => api.winMinimize());
-$('#tb-max').addEventListener('click', () => api.winToggleMaximize());
-$('#tb-close').addEventListener('click', () => api.winClose());
-api.onWinMaximized((m) => {
-  $('#tb-max').innerHTML = m ? '&#x2750;' : '&#x25A1;';
-});
+try {
+  $('#tb-min').addEventListener('click', () => api.winMinimize());
+  $('#tb-max').addEventListener('click', () => api.winToggleMaximize());
+  $('#tb-close').addEventListener('click', () => api.winClose());
+  api.onWinMaximized((m) => {
+    $('#tb-max').innerHTML = m ? '&#x2750;' : '&#x25A1;';
+  });
+} catch (_) {}
 
 // ---------- الأصوات (WebAudio) ----------
 let audioCtx = null;
@@ -132,6 +134,9 @@ api.onUpdateStatus((s) => {
     if (!session) showScreen('screen-login');
   }
 });
+
+// ضمان: الشاشة لا تعلق فوق الواجهة أبداً حتى لو فشل فحص التحديث
+setTimeout(() => { updateOverlay.classList.remove('visible'); if (!session) showScreen('screen-login'); }, 15000);
 
 // ---------- الإقلاع ----------
 async function init() {

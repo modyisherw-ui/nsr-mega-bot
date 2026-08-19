@@ -22,7 +22,8 @@ async function resolveAppConfig() {
   let bridgeKey = s.bridgeKey || '';
   if (!bridgeKey) {
     try {
-      const res = await fetch(BOT_CONFIG_URL, { headers: { 'User-Agent': 'nsr-hub' } });
+      const ctl = AbortSignal.timeout(6000);
+      const res = await fetch(BOT_CONFIG_URL, { headers: { 'User-Agent': 'nsr-hub' }, signal: ctl });
       if (res.ok) {
         const cfg = await res.json();
         if (cfg.bridgeKey) {
@@ -238,7 +239,8 @@ function verLt(a, b) {
 
 async function checkForUpdate() {
   try {
-    const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' } });
+    const ctl = AbortSignal.timeout(10000);
+    const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: ctl });
     if (!res.ok) return null;
     const rel = await res.json();
     let best = null;
