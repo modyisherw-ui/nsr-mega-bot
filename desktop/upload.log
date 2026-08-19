@@ -1,5 +1,0 @@
-token len: 377
-create failed: Response status code does not indicate success: 422 (Unprocessable Entity).
-found existing release: 372727735
-uploading NSR-Dashboard-Setup-1.0.0.exe (82619239 bytes)
-asset upload failed: Error while copying content to a stream.

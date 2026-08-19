@@ -181,7 +181,7 @@ function createWindow() {
     minHeight: 620,
     backgroundColor: '#0b0f1c',
     autoHideMenuBar: true,
-    title: 'NSR Dashboard',
+    title: 'NSR HUB',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
