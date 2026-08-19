@@ -22,7 +22,7 @@ module.exports = {
         '3️⃣ افتح البرنامج وسجّل الدخول بحساب البوت\n\n' +
         `📥 رابط مباشر: [اضغط هنا للتحميل](${DOWNLOAD_URL})`
       )
-      .setFooter({ text: 'الإصدار 1.0.2' });
+      .setFooter({ text: 'الإصدار 1.0.3' });
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setStyle(ButtonStyle.Link)
