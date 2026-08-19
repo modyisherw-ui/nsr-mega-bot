@@ -98,6 +98,7 @@ async function refreshBotGuilds() {
 async function init() {
   settings = await api.getSettings();
   $('#inp-clientid').value = settings.clientId || '';
+  $('#inp-clientsecret').value = settings.clientSecret || '';
   $('#inp-bridgekey').value = settings.bridgeKey || '';
 
   if (settings.bridgeKey) await api.bridgeConnect(settings.bridgeKey);
@@ -129,6 +130,7 @@ async function init() {
 // ---------- تسجيل الدخول ----------
 async function doLogin() {
   const clientId = $('#inp-clientid').value.trim();
+  const clientSecret = $('#inp-clientsecret').value.trim();
   const bridgeKey = $('#inp-bridgekey').value.trim();
   const err = $('#login-error');
   err.textContent = '';
@@ -139,13 +141,13 @@ async function doLogin() {
     return;
   }
 
-  settings = await api.setSettings({ clientId, bridgeKey });
+  settings = await api.setSettings({ clientId, clientSecret, bridgeKey });
   await api.bridgeConnect(bridgeKey);
   const bst = await api.bridgeStatus();
   setBridgeStatus(bst.connected);
 
   try {
-    const res = await api.login({ clientId });
+    const res = await api.login({ clientId, clientSecret });
     session = res.session;
     adminGuilds = res.adminGuilds;
     toast('✅ تم تسجيل الدخول بنجاح!');

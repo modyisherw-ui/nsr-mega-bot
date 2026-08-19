@@ -98,16 +98,29 @@ function startOAuth(settings) {
     const verifier = b64url(crypto.randomBytes(32));
     const challenge = b64url(crypto.createHash('sha256').update(verifier).digest());
     const state = crypto.randomBytes(8).toString('hex');
+    let settled = false;
+    const settle = (fn, val) => { if (settled) return; settled = true; cleanup(); fn(val); };
 
     const server = http.createServer();
-    const cleanup = () => { try { server.close(); } catch (_) {} };
+    const cleanup = () => {
+      clearTimeout(server._timeout);
+      try { server.close(); } catch (_) {}
+    };
 
-    server.on('error', (err) => { cleanup(); reject(new Error('تعذر فتح منفذ الاستقبال: ' + err.message)); });
+    server.on('error', (err) => {
+      settle(reject, new Error('تعذر فتح منفذ الاستقبال 19563 — تأكد من إغلاق نافذة تسجيل دخول سابقة وأن المنفذ غير محجوب: ' + err.code));
+    });
 
     server.listen(CALLBACK_PORT, '127.0.0.1', () => {
       const url = `${DISCORD_API}/oauth2/authorize?client_id=${settings.clientId}&response_type=code&redirect_uri=${encodeURIComponent('http://127.0.0.1:' + CALLBACK_PORT + '/callback')}&scope=identify%20guilds&state=${state}&code_challenge=${challenge}&code_challenge_method=S256`;
-      shell.openExternal(url).catch(() => {});
+      shell.openExternal(url).catch(() => {
+        settle(reject, new Error(`تعذر فتح المتصفح. افتح هذا الرابط يدوياً:\n${url}`));
+      });
     });
+
+    server._timeout = setTimeout(() => {
+      settle(reject, new Error('انتهت مهلة تسجيل الدخول — حاول مرة أخرى'));
+    }, 120000);
 
     server.on('request', async (req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
@@ -116,34 +129,48 @@ function startOAuth(settings) {
       }
       if (url.searchParams.get('state') !== state) {
         res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end('<h1>حالة التحقق غير صحيحة</h1>'); return;
+        res.end('<h1>حالة التحقق غير صحيحة — أعد المحاولة من التطبيق</h1>');
+        settle(reject, new Error('حالة التحقق غير صحيحة — أعد فتح نافذة تسجيل الدخول'));
+        return;
       }
       const code = url.searchParams.get('code');
       const error = url.searchParams.get('error');
       if (!code) {
         res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(`<h1>تم رفض الدخول: ${error || 'لا يوجد كود'}</h1>`);
-        cleanup(); reject(new Error('تم إلغاء تسجيل الدخول أو رفضه')); return;
+        settle(reject, new Error(error === 'access_denied'
+          ? 'تم إلغاء تسجيل الدخول في متصفح Discord'
+          : `فشل تسجيل الدخول: ${error || 'لا يوجد كود'} — تحقق من Client ID وأضف الرابط في Redirects`));
+        return;
       }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end('<h1>تم تسجيل الدخول بنجاح! يمكنك إغلاق هذه الصفحة والعودة للتطبيق.</h1>');
       cleanup();
       try {
+        const params = new URLSearchParams({
+          client_id: settings.clientId,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: 'http://127.0.0.1:' + CALLBACK_PORT + '/callback',
+          code_verifier: verifier,
+        });
+        if (settings.clientSecret) params.set('client_secret', settings.clientSecret);
         const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: settings.clientId,
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: 'http://127.0.0.1:' + CALLBACK_PORT + '/callback',
-            code_verifier: verifier,
-          }),
+          body: params,
         });
         const tokenData = await tokenRes.json();
-        if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData).slice(0, 200));
+        if (!tokenData.access_token) {
+          let msg = 'فشل استبدال كود الدخول من Discord';
+          if (tokenData.error === 'invalid_client') msg = 'Discord رفض المدخلات: Client ID غير صحيح أو تحتاج Client Secret (فعّل Public Client في البوابة أو أضف السر فيه)';
+          else if (tokenData.error_description) msg += ' — ' + tokenData.error_description;
+          else if (tokenData.error) msg += ' — ' + tokenData.error;
+          throw new Error(msg);
+        }
         const meRes = await fetch(`${DISCORD_API}/users/@me`, { headers: { Authorization: 'Bearer ' + tokenData.access_token } });
         const me = await meRes.json();
+        if (!me.id) throw new Error('فشل جلب بيانات الحساب من Discord');
         const guildsRes = await fetch(`${DISCORD_API}/users/@me/guilds`, { headers: { Authorization: 'Bearer ' + tokenData.access_token } });
         const guilds = await guildsRes.json();
         const session = {
@@ -155,7 +182,7 @@ function startOAuth(settings) {
         saveSession(session);
         resolve(session);
       } catch (err) {
-        reject(err);
+        settle(reject, err);
       }
     });
   });
@@ -209,6 +236,10 @@ ipcMain.handle('auth:login', async (e, settings) => {
 ipcMain.handle('auth:session', () => {
   const s = loadSession();
   if (!s) return null;
+  if (s.expiresAt && Date.now() > s.expiresAt) {
+    clearSession();
+    return null;
+  }
   return { session: s, adminGuilds: getAdminGuilds(s) };
 });
 ipcMain.handle('auth:logout', () => {
