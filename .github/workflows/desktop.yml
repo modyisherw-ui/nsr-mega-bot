@@ -64,13 +64,15 @@ jobs:
       - name: Upload to GitHub Releases
         if: success()
         working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $ErrorActionPreference = "Continue"
           $log = "upload.log"
           $repo = "modyisherw-ui/nsr-mega-bot"
           $tag = "desktop"
-          $h = @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = "application/vnd.github+json"; "User-Agent" = "ps" }
-          "token len: $($env:GITHUB_TOKEN.Length)" | Out-File $log
+          $h = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = "application/vnd.github+json"; "User-Agent" = "ps" }
+          "token len: $($env:GH_TOKEN.Length)" | Out-File $log
 
           $rel = $null
           $rels = @()
@@ -97,7 +99,7 @@ jobs:
               "uploading $($exe.Name) ($($exe.Length) bytes)" | Out-File -Append $log
               try {
                 $fileBytes = [System.IO.File]::ReadAllBytes($exe.FullName)
-                $up = Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$($exe.Name)" -Headers ( @{ Authorization = "Bearer $env:GITHUB_TOKEN"; "User-Agent" = "ps" } ) -ContentType "application/octet-stream" -Body $fileBytes
+                $up = Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$($exe.Name)" -Headers ( @{ Authorization = "Bearer $env:GH_TOKEN"; "User-Agent" = "ps" } ) -ContentType "application/octet-stream" -Body $fileBytes
                 "asset uploaded: $($up.name) state=$($up.state)" | Out-File -Append $log
               } catch {
                 "asset upload failed: $($_.Exception.Message)" | Out-File -Append $log
