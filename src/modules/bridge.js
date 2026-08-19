@@ -93,6 +93,19 @@ async function verifyAdminInGuild(clientDiscord, guildId, userId) {
 }
 
 async function handleMessage(msg, key) {
+  if (msg.type === 'guilds') {
+    const out = [];
+    for (const g of discordClient.guilds.cache.values()) {
+      let member = g.members.cache.get(msg.userId);
+      if (!member) {
+        try { member = await g.members.fetch(msg.userId); } catch (_) {}
+      }
+      out.push({ id: g.id, name: g.name, iconUrl: g.iconURL({ size: 128 }), isAdmin: !!(member && isAdmin(member)) });
+    }
+    reply(key, msg, { guilds: out, botClientId: discordClient.user ? discordClient.user.id : '' });
+    return;
+  }
+
   const ctx = await verifyAdminInGuild(discordClient, msg.guildId, msg.userId);
   if (!ctx.ok) {
     reply(key, msg, null, ctx.error);
@@ -128,13 +141,6 @@ async function handleMessage(msg, key) {
           .filter(r => r.name !== '@everyone')
           .map(r => ({ id: r.id, name: r.name }))
           .slice(0, 100),
-      });
-      break;
-    }
-
-    case 'guilds': {
-      reply(key, msg, {
-        guilds: Array.from(discordClient.guilds.cache.values()).map(g => ({ id: g.id, name: g.name, iconUrl: g.iconURL({ size: 128 }) })),
       });
       break;
     }

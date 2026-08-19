@@ -461,6 +461,9 @@ ipcMain.handle('window:toggle-maximize', () => {
   if (win.isMaximized()) win.unmaximize(); else win.maximize();
 });
 ipcMain.handle('window:close', () => { win && win.close(); });
+  ipcMain.handle('open:external', (e, url) => {
+    if (typeof url === 'string' && /^https?:\/\//.test(url)) shell.openExternal(url);
+  });
 
 // ---------- إقلاع ----------
 app.whenReady().then(() => {

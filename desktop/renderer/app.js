@@ -6,9 +6,13 @@ let settings = {};
 let session = null;
 let adminGuilds = [];
 let botGuilds = [];
+let known = false;
+let botClientId = '';
 let state = null;
 let currentGuild = null;
 let currentPage = 'home';
+
+const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -98,6 +102,7 @@ async function refreshBotGuilds() {
     const rep = await NSR.bridgeCommand({ type: 'guilds', userId: session.user.id, guildId: '' });
     if (rep && rep.ok && Array.isArray(rep.data.guilds)) {
       botGuilds = rep.data.guilds;
+      botClientId = rep.data.botClientId || botClientId;
       return botGuilds;
     }
   } catch (_) {}
@@ -157,12 +162,40 @@ async function init() {
   }
 
   $('#btn-login').addEventListener('click', doLogin);
-  $('#btn-logout2').addEventListener('click', doLogout);
   $('#btn-back').addEventListener('click', () => { playSound('click'); enterServers(); });
+
+  // زر الصورة الشخصية → القائمة الشخصية
+  $('#btn-user-menu').addEventListener('click', () => {
+    playSound('click');
+    const menu = $('#user-menu');
+    const show = menu.classList.toggle('hidden');
+    if (!show) fillUserMenu();
+  });
+  $('#btn-logout').addEventListener('click', doLogout);
+  document.addEventListener('click', (e) => {
+    if (!$('#user-menu').classList.contains('hidden') && !e.target.closest('.user-chip')) {
+      $('#user-menu').classList.add('hidden');
+    }
+  });
+
+  // علامة الديسكورد → رابط سيرفر NSR HUB
+  $('#btn-discord-server').addEventListener('click', () => {
+    playSound('click');
+    NSR.openExternal(NSR_DISCORD_SERVER);
+  });
 
   document.querySelectorAll('.nav-btn').forEach((b) => {
     b.addEventListener('click', () => { playSound('click'); goPage(b.dataset.page); });
   });
+}
+
+function fillUserMenu() {
+  if (!session) return;
+  $('#um-avatar').src = session.user.avatarUrl || '';
+  $('#um-name').textContent = session.user.username;
+  $('#um-id').textContent = '#' + session.user.id;
+  const count = known ? botGuilds.filter((g) => g.isAdmin === true).length : adminGuilds.length;
+  $('#um-count').textContent = String(count);
 }
 
 // ---------- تسجيل الدخول ----------
@@ -184,7 +217,7 @@ async function doLogin() {
 async function doLogout() {
   playSound('click');
   await NSR.logout();
-  session = null; adminGuilds = []; botGuilds = [];
+  session = null; adminGuilds = []; botGuilds = []; known = false; botClientId = '';
   showScreen('screen-login');
   $('#login-error').textContent = '';
 }
@@ -200,11 +233,16 @@ async function enterServers() {
   $('#servers-empty').classList.add('hidden');
 
   await refreshBotGuilds();
-  const botIds = new Set(botGuilds.map((g) => g.id));
-  const known = botGuilds.length > 0;
+  known = botGuilds.length > 0;
 
-  // السيرفرات التي فيها البوت (إن كنا نعرفها) والمستخدم أدمن فيها
-  const listed = known ? adminGuilds.filter((g) => botIds.has(g.id)) : adminGuilds;
+  // السيرفرات اللي فيها البوت وعندك عليها صلاحية إدارة (أدمن أو رول ستاف) حسب تعريف البوت
+  let listed;
+  if (known) {
+    listed = botGuilds.filter((g) => g.isAdmin === true);
+  } else {
+    // احتياط: من صلاحيات OAuth إذا الجسر غير متصل
+    listed = adminGuilds;
+  }
 
   if (!listed.length) {
     grid.innerHTML = '';
@@ -214,15 +252,15 @@ async function enterServers() {
   grid.innerHTML = '';
 
   listed.forEach((g, i) => {
-    const inBot = botIds.has(g.id);
+    const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
     const card = document.createElement('div');
     card.className = 'server-card';
     card.style.setProperty('--d', (i * 0.06) + 's');
     card.innerHTML = `
-      <div class="icon">${g.icon ? `<img src="https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128" alt="" />` : '🎮'}</div>
+      <div class="icon">${iconUrl ? `<img src="${iconUrl}" alt="" />` : '🎮'}</div>
       <h3>${esc(g.name)}</h3>
       <div class="meta">السيرفر: ${g.id}</div>
-      <div class="badges">${known ? (inBot ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير موجود</span>') : '<span class="badge no">⚠ البوت غير متصل</span>'}<span class="badge">👑 أدمن</span></div>`;
+      <div class="badges">${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}<span class="badge">👑 إدارة</span></div>`;
     card.addEventListener('click', () => openGuild(g));
     grid.appendChild(card);
     requestAnimationFrame(() => card.classList.add('in'));
@@ -235,7 +273,7 @@ async function openGuild(g) {
   playSound('click');
   currentGuild = g;
   showScreen('screen-dashboard');
-  $('#guild-icon').src = g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '';
+  $('#guild-icon').src = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
   $('#guild-name').textContent = g.name;
 
   goPage('home');
@@ -247,9 +285,23 @@ async function openGuild(g) {
     renderPage(currentPage);
     toast('📡 تم تحميل إعدادات السيرفر');
   } catch (e) {
-    toast('❌ ' + e.message, 'err');
     state = null;
-    $('#dash-main').innerHTML = '<div class="loading">تعذر الاتصال بالبوت — تأكد أن البوت شغال وأن مفتاح الجسر صحيح</div>';
+    const missing = /البوت ليس في هذا السيرفر/.test(e.message || '');
+    if (missing) {
+      $('#dash-main').innerHTML = `
+        <div class="loading">
+          <p style="margin-bottom:16px;">البوت لا يوجد في هذا السيرفر — قم بدعوته أولاً لتتمكن من إدارة اللوحة</p>
+          <button id="btn-invite-bot" class="btn primary invite-btn">🤖 دعوة البوت</button>
+        </div>`;
+      $('#btn-invite-bot').addEventListener('click', () => {
+        playSound('click');
+        const cid = botClientId || settings.clientId || '';
+        if (cid) NSR.openExternal(`https://discord.com/api/oauth2/authorize?client_id=${cid}&permissions=8&scope=bot%20applications.commands`);
+      });
+    } else {
+      toast('❌ ' + e.message, 'err');
+      $('#dash-main').innerHTML = '<div class="loading">تعذر الاتصال بالبوت — تأكد أن البوت شغال وأن مفتاح الجسر صحيح</div>';
+    }
   }
 }
 

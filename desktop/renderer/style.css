@@ -90,6 +90,43 @@ body {
 }
 .mini-btn:hover { opacity: 1; transform: scale(1.15); transition: .15s; }
 
+/* زر الصورة الشخصية والقائمة الشخصية */
+.chip-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  color: var(--text); font-size: 14px;
+}
+.chip-btn:hover .avatar { border-color: var(--green); }
+.discord-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: 50%;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  color: #5865F2; cursor: pointer; transition: .18s;
+}
+.discord-btn:hover { background: rgba(88,101,242,.18); transform: translateY(-2px) scale(1.06); }
+.user-chip { position: relative; }
+.user-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 120;
+  min-width: 230px; background: #141414; border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: var(--shadow); padding: 10px; animation: menuIn .2s ease;
+}
+@keyframes menuIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+.um-head { display: flex; align-items: center; gap: 10px; padding: 6px 6px 12px; border-bottom: 1px solid var(--border); }
+.um-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.um-info b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.um-info small { color: var(--muted); font-size: 11.5px; direction: ltr; }
+.um-row { padding: 10px 8px; font-size: 12.5px; color: var(--muted); }
+.um-row b { color: var(--text); }
+.um-logout {
+  width: 100%; padding: 10px; border: 1px solid rgba(255,93,108,.4); border-radius: 10px;
+  background: transparent; color: var(--red); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: .15s; margin-top: 4px;
+}
+.um-logout:hover { background: rgba(255,93,108,.15); }
+
+/* زر الرجوع باللوقو */
+.back-btn { display: inline-flex; align-items: center; gap: 8px; }
+#back-logo { width: 22px; height: 22px; border-radius: 6px; }
+
 .btn {
   border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
   transition: transform .15s ease, box-shadow .2s, filter .2s;
