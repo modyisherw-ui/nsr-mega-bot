@@ -145,7 +145,7 @@ function startOAuth(settings) {
     });
 
     server._timeout = setTimeout(() => {
-      settle(reject, new Error('انتهت مهلة تسجيل الدخول — حاول مرة أخرى'));
+      settle(reject, new Error('انتهت مهلة تسجيل الدخول — تأكد أن رابط التوجيه مضاف بالظبط في Discord Developer Portal → OAuth2 → Redirects: http://127.0.0.1:19563/callback'));
     }, 120000);
 
     server.on('request', async (req, res) => {
@@ -161,12 +161,19 @@ function startOAuth(settings) {
       }
       const code = url.searchParams.get('code');
       const error = url.searchParams.get('error');
+      const errorDesc = url.searchParams.get('error_description') || '';
       if (!code) {
         res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`<h1>تم رفض الدخول: ${error || 'لا يوجد كود'}</h1>`);
-        settle(reject, new Error(error === 'access_denied'
+        if (error === 'invalid_request' && /redirect/i.test(errorDesc)) {
+          res.end(`<meta charset="utf-8"><h1>خطأ في رابط التوجيه (redirect_uri)</h1><p>أضف هذا الرابط بالظبط في Discord Developer Portal ← OAuth2 ← Redirects:</p><code>http://127.0.0.1:19563/callback</code><p>ثم أعد المحاولة.</p>`);
+        } else {
+          res.end(`<h1>تم رفض الدخول: ${error || 'لا يوجد كود'}</h1>`);
+        }
+        settle(reject, error === 'access_denied'
           ? 'تم إلغاء تسجيل الدخول في متصفح Discord'
-          : `فشل تسجيل الدخول: ${error || 'لا يوجد كود'} — تحقق من Client ID وأضف الرابط في Redirects`));
+          : /redirect/i.test(errorDesc) || error == null
+            ? 'Discord رفض رابط التوجيه (Invalid OAuth2 redirect_uri) — أضف الرابط http://127.0.0.1:19563/callback بالظبط في Discord Developer Portal → OAuth2 → Redirects ثم أعد المحاولة'
+            : `فشل تسجيل الدخول: ${error || 'لا يوجد كود'} — تحقق من Client ID وأضف الرابط في Redirects`);
         return;
       }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

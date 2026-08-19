@@ -1,5 +1,5 @@
-// NSR Dashboard — منطق الواجهة
-const api = window.api;
+﻿// NSR Dashboard — منطق الواجهة
+const NSR = window.api;
 const $ = (sel) => document.querySelector(sel);
 
 let settings = {};
@@ -21,10 +21,10 @@ function showScreen(id) {
 
 // ---------- شريط العنوان ----------
 try {
-  $('#tb-min').addEventListener('click', () => api.winMinimize());
-  $('#tb-max').addEventListener('click', () => api.winToggleMaximize());
-  $('#tb-close').addEventListener('click', () => api.winClose());
-  api.onWinMaximized((m) => {
+  $('#tb-min').addEventListener('click', () => NSR.winMinimize());
+  $('#tb-max').addEventListener('click', () => NSR.winToggleMaximize());
+  $('#tb-close').addEventListener('click', () => NSR.winClose());
+  NSR.onWinMaximized((m) => {
     $('#tb-max').innerHTML = m ? '&#x2750;' : '&#x25A1;';
   });
 } catch (_) {}
@@ -95,7 +95,7 @@ function setBridgeStatus(connected) {
 async function refreshBotGuilds() {
   if (!settings.bridgeKey || !session) return [];
   try {
-    const rep = await api.bridgeCommand({ type: 'guilds', userId: session.user.id, guildId: '' });
+    const rep = await NSR.bridgeCommand({ type: 'guilds', userId: session.user.id, guildId: '' });
     if (rep && rep.ok && Array.isArray(rep.data.guilds)) {
       botGuilds = rep.data.guilds;
       return botGuilds;
@@ -111,7 +111,7 @@ const updateSub = $('#update-sub');
 const updateBarWrap = $('#update-bar-wrap');
 const updateBar = $('#update-bar');
 
-api.onUpdateStatus((s) => {
+NSR.onUpdateStatus((s) => {
   updateOverlay.classList.add('visible');
   if (s.phase === 'checking') {
     updateTitle.textContent = 'جاري التحقق من التحديثات...';
@@ -143,13 +143,13 @@ setTimeout(() => { updateOverlay.classList.remove('visible'); if (!session) show
 // ---------- الإقلاع ----------
 async function init() {
   setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
-  settings = await api.getSettings();
-  if (settings.bridgeKey) await api.bridgeConnect(settings.bridgeKey);
-  api.onBridgeStatus((s) => setBridgeStatus(s.connected));
-  const st = await api.bridgeStatus();
+  settings = await NSR.getSettings();
+  if (settings.bridgeKey) await NSR.bridgeConnect(settings.bridgeKey);
+  NSR.onBridgeStatus((s) => setBridgeStatus(s.connected));
+  const st = await NSR.bridgeStatus();
   setBridgeStatus(st.connected);
 
-  const sess = await api.getSession();
+  const sess = await NSR.getSession();
   if (sess && sess.session) {
     session = sess.session;
     adminGuilds = sess.adminGuilds;
@@ -171,7 +171,7 @@ async function doLogin() {
   err.textContent = '';
 
   try {
-    const res = await api.login();
+    const res = await NSR.login();
     session = res.session;
     adminGuilds = res.adminGuilds;
     toast('✅ تم تسجيل الدخول بنجاح!');
@@ -183,7 +183,7 @@ async function doLogin() {
 
 async function doLogout() {
   playSound('click');
-  await api.logout();
+  await NSR.logout();
   session = null; adminGuilds = []; botGuilds = [];
   showScreen('screen-login');
   $('#login-error').textContent = '';
@@ -241,7 +241,7 @@ async function openGuild(g) {
   goPage('home');
   $('#dash-main').innerHTML = '<div class="loading">جاري تحميل إعدادات السيرفر...</div>';
   try {
-    const rep = await api.bridgeCommand({ type: 'state', userId: session.user.id, guildId: g.id });
+    const rep = await NSR.bridgeCommand({ type: 'state', userId: session.user.id, guildId: g.id });
     if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'لا استجابة');
     state = rep.data;
     renderPage(currentPage);
@@ -275,7 +275,7 @@ function renderPage(page) {
 
 async function refreshState() {
   try {
-    const rep = await api.bridgeCommand({ type: 'state', userId: session.user.id, guildId: currentGuild.id });
+    const rep = await NSR.bridgeCommand({ type: 'state', userId: session.user.id, guildId: currentGuild.id });
     if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'لا استجابة');
     state = rep.data;
     renderPage(currentPage);
@@ -367,7 +367,7 @@ function renderWelcome(main) {
       showCount: main.querySelector('#w-count').checked,
     };
     try {
-      const rep = await api.bridgeCommand({ type: 'setWelcome', userId: session.user.id, guildId: currentGuild.id, welcome: w2 });
+      const rep = await NSR.bridgeCommand({ type: 'setWelcome', userId: session.user.id, guildId: currentGuild.id, welcome: w2 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الحفظ');
       state.welcome = rep.data.welcome;
       toast('✅ تم حفظ إعدادات الترحيب');
@@ -412,7 +412,7 @@ function renderTickets(main) {
   main.querySelectorAll('[data-type-id]').forEach((sw) => {
     sw.addEventListener('change', async () => {
       try {
-        const rep = await api.bridgeCommand({ type: 'setTicketTypeEnabled', userId: session.user.id, guildId: currentGuild.id, typeId: sw.dataset.typeId, enabled: sw.checked });
+        const rep = await NSR.bridgeCommand({ type: 'setTicketTypeEnabled', userId: session.user.id, guildId: currentGuild.id, typeId: sw.dataset.typeId, enabled: sw.checked });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
         toast(sw.checked ? '✅ النوع ظاهر الآن' : '🙈 النوع مخفي الآن');
       } catch (e) { sw.checked = !sw.checked; toast('❌ ' + e.message, 'err'); }
@@ -422,7 +422,7 @@ function renderTickets(main) {
     b.addEventListener('click', async () => {
       playSound('click');
       try {
-        const rep = await api.bridgeCommand({ type: 'delTicketType', userId: session.user.id, guildId: currentGuild.id, typeId: b.dataset.delId });
+        const rep = await NSR.bridgeCommand({ type: 'delTicketType', userId: session.user.id, guildId: currentGuild.id, typeId: b.dataset.delId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
         toast('🗑 تم حذف النوع المخصص');
         refreshState();
@@ -433,7 +433,7 @@ function renderTickets(main) {
     const label = main.querySelector('#tk-new-label').value.trim();
     if (!label) { toast('❌ اكتب اسم النوع', 'err'); return; }
     try {
-      const rep = await api.bridgeCommand({ type: 'addTicketType', userId: session.user.id, guildId: currentGuild.id, label });
+      const rep = await NSR.bridgeCommand({ type: 'addTicketType', userId: session.user.id, guildId: currentGuild.id, label });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       main.querySelector('#tk-new-label').value = '';
       toast('✅ تمت إضافة النوع');
@@ -446,7 +446,7 @@ function renderTickets(main) {
       description: main.querySelector('#tk-desc').value.trim(),
     };
     try {
-      const rep = await api.bridgeCommand({ type: 'setTicketPanel', userId: session.user.id, guildId: currentGuild.id, panel: p });
+      const rep = await NSR.bridgeCommand({ type: 'setTicketPanel', userId: session.user.id, guildId: currentGuild.id, panel: p });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.ticket.panel = rep.data.panel;
       toast('✅ تم حفظ اللوحة');
@@ -455,7 +455,7 @@ function renderTickets(main) {
   main.querySelector('[data-send="ticket"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
-        const rep = await api.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
+        const rep = await NSR.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
         toast('✅ تم إرسال لوحة التذاكر');
       } catch (e) { toast('❌ ' + e.message, 'err'); }
@@ -492,7 +492,7 @@ function renderSuggestions(main) {
     const channelId = main.querySelector('#sugg-ch').value;
     if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
     try {
-      const rep = await api.bridgeCommand({ type: 'setSuggestionsChannel', userId: session.user.id, guildId: currentGuild.id, channelId });
+      const rep = await NSR.bridgeCommand({ type: 'setSuggestionsChannel', userId: session.user.id, guildId: currentGuild.id, channelId });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.suggestions.channelId = channelId;
       toast('✅ تم حفظ روم الاقتراحات');
@@ -501,7 +501,7 @@ function renderSuggestions(main) {
   main.querySelector('[data-send="sugg"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
-        const rep = await api.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
+        const rep = await NSR.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
         toast('✅ تم إرسال لوحة الاقتراحات');
       } catch (e) { toast('❌ ' + e.message, 'err'); }
@@ -521,7 +521,7 @@ function renderSend(main) {
   main.querySelector('[data-send="st"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
-        const rep = await api.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
+        const rep = await NSR.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
         toast('✅ تم الإرسال!');
       } catch (e) { toast('❌ ' + e.message, 'err'); }
@@ -530,7 +530,7 @@ function renderSend(main) {
   main.querySelector('[data-send="ss"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
-        const rep = await api.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
+        const rep = await NSR.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
         toast('✅ تم الإرسال!');
       } catch (e) { toast('❌ ' + e.message, 'err'); }
@@ -607,7 +607,7 @@ function renderAuth(main) {
   main.querySelector('#save-staff').addEventListener('click', async () => {
     const ids = Array.from(main.querySelectorAll('[data-role-id][data-picked="1"]')).map((c) => c.dataset.roleId);
     try {
-      const rep = await api.bridgeCommand({ type: 'setStaffRoles', userId: session.user.id, guildId: currentGuild.id, roleIds: ids });
+      const rep = await NSR.bridgeCommand({ type: 'setStaffRoles', userId: session.user.id, guildId: currentGuild.id, roleIds: ids });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.staffRoles = rep.data.staffRoles;
       toast('✅ تم حفظ رتب الإدارة');
@@ -619,7 +619,7 @@ function renderAuth(main) {
       botRoleId: main.querySelector('#ar-bot').value || null,
     };
     try {
-      const rep = await api.bridgeCommand({ type: 'setAutoRoles', userId: session.user.id, guildId: currentGuild.id, autoRoles: ar2 });
+      const rep = await NSR.bridgeCommand({ type: 'setAutoRoles', userId: session.user.id, guildId: currentGuild.id, autoRoles: ar2 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.autoRoles = rep.data.autoRoles;
       toast('✅ تم حفظ الرولات التلقائية');
@@ -649,7 +649,7 @@ function renderBrand(main) {
     const hex = main.querySelector('#brand-color').value.replace('#', '');
     const color = parseInt(hex, 16);
     try {
-      const rep = await api.bridgeCommand({ type: 'setColor', userId: session.user.id, guildId: currentGuild.id, color });
+      const rep = await NSR.bridgeCommand({ type: 'setColor', userId: session.user.id, guildId: currentGuild.id, color });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.color = rep.data.color;
       toast('✅ تم حفظ اللون');
