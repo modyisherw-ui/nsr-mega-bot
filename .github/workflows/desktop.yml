@@ -65,43 +65,54 @@ jobs:
         if: success()
         working-directory: desktop
         run: |
+          $ErrorActionPreference = "Continue"
           $log = "upload.log"
-          "--- release create/update ---" | Out-File $log
           $repo = "modyisherw-ui/nsr-mega-bot"
           $tag = "desktop"
-          # إنشاء أو تحديث الـ release بوسم ثابت
-          $body = @{ tag_name = $tag; name = "NSR Dashboard"; body = "لوحة تحكم سطح المكتب للبوت — أحدث إصدار"; draft = $false; prerelease = $false } | ConvertTo-Json
+          $h = @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = "application/vnd.github+json"; "User-Agent" = "ps" }
+          "token len: $($env:GITHUB_TOKEN.Length)" | Out-File $log
+
+          $rel = $null
+          $rels = @()
+          # جرّب إنشاء الـ release
           try {
-            $h = @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = "application/vnd.github+json"; "User-Agent" = "ps" }
-            $rel = Invoke-RestMethod -Method Post -Uri "https://api.github.com/repos/$repo/releases" -Headers $h -Body $body -ContentType "application/json" -ErrorAction Stop
+            $body = @{ tag_name = $tag; name = "NSR Dashboard"; body = "لوحة تحكم سطح المكتب للبوت"; draft = $false; prerelease = $false } | ConvertTo-Json
+            $rel = Invoke-RestMethod -Method Post -Uri "https://api.github.com/repos/$repo/releases" -Headers $h -Body $body -ContentType "application/json"
             "release created: $($rel.id)" | Out-File -Append $log
           } catch {
-            $r = $_.Exception.Message
-            "create failed: $r (probably exists)" | Out-File -Append $log
-            $rels = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repo/releases?per_page=100" -Headers $h
-            $rel = $rels | Where-Object { $_.tag_name -eq $tag } | Select-Object -First 1
-            if ($rel) {
-              "found existing release: $($rel.id)" | Out-File -Append $log
-              $patch = @{ body = "لوحة تحكم سطح المكتب للبوت — أحدث إصدار" } | ConvertTo-Json
-              Invoke-RestMethod -Method Patch -Uri "https://api.github.com/repos/$repo/releases/$($rel.id)" -Headers $h -Body $patch -ContentType "application/json" | Out-Null
-            } else {
-              "NO RELEASE AVAILABLE" | Out-File -Append $log
-              exit 1
-            }
+            "create failed: $($_.Exception.Message)" | Out-File -Append $log
           }
-          # رفع الملف
-          $exe = Get-ChildItem dist/NSR-Dashboard-Setup-*.exe | Select-Object -First 1
-          if (-not $exe) { "NO EXE FOUND in dist" | Out-File -Append $log; exit 1 }
-          "uploading $($exe.Name) ($($exe.Length) bytes)" | Out-File -Append $log
-          $fileBytes = [System.IO.File]::ReadAllBytes($exe.FullName)
-          try {
-            $up = Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$($exe.Name)" -Headers ( @{ Authorization = "Bearer $env:GITHUB_TOKEN"; "User-Agent" = "ps" } ) -ContentType "application/octet-stream" -Body $fileBytes -ErrorAction Stop
-            "asset uploaded: $($up.name) state=$($up.state)" | Out-File -Append $log
-          } catch {
-            "upload failed: $($_.Exception.Message)" | Out-File -Append $log
-            exit 1
+          if (-not $rel) {
+            try {
+              $rels = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repo/releases?per_page=100" -Headers $h
+              $rel = @($rels) | Where-Object { $_.tag_name -eq $tag } | Select-Object -First 1
+            } catch { "list failed: $($_.Exception.Message)" | Out-File -Append $log }
+            if ($rel) { "found existing release: $($rel.id)" | Out-File -Append $log }
+            else { "NO RELEASE AVAILABLE" | Out-File -Append $log }
           }
+
+          if ($rel) {
+            $exe = Get-ChildItem dist/NSR-Dashboard-Setup-*.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($exe) {
+              "uploading $($exe.Name) ($($exe.Length) bytes)" | Out-File -Append $log
+              try {
+                $fileBytes = [System.IO.File]::ReadAllBytes($exe.FullName)
+                $up = Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$($exe.Name)" -Headers ( @{ Authorization = "Bearer $env:GITHUB_TOKEN"; "User-Agent" = "ps" } ) -ContentType "application/octet-stream" -Body $fileBytes
+                "asset uploaded: $($up.name) state=$($up.state)" | Out-File -Append $log
+              } catch {
+                "asset upload failed: $($_.Exception.Message)" | Out-File -Append $log
+              }
+            } else { "NO EXE FOUND in dist" | Out-File -Append $log }
+          }
+
           Get-Content $log
+          # تحميل السجل إلى الريبو لمراجعته دائماً
+          git config user.name "nsr-bot" 2>$null | Out-Null
+          git config user.email "nsr-bot@users.noreply.github.com" 2>$null | Out-Null
+          git add -f upload.log 2>$null | Out-Null
+          git commit -m "debug: upload log" 2>$null | Out-Null
+          git pull --rebase origin main --no-edit 2>$null | Out-Null
+          git push origin main 2>$null | Out-Null
 
       - name: Show artifacts
         if: always()
