@@ -24,7 +24,7 @@ function rebuildPanelComponents(tcfg) {
 }
 
 function ticketColor(typeId, guildId) {
-  return 0x5865F2; // أزرق ثابت للوحة التذاكر
+  return 0x0099FF; // أزرق ثابت للتذاكر (لون لا يُستبدل بنظام لون السيرفر)
 }
 
 async function handleTicketSelect(interaction) {

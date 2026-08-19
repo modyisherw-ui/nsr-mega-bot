@@ -1370,7 +1370,7 @@ function buildTicketPanelPayload(guild, tcfg) {
       return opt;
     }));
   const embed = new EmbedBuilder()
-    .setColor(tcfg.panel?.color || 0x5865F2)
+    .setColor(0x0099FF) // أزرق ثابت للتذاكر (لون لا يُستبدل بنظام لون السيرفر)
     .setTitle(tcfg.panel?.title || '🎫 Support Tickets')
     .setDescription(`${tcfg.panel?.description || ''}\n\n${types.map(tp => `> ${tp.emoji} **${tp.label}** — ${tp.description}`).join('\n')}`)
     .setFooter({ text: tcfg.panel?.footer || 'NSR HUB - MoDy Dev' });

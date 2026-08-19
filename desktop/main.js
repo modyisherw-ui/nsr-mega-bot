@@ -342,14 +342,23 @@ function downloadFile(url, dest, onProgress) {
 }
 
 function installAndRelaunch(installerPath) {
+  if (!installerPath || !fs.existsSync(installerPath)) {
+    updateLog('installer missing: ' + installerPath);
+    return;
+  }
   const exe = process.execPath;
-  const installer = installerPath.replace(/"/g, '\\"');
-  const appExe = exe.replace(/"/g, '\\"');
-  const cmd = `start "" /wait "${installer}" /S & start "" "${appExe}"`;
+  const iPath = String(installerPath).replace(/'/g, "''");
+  const aPath = String(exe).replace(/'/g, "''");
+  // عملية منفصلة: تنتظر خروج التطبيق (2 ثانية) → تشغّل المثبّت بصمت → تفتح التطبيق الجديد
+  // لا نستخدم cmd start لأن المثبّت كان يفشل بصمت عندما يكون التطبيق ما زال يعمل
+  const script = "Start-Sleep -Seconds 2; Start-Process -FilePath '" + iPath + "' -ArgumentList '/S' -Wait; Start-Process -FilePath '" + aPath + "'";
   try {
-    spawn((process.env.ComSpec || 'cmd.exe'), ['/c', cmd], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
-  } catch (_) {}
-  setTimeout(() => { try { app.exit(0); } catch (_) {} }, 800);
+    spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    updateLog('launched updater script: ' + installerPath);
+  } catch (e) {
+    updateLog('launch updater failed: ' + (e && e.message));
+  }
+  setTimeout(() => { try { app.exit(0); } catch (_) {} }, 1200);
 }
 
 async function runUpdateCheck(win) {
