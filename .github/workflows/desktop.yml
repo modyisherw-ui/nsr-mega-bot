@@ -46,20 +46,7 @@ jobs:
       - name: Print build log on failure
         if: failure()
         working-directory: desktop
-        run: |
-          Get-Content build.log -Tail 80
-          Copy-Item build.log build-error.log -Force
-          git config user.name "nsr-bot"
-          git config user.email "nsr-bot@users.noreply.github.com"
-          for ($i = 0; $i -lt 6; $i++) {
-            git pull --rebase origin main --no-edit 2>$null | Out-Null
-            git add -f build-error.log
-            git commit -m "debug: desktop build error log" 2>$null | Out-Null
-            git push origin main 2>$null
-            if ($LASTEXITCODE -eq 0) { break }
-            Start-Sleep -Seconds 15
-          }
-          Get-Content build-error.log -Tail 5
+        run: Get-Content build.log -Tail 80
 
       - name: Upload to GitHub Releases
         if: success()
@@ -108,13 +95,6 @@ jobs:
           }
 
           Get-Content $log
-          # تحميل السجل إلى الريبو لمراجعته دائماً
-          git config user.name "nsr-bot" 2>$null | Out-Null
-          git config user.email "nsr-bot@users.noreply.github.com" 2>$null | Out-Null
-          git add -f upload.log 2>$null | Out-Null
-          git commit -m "debug: upload log" 2>$null | Out-Null
-          git pull --rebase origin main --no-edit 2>$null | Out-Null
-          git push origin main 2>$null | Out-Null
 
       - name: Show artifacts
         if: always()
