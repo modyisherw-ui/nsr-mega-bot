@@ -320,7 +320,8 @@ function createWindow() {
     height: 760,
     minWidth: 960,
     minHeight: 620,
-    backgroundColor: '#0b0f1c',
+    frame: false,
+    backgroundColor: '#0a0a0a',
     autoHideMenuBar: true,
     title: 'NSR HUB',
     webPreferences: {
@@ -329,6 +330,8 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+  win.on('maximize', () => { try { win.webContents.send('window:maximized', true); } catch (_) {} });
+  win.on('unmaximize', () => { try { win.webContents.send('window:maximized', false); } catch (_) {} });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
@@ -372,6 +375,14 @@ ipcMain.handle('bridge:connect', (e, key) => {
 });
 ipcMain.handle('bridge:command', (e, data) => sendCommand(data));
 ipcMain.handle('bridge:status', () => ({ connected: !!(mqttClient && mqttClient.connected) }));
+
+// ---------- أزرار شريط العنوان ----------
+ipcMain.handle('window:minimize', () => { win && win.minimize(); });
+ipcMain.handle('window:toggle-maximize', () => {
+  if (!win) return;
+  if (win.isMaximized()) win.unmaximize(); else win.maximize();
+});
+ipcMain.handle('window:close', () => { win && win.close(); });
 
 // ---------- إقلاع ----------
 app.whenReady().then(() => {

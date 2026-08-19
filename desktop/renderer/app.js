@@ -19,6 +19,14 @@ function showScreen(id) {
   $('#' + id).classList.add('active');
 }
 
+// ---------- شريط العنوان ----------
+$('#tb-min').addEventListener('click', () => api.winMinimize());
+$('#tb-max').addEventListener('click', () => api.winToggleMaximize());
+$('#tb-close').addEventListener('click', () => api.winClose());
+api.onWinMaximized((m) => {
+  $('#tb-max').innerHTML = m ? '&#x2750;' : '&#x25A1;';
+});
+
 // ---------- الأصوات (WebAudio) ----------
 let audioCtx = null;
 function ensureAudio() {

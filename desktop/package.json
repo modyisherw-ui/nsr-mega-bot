@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "nsr-hub",
   "version": "1.0.3",
-  "description": "NSR HUB â€” Ù„ÙˆØ­Ø© ØªØ­ÙƒÙ… Ø³Ø·Ø­ Ø§Ù„Ù…ÙƒØªØ¨ Ù„Ù„Ø¨ÙˆØª",
+  "description": "NSR HUB — لوحة تحكم سطح المكتب للبوت",
   "main": "main.js",
   "author": "NSR HUB",
   "license": "MIT",

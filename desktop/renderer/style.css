@@ -26,7 +26,31 @@ body {
   user-select: none;
 }
 
-.screen { position: absolute; inset: 0; display: none; flex-direction: column; padding: 26px 34px; }
+/* ---------- شريط العنوان المخصص ---------- */
+#titlebar {
+  height: 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #0d0d0d;
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  position: relative; z-index: 300;
+  direction: ltr;
+}
+#titlebar-brand { display: flex; align-items: center; gap: 9px; padding: 0 12px; font-size: 13px; color: var(--muted); letter-spacing: .3px; }
+#titlebar-brand b { color: var(--text); }
+#titlebar-logo { width: 20px; height: 20px; border-radius: 6px; }
+#titlebar-controls { display: flex; height: 100%; -webkit-app-region: no-drag; }
+.tb-btn {
+  width: 46px; height: 100%;
+  background: transparent; border: none; color: var(--muted);
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.tb-btn:hover { background: rgba(255,255,255,.09); color: var(--text); }
+.tb-close:hover { background: #e81123; color: #fff; }
+
+.screen { position: absolute; inset: 0; top: 40px; display: none; flex-direction: column; padding: 26px 34px; }
 .screen.active { display: flex; animation: screenIn .45s cubic-bezier(.2,.9,.25,1); }
 @keyframes screenIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
 
@@ -252,7 +276,7 @@ body {
 
 /* ---------- التحديث الإجباري ---------- */
 .update-overlay {
-  position: fixed; inset: 0; z-index: 200;
+  position: fixed; inset: 0; top: 40px; z-index: 200;
   background: #0a0a0a;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity .25s ease;

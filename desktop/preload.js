@@ -13,4 +13,8 @@ contextBridge.exposeInMainWorld('api', {
   onBridgeStatus: (cb) => ipcRenderer.on('bridge:status', (e, s) => cb(s)),
   onBridgeEvent: (cb) => ipcRenderer.on('bridge:event', (e, m) => cb(m)),
   onUpdateStatus: (cb) => ipcRenderer.on('update:status', (e, s) => cb(s)),
+  winMinimize: () => ipcRenderer.invoke('window:minimize'),
+  winToggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
+  winClose: () => ipcRenderer.invoke('window:close'),
+  onWinMaximized: (cb) => ipcRenderer.on('window:maximized', (e, m) => cb(m)),
 });
