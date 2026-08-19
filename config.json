@@ -392,6 +392,14 @@
       },
       "suggestions": {
         "channelId": "1537538400054415390"
+      },
+      "welcome": {
+        "channelId": "1409937832692158585",
+        "message": "أهلاً بك {user} في سيرفر {server}! 🎉",
+        "imageUrl": "",
+        "mode": "room",
+        "withImage": true,
+        "showCount": true
       }
     }
   },
