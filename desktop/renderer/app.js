@@ -94,8 +94,40 @@ async function refreshBotGuilds() {
   return [];
 }
 
+// ---------- التحديث الإجباري ----------
+const updateOverlay = $('#update-overlay');
+const updateTitle = $('#update-title');
+const updateSub = $('#update-sub');
+const updateBarWrap = $('#update-bar-wrap');
+const updateBar = $('#update-bar');
+
+api.onUpdateStatus((s) => {
+  updateOverlay.classList.add('visible');
+  if (s.phase === 'checking') {
+    updateTitle.textContent = 'جاري التحقق من التحديثات...';
+    updateSub.textContent = '';
+    updateBarWrap.classList.add('hidden');
+  } else if (s.phase === 'downloading') {
+    updateTitle.textContent = '📥 تم العثور على تحديث جديد — جاري تنزيله';
+    updateSub.textContent = s.pct + '%';
+    updateBarWrap.classList.remove('hidden');
+    updateBar.style.width = s.pct + '%';
+  } else if (s.phase === 'installing') {
+    updateTitle.textContent = '⚙️ جاري تثبيت التحديث وسيُفتح التطبيق تلقائياً...';
+    updateSub.textContent = 'إصدار ' + s.version;
+    updateBarWrap.classList.add('hidden');
+  } else if (s.phase === 'none') {
+    updateOverlay.classList.remove('visible');
+    if (!session) showScreen('screen-login');
+  } else if (s.phase === 'error') {
+    updateOverlay.classList.remove('visible');
+    if (!session) showScreen('screen-login');
+  }
+});
+
 // ---------- الإقلاع ----------
 async function init() {
+  setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
   settings = await api.getSettings();
   $('#inp-clientid').value = settings.clientId || '';
   $('#inp-clientsecret').value = settings.clientSecret || '';

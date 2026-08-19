@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld('api', {
   bridgeStatus: () => ipcRenderer.invoke('bridge:status'),
   onBridgeStatus: (cb) => ipcRenderer.on('bridge:status', (e, s) => cb(s)),
   onBridgeEvent: (cb) => ipcRenderer.on('bridge:event', (e, m) => cb(m)),
+  onUpdateStatus: (cb) => ipcRenderer.on('update:status', (e, s) => cb(s)),
 });

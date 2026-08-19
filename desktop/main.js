@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
 const mqtt = require('mqtt');
 
 const BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
@@ -197,6 +198,95 @@ function getAdminGuilds(session) {
   });
 }
 
+// ---------- التحديث التلقائي الإجباري ----------
+const UPDATE_API = 'https://api.github.com/repos/modyisherw-ui/nsr-mega-bot/releases/tags/desktop';
+const UPDATE_PATTERN = /^NSR-HUB-Setup-(\d+\.\d+\.\d+)\.exe$/;
+
+function verLt(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) < (pb[i] || 0)) return true;
+    if ((pa[i] || 0) > (pb[i] || 0)) return false;
+  }
+  return false;
+}
+
+async function checkForUpdate() {
+  try {
+    const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' } });
+    if (!res.ok) return null;
+    const rel = await res.json();
+    const asset = (rel.assets || []).find((a) => UPDATE_PATTERN.test(a.name));
+    if (!asset) return null;
+    const remoteVer = asset.name.match(UPDATE_PATTERN)[1];
+    if (!verLt(app.getVersion(), remoteVer)) return null;
+    return { version: remoteVer, url: asset.browser_download_url };
+  } catch (_) {
+    return null;
+  }
+}
+
+function downloadFile(url, dest, onProgress) {
+  return new Promise((resolve, reject) => {
+    fetch(url, { headers: { 'User-Agent': 'nsr-hub-updater' } })
+      .then((res) => {
+        if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+        const total = Number(res.headers.get('content-length')) || 0;
+        const ws = fs.createWriteStream(dest);
+        let got = 0;
+        res.body.getReader()
+          .then(function pump(reader) {
+            return reader.read().then(({ done, value }) => {
+              if (done) { ws.end(); return; }
+              got += value.length;
+              ws.write(value);
+              if (total && onProgress) onProgress(got / total);
+              return pump(reader);
+            });
+          })
+          .then(() => { ws.end(); resolve(); })
+          .catch((e) => { try { ws.destroy(); } catch (_) {} reject(e); });
+      })
+      .catch(reject);
+  });
+}
+
+function installAndRelaunch(installerPath) {
+  const exe = process.execPath;
+  const child = spawn(installerPath, ['/S'], { detached: true, stdio: 'ignore' });
+  const fallback = setTimeout(() => { try { app.exit(0); } catch (_) {} }, 180000);
+  child.on('close', () => {
+    clearTimeout(fallback);
+    try { spawn(exe, [], { detached: true, stdio: 'ignore' }); } catch (_) {}
+    try { app.exit(0); } catch (_) {}
+  });
+  child.on('error', () => {
+    clearTimeout(fallback);
+    try { app.exit(0); } catch (_) {}
+  });
+}
+
+async function runUpdateCheck(win) {
+  const send = (s) => { try { if (win && !win.isDestroyed()) win.webContents.send('update:status', s); } catch (_) {} };
+  send({ phase: 'checking' });
+  const upd = await checkForUpdate();
+  if (!upd) {
+    send({ phase: 'none' });
+    return;
+  }
+  send({ phase: 'downloading', pct: 0, version: upd.version });
+  const dest = path.join(app.getPath('temp'), 'nsr-hub-update-' + upd.version + '.exe');
+  try {
+    await downloadFile(upd.url, dest, (pct) => send({ phase: 'downloading', pct: Math.round(pct * 100), version: upd.version }));
+  } catch (e) {
+    send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
+    return;
+  }
+  send({ phase: 'installing', version: upd.version });
+  installAndRelaunch(dest);
+}
+
 // ---------- نافذة ----------
 let win = null;
 
@@ -261,6 +351,9 @@ app.whenReady().then(() => {
   // ربط الجسر عند الإقلاع لو المفتاح محفوظ
   const s = loadSettings();
   if (s.bridgeKey) connectBridge(s.bridgeKey, win);
+
+  // فحص التحديث الإجباري عند الفتح — يعطي الواجهة مهلة للاشتراك
+  setTimeout(() => runUpdateCheck(win), 1200);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
