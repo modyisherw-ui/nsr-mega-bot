@@ -11,6 +11,30 @@ const BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
 const CALLBACK_PORT = 19563;
 const DISCORD_API = 'https://discord.com/api/v10';
 
+// ---------- إعدادات التطبيق المثبتة (بدون إدخال من المستخدم) ----------
+const APP_CLIENT_ID = '1537394763328786572';
+const BOT_CONFIG_URL = 'https://raw.githubusercontent.com/modyisherw-ui/nsr-mega-bot/main/config.json';
+
+async function resolveAppConfig() {
+  const s = loadSettings();
+  const clientId = s.clientId || APP_CLIENT_ID;
+  const clientSecret = s.clientSecret || '';
+  let bridgeKey = s.bridgeKey || '';
+  if (!bridgeKey) {
+    try {
+      const res = await fetch(BOT_CONFIG_URL, { headers: { 'User-Agent': 'nsr-hub' } });
+      if (res.ok) {
+        const cfg = await res.json();
+        if (cfg.bridgeKey) {
+          bridgeKey = String(cfg.bridgeKey);
+          saveSettings({ bridgeKey });
+        }
+      }
+    } catch (_) {}
+  }
+  return { clientId, clientSecret, bridgeKey };
+}
+
 // ---------- تخزين الإعدادات الجلسة ----------
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 
@@ -319,8 +343,13 @@ ipcMain.handle('settings:set', (e, patch) => {
   return s;
 });
 
-ipcMain.handle('auth:login', async (e, settings) => {
-  const session = await startOAuth(settings);
+ipcMain.handle('auth:login', async () => {
+  const cfg = await resolveAppConfig();
+  if (cfg.bridgeKey) {
+    connectBridge(cfg.bridgeKey, win);
+    if (win) win.webContents.send('bridge:status', { connected: false });
+  }
+  const session = await startOAuth(cfg);
   return { session, adminGuilds: getAdminGuilds(session) };
 });
 ipcMain.handle('auth:session', () => {

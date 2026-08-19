@@ -129,10 +129,6 @@ api.onUpdateStatus((s) => {
 async function init() {
   setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
   settings = await api.getSettings();
-  $('#inp-clientid').value = settings.clientId || '';
-  $('#inp-clientsecret').value = settings.clientSecret || '';
-  $('#inp-bridgekey').value = settings.bridgeKey || '';
-
   if (settings.bridgeKey) await api.bridgeConnect(settings.bridgeKey);
   api.onBridgeStatus((s) => setBridgeStatus(s.connected));
   const st = await api.bridgeStatus();
@@ -145,11 +141,6 @@ async function init() {
     enterServers();
   }
 
-  $('#btn-toggle-key').addEventListener('click', () => {
-    const inp = $('#inp-bridgekey');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-  });
-
   $('#btn-login').addEventListener('click', doLogin);
   $('#btn-logout2').addEventListener('click', doLogout);
   $('#btn-back').addEventListener('click', () => { playSound('click'); enterServers(); });
@@ -161,25 +152,11 @@ async function init() {
 
 // ---------- تسجيل الدخول ----------
 async function doLogin() {
-  const clientId = $('#inp-clientid').value.trim();
-  const clientSecret = $('#inp-clientsecret').value.trim();
-  const bridgeKey = $('#inp-bridgekey').value.trim();
   const err = $('#login-error');
   err.textContent = '';
 
-  if (!clientId) { err.textContent = '❌ أدخل معرف تطبيق Discord أولاً'; return; }
-  if (!bridgeKey) {
-    err.textContent = '❌ أدخل مفتاح الجسر — تجده في config.json داخل خاصية bridgeKey (جمّلته في أول تشغيل للبوت)';
-    return;
-  }
-
-  settings = await api.setSettings({ clientId, clientSecret, bridgeKey });
-  await api.bridgeConnect(bridgeKey);
-  const bst = await api.bridgeStatus();
-  setBridgeStatus(bst.connected);
-
   try {
-    const res = await api.login({ clientId, clientSecret });
+    const res = await api.login();
     session = res.session;
     adminGuilds = res.adminGuilds;
     toast('✅ تم تسجيل الدخول بنجاح!');

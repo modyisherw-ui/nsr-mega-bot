@@ -16,20 +16,8 @@
       <p class="subtitle">لوحة تحكم سطح المكتب — تحكم في بوتك من برنامجك</p>
 
       <div class="field-row">
-        <label>معرف تطبيق Discord (Client ID)</label>
-        <input id="inp-clientid" type="text" placeholder="1537394763328786572" />
+        <button id="btn-login" class="btn primary big">تسجيل الدخول عبر Discord</button>
       </div>
-      <div class="field-row">
-        <label>السر السري للتطبيق (Client Secret) — اختياري</label>
-        <input id="inp-clientsecret" type="password" placeholder="مطلوب فقط إذا التطبيق ليس Public Client" />
-      </div>
-      <div class="field-row">
-        <label>مفتاح الجسر (Bridge Key)</label>
-        <input id="inp-bridgekey" type="password" placeholder="المفتاح المشترك بين التطبيق والبوت" />
-        <button id="btn-toggle-key" class="mini-btn" type="button">👁</button>
-      </div>
-
-      <button id="btn-login" class="btn primary big">تسجيل الدخول عبر Discord</button>
       <p class="hint">🔴 مهم: في Discord Developer Portal → OAuth2 → Redirects أضف:<br/><code>http://127.0.0.1:19563/callback</code></p>
       <p id="login-error" class="error"></p>
     </div>
