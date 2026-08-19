@@ -158,9 +158,10 @@ NSR.onUpdateStatus((s) => {
   }
 });
 
-// ضمان: الشاشة لا تعلق فوق الواجهة أبداً حتى لو فشل فحص التحديث (إلا إذا وجد تحديثاً بانتظار الضغط)
+// ضمان: الشاشة لا تعلق فوق الواجهة أبداً إلا إذا كان التحديث جارياً (تحميل/تثبيت/انتظار ضغط) — عندها نتركها حتى يكتمل
 setTimeout(() => {
-  if (updatePhase === 'found') return;
+  const active = updatePhase === 'found' || updatePhase === 'downloading' || updatePhase === 'installing';
+  if (active) return;
   updateOverlay.classList.remove('visible');
   if (!session) showScreen('screen-login');
 }, 15000);
