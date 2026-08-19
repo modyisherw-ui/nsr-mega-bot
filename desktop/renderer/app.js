@@ -148,6 +148,7 @@ const updateSub = $('#update-sub');
 const updateBarWrap = $('#update-bar-wrap');
 const updateBar = $('#update-bar');
 const updateBtn = $('#btn-update-download');
+const updateManualBtn = $('#btn-update-manual');
 
 let updatePhase = '';
 NSR.onUpdateStatus((s) => {
@@ -159,6 +160,7 @@ NSR.onUpdateStatus((s) => {
     updateBarWrap.classList.add('hidden');
     updateBar.style.width = '0%';
     updateBtn.classList.add('hidden');
+    updateManualBtn.classList.add('hidden');
   } else if (s.phase === 'found') {
     updateTitle.textContent = 'يوجد تحديث جديد في التطبيق';
     updateSub.textContent = 'الإصدار ' + s.version + ' متوفر الآن — اضغط الزر للتحميل';
@@ -166,7 +168,11 @@ NSR.onUpdateStatus((s) => {
     updateBar.style.width = '0%';
     updateBtn.textContent = 'تحميل التحديث الآن';
     updateBtn.classList.remove('hidden');
-  } else if (s.phase === 'downloading') {
+    updateManualBtn.classList.toggle('hidden', !s.manualUrl);
+    if (s.manualUrl) updateManualBtn.dataset.url = s.manualUrl;
+  } else if (s.phase === 'downloading' || s.phase === 'installing') {
+    updateManualBtn.classList.add('hidden');
+  }
     updateTitle.textContent = 'يوجد تحديث في التطبيق';
     updateSub.textContent = 'جاري تحديث التطبيق... ' + s.pct + '%';
     updateBarWrap.classList.remove('hidden');
@@ -183,10 +189,12 @@ NSR.onUpdateStatus((s) => {
     if (!session) showScreen('screen-login');
   } else if (s.phase === 'error') {
     updateTitle.textContent = 'فشل تحميل التحديث';
-    updateSub.textContent = (s.message && s.message !== 'فشل التنزيل' ? s.message + ' — ' : '') + 'اضغط الزر لإعادة المحاولة، أو أغلق التطبيق';
+    updateSub.textContent = (s.message && s.message !== 'فشل التنزيل' ? s.message + ' — ' : '') + 'اضغط الزر لإعادة المحاولة، أو حمّله يدوياً';
     updateBarWrap.classList.add('hidden');
     updateBtn.textContent = 'إعادة المحاولة';
     updateBtn.classList.remove('hidden');
+    updateManualBtn.classList.toggle('hidden', !s.manualUrl);
+    if (s.manualUrl) updateManualBtn.dataset.url = s.manualUrl;
   }
 });
 
@@ -203,6 +211,11 @@ async function init() {
   updateBtn.addEventListener('click', () => {
     playSound('click');
     NSR.startUpdate();
+  });
+  updateManualBtn.addEventListener('click', () => {
+    playSound('click');
+    const url = updateManualBtn.dataset.url;
+    if (url) NSR.openExternal(url);
   });
   setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
   const ver = await NSR.getVersion();

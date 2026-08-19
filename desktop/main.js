@@ -279,8 +279,9 @@ async function checkForUpdate() {
       const latest = verStr(lines[0] || '');
       if (latest && verLt(app.getVersion(), latest)) {
         const direct = lines.find((l) => /^https?:\/\//i.test(l));
+        const manual = lines.find((l) => /^https?:\/\//i.test(l) && l !== direct);
         updateLog('update found (raw): installed=' + app.getVersion() + ' latest=' + latest + (direct ? ' (mirror)' : ''));
-        return { version: latest, url: direct || (UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe'), fallbackUrl: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe' };
+        return { version: latest, url: direct || (UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe'), fallbackUrl: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe', manualUrl: manual || null };
       }
       updateLog('no newer (raw): installed=' + app.getVersion() + ' latest=' + latest);
     }
@@ -375,7 +376,7 @@ async function runUpdateCheck(win) {
   }
   // وجود تحديث: نخبر الواجهة وننتظر المستخدم يضغط زر التحميل
   updateLog('update ready: ' + upd.version + ' -> ' + upd.url);
-  send({ phase: 'found', version: upd.version, url: upd.url });
+  send({ phase: 'found', version: upd.version, url: upd.url, manualUrl: upd.manualUrl || null });
 }
 
 async function runUpdateDownload(win, upd) {
@@ -422,11 +423,11 @@ async function runUpdateDownload(win, upd) {
         return;
       } catch (e2) {
         updateLog('fallback failed: ' + (e2 && e2.message));
-        send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
+        send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل', manualUrl: upd.manualUrl || null });
         return;
       }
     }
-    send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
+    send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل', manualUrl: upd.manualUrl || null });
     return;
   }
   send({ phase: 'installing', version: upd.version });
