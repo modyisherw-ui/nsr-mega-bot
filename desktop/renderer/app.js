@@ -115,38 +115,62 @@ const updateTitle = $('#update-title');
 const updateSub = $('#update-sub');
 const updateBarWrap = $('#update-bar-wrap');
 const updateBar = $('#update-bar');
+const updateBtn = $('#btn-update-download');
 
+let updatePhase = '';
 NSR.onUpdateStatus((s) => {
+  updatePhase = s.phase;
   updateOverlay.classList.add('visible');
   if (s.phase === 'checking') {
     updateTitle.textContent = 'جاري التحقق من التحديثات...';
     updateSub.textContent = '';
     updateBarWrap.classList.add('hidden');
     updateBar.style.width = '0%';
+    updateBtn.classList.add('hidden');
+  } else if (s.phase === 'found') {
+    updateTitle.textContent = 'يوجد تحديث جديد في التطبيق';
+    updateSub.textContent = 'الإصدار ' + s.version + ' متوفر الآن — اضغط الزر للتحميل';
+    updateBarWrap.classList.add('hidden');
+    updateBar.style.width = '0%';
+    updateBtn.textContent = 'تحميل التحديث الآن';
+    updateBtn.classList.remove('hidden');
   } else if (s.phase === 'downloading') {
     updateTitle.textContent = 'يوجد تحديث في التطبيق';
     updateSub.textContent = 'جاري تحديث التطبيق... ' + s.pct + '%';
     updateBarWrap.classList.remove('hidden');
     updateBar.style.width = s.pct + '%';
+    updateBtn.classList.add('hidden');
   } else if (s.phase === 'installing') {
     updateTitle.textContent = 'يوجد تحديث في التطبيق';
     updateSub.textContent = 'جاري تثبيت التحديث — سيُفتح التطبيق تلقائياً...';
     updateBarWrap.classList.remove('hidden');
     updateBar.style.width = '100%';
+    updateBtn.classList.add('hidden');
   } else if (s.phase === 'none') {
     updateOverlay.classList.remove('visible');
     if (!session) showScreen('screen-login');
   } else if (s.phase === 'error') {
-    updateOverlay.classList.remove('visible');
-    if (!session) showScreen('screen-login');
+    updateTitle.textContent = 'فشل تحميل التحديث';
+    updateSub.textContent = (s.message && s.message !== 'فشل التنزيل' ? s.message + ' — ' : '') + 'اضغط الزر لإعادة المحاولة، أو أغلق التطبيق';
+    updateBarWrap.classList.add('hidden');
+    updateBtn.textContent = 'إعادة المحاولة';
+    updateBtn.classList.remove('hidden');
   }
 });
 
-// ضمان: الشاشة لا تعلق فوق الواجهة أبداً حتى لو فشل فحص التحديث
-setTimeout(() => { updateOverlay.classList.remove('visible'); if (!session) showScreen('screen-login'); }, 15000);
+// ضمان: الشاشة لا تعلق فوق الواجهة أبداً حتى لو فشل فحص التحديث (إلا إذا وجد تحديثاً بانتظار الضغط)
+setTimeout(() => {
+  if (updatePhase === 'found') return;
+  updateOverlay.classList.remove('visible');
+  if (!session) showScreen('screen-login');
+}, 15000);
 
 // ---------- الإقلاع ----------
 async function init() {
+  updateBtn.addEventListener('click', () => {
+    playSound('click');
+    NSR.startUpdate();
+  });
   setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
   const ver = await NSR.getVersion();
   if (ver) $('#titlebar-version').textContent = 'v' + ver;

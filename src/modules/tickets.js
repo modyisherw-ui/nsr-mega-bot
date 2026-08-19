@@ -25,7 +25,10 @@ function rebuildPanelComponents(tcfg) {
 
 function ticketColor(typeId, guildId) {
   const t = (ticketConfig(guildId).ticketTypes || []).find(tp => tp.id === typeId);
-  return t?.color || 0x57F287;
+  const c = t?.color;
+  // عصبية: أي لون خارج النطاق (0 - 0xFFFFFF) أو نص أو رقم كبير مكتوب بالغلط → لون افتراضي آمن
+  if (typeof c === 'number' && Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF) return c;
+  return 0x57F287;
 }
 
 async function handleTicketSelect(interaction) {

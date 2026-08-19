@@ -19,4 +19,5 @@ contextBridge.exposeInMainWorld('api', {
   onWinMaximized: (cb) => ipcRenderer.on('window:maximized', (e, m) => cb(m)),
   openExternal: (url) => ipcRenderer.invoke('open:external', url),
   getVersion: () => ipcRenderer.invoke('app:version'),
+  startUpdate: () => ipcRenderer.invoke('update:start'),
 });

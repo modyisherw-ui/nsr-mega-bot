@@ -931,7 +931,7 @@ async function handleTicketAddModal(interaction) {
   const t = g.ticket || {};
   if (!t.ticketTypes) t.ticketTypes = [];
   const id = 'c' + Date.now().toString(36);
-  const tp = { id, label: name, description: desc, color: 0x5793266, enabled: true };
+  const tp = { id, label: name, description: desc, color: 0x57F287, enabled: true };
   // إيموجي صالح فقط (نقطة Unicode واحدة في النطاق الإيموجي) وإلا لا نضيفه
   if (emoji && /^\p{Extended_Pictographic}$/u.test(emoji)) tp.emoji = emoji;
   else if (emoji) tp.emoji = '';

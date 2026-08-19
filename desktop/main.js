@@ -360,6 +360,18 @@ async function runUpdateCheck(win) {
     send({ phase: 'none' });
     return;
   }
+  // وجود تحديث: نخبر الواجهة وننتظر المستخدم يضغط زر التحميل
+  updateLog('update ready: ' + upd.version + ' -> ' + upd.url);
+  send({ phase: 'found', version: upd.version, url: upd.url });
+}
+
+async function runUpdateDownload(win, upd) {
+  const send = (s) => { try { if (win && !win.isDestroyed()) win.webContents.send('update:status', s); } catch (_) {} };
+  if (!upd) {
+    const found = await checkForUpdate();
+    if (!found) { send({ phase: 'none' }); return; }
+    upd = found;
+  }
   // نبث تقدم اصطناعي على مدى 4 ثوانٍ حتى يظهر الشريط بصورة واضحة وثابتة
   const MIN_SHOW_MS = 4000;
   const start = Date.now();
@@ -465,6 +477,12 @@ ipcMain.handle('window:close', () => { win && win.close(); });
     if (typeof url === 'string' && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
   ipcMain.handle('app:version', () => app.getVersion());
+  ipcMain.handle('update:start', async () => {
+    const w = win;
+    if (!w) return;
+    const upd = await checkForUpdate();
+    await runUpdateDownload(w, upd);
+  });
 
 // ---------- إقلاع ----------
 app.whenReady().then(() => {
