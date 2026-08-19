@@ -254,17 +254,13 @@ function downloadFile(url, dest, onProgress) {
 
 function installAndRelaunch(installerPath) {
   const exe = process.execPath;
-  const child = spawn(installerPath, ['/S'], { detached: true, stdio: 'ignore' });
-  const fallback = setTimeout(() => { try { app.exit(0); } catch (_) {} }, 180000);
-  child.on('close', () => {
-    clearTimeout(fallback);
-    try { spawn(exe, [], { detached: true, stdio: 'ignore' }); } catch (_) {}
-    try { app.exit(0); } catch (_) {}
-  });
-  child.on('error', () => {
-    clearTimeout(fallback);
-    try { app.exit(0); } catch (_) {}
-  });
+  const installer = installerPath.replace(/"/g, '\\"');
+  const appExe = exe.replace(/"/g, '\\"');
+  const cmd = `start "" /wait "${installer}" /S & start "" "${appExe}"`;
+  try {
+    spawn((process.env.ComSpec || 'cmd.exe'), ['/c', cmd], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  } catch (_) {}
+  setTimeout(() => { try { app.exit(0); } catch (_) {} }, 800);
 }
 
 async function runUpdateCheck(win) {
