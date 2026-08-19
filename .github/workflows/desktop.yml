@@ -85,6 +85,13 @@ jobs:
             if ($exe) {
               "uploading $($exe.Name) ($($exe.Length) bytes)" | Out-File -Append $log
               try {
+                # حذف أي ملف قديم بنفس الاسم في الـ release
+                foreach ($old in @($rel.assets)) {
+                  if ($old.name -eq $exe.Name) {
+                    Invoke-RestMethod -Method Delete -Uri "https://api.github.com/repos/$repo/releases/assets/$($old.id)" -Headers $h | Out-Null
+                    "removed old asset: $($old.name)" | Out-File -Append $log
+                  }
+                }
                 $fileBytes = [System.IO.File]::ReadAllBytes($exe.FullName)
                 $up = Invoke-RestMethod -Method Post -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$($exe.Name)" -Headers ( @{ Authorization = "Bearer $env:GH_TOKEN"; "User-Agent" = "ps" } ) -ContentType "application/octet-stream" -Body $fileBytes
                 "asset uploaded: $($up.name) state=$($up.state)" | Out-File -Append $log
