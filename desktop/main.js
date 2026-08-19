@@ -217,11 +217,15 @@ async function checkForUpdate() {
     const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' } });
     if (!res.ok) return null;
     const rel = await res.json();
-    const asset = (rel.assets || []).find((a) => UPDATE_PATTERN.test(a.name));
-    if (!asset) return null;
-    const remoteVer = asset.name.match(UPDATE_PATTERN)[1];
-    if (!verLt(app.getVersion(), remoteVer)) return null;
-    return { version: remoteVer, url: asset.browser_download_url };
+    let best = null;
+    for (const a of (rel.assets || [])) {
+      const m = UPDATE_PATTERN.exec(a.name);
+      if (!m) continue;
+      if (!best || verLt(best.version, m[1])) best = { version: m[1], url: a.browser_download_url };
+    }
+    if (!best) return null;
+    if (!verLt(app.getVersion(), best.version)) return null;
+    return best;
   } catch (_) {
     return null;
   }
