@@ -224,8 +224,22 @@ function getAdminGuilds(session) {
 }
 
 // ---------- التحديث التلقائي الإجباري ----------
+const UPDATE_RAW = 'https://raw.githubusercontent.com/modyisherw-ui/nsr-mega-bot/main/desktop/LATEST';
 const UPDATE_API = 'https://api.github.com/repos/modyisherw-ui/nsr-mega-bot/releases/tags/desktop';
+const UPDATE_API_FALLBACK = 'https://api.github.com/repos/modyisherw-ui/nsr-mega-bot/releases?per_page=10';
 const UPDATE_PATTERN = /^NSR-HUB-Setup-(\d+\.\d+\.\d+)\.exe$/;
+const UPDATE_BASE_URL = 'https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/';
+
+function updateLog(msg) {
+  try {
+    fs.appendFileSync(path.join(app.getPath('userData'), 'update.log'), '[' + new Date().toISOString() + '] ' + msg + '\n');
+  } catch (_) {}
+}
+
+function verStr(v) {
+  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(String(v || '').trim());
+  return m ? m[1] + '.' + m[2] + '.' + m[3] : null;
+}
 
 function verLt(a, b) {
   const pa = String(a).split('.').map(Number);
@@ -237,22 +251,60 @@ function verLt(a, b) {
   return false;
 }
 
+function pickBestAsset(assets) {
+  let best = null;
+  for (const a of (assets || [])) {
+    const m = UPDATE_PATTERN.exec(a.name);
+    if (!m) continue;
+    if (!best || verLt(best.version, m[1])) best = { version: m[1], url: a.browser_download_url };
+  }
+  return best;
+}
+
 async function checkForUpdate() {
+  // المسار الأساسي: ملف LATEST من raw.githubusercontent — بلا حدود طلبات API
   try {
-    const ctl = AbortSignal.timeout(10000);
-    const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: ctl });
-    if (!res.ok) return null;
-    const rel = await res.json();
-    let best = null;
-    for (const a of (rel.assets || [])) {
-      const m = UPDATE_PATTERN.exec(a.name);
-      if (!m) continue;
-      if (!best || verLt(best.version, m[1])) best = { version: m[1], url: a.browser_download_url };
+    const rawRes = await fetch(UPDATE_RAW, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: AbortSignal.timeout(10000) });
+    if (rawRes.ok) {
+      const latest = verStr(await rawRes.text());
+      if (latest && verLt(app.getVersion(), latest)) {
+        updateLog('update found (raw): installed=' + app.getVersion() + ' latest=' + latest);
+        return { version: latest, url: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe' };
+      }
+      updateLog('no newer (raw): installed=' + app.getVersion() + ' latest=' + latest);
     }
+  } catch (_) {}
+
+  // مسار احتياطي: GitHub API
+  try {
+    let rel = null;
+    try {
+      const res = await fetch(UPDATE_API, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: AbortSignal.timeout(10000) });
+      if (res.ok) rel = await res.json();
+    } catch (_) {}
+    if (!rel || !rel.assets) {
+      updateLog('tag API failed, trying fallback list');
+      try {
+        const res2 = await fetch(UPDATE_API_FALLBACK, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: AbortSignal.timeout(10000) });
+        if (res2.ok) {
+          const list = await res2.json();
+          for (const r of list) {
+            if (pickBestAsset(r.assets)) { rel = r; break; }
+          }
+        }
+      } catch (_) {}
+    }
+    if (!rel || !rel.assets) return null;
+    const best = pickBestAsset(rel.assets);
     if (!best) return null;
-    if (!verLt(app.getVersion(), best.version)) return null;
+    if (!verLt(app.getVersion(), best.version)) {
+      updateLog('no newer (api): installed=' + app.getVersion() + ' latest=' + best.version);
+      return null;
+    }
+    updateLog('update found (api): installed=' + app.getVersion() + ' latest=' + best.version);
     return best;
-  } catch (_) {
+  } catch (e) {
+    updateLog('checkForUpdate error: ' + (e && e.message));
     return null;
   }
 }
@@ -301,15 +353,32 @@ async function runUpdateCheck(win) {
     send({ phase: 'none' });
     return;
   }
+  // نبث تقدم اصطناعي على مدى 4 ثوانٍ حتى يظهر الشريط بصورة واضحة وثابتة
+  const MIN_SHOW_MS = 4000;
+  const start = Date.now();
   send({ phase: 'downloading', pct: 0, version: upd.version });
   const dest = path.join(app.getPath('temp'), 'nsr-hub-update-' + upd.version + '.exe');
+  updateLog('downloading ' + upd.version);
   try {
-    await downloadFile(upd.url, dest, (pct) => send({ phase: 'downloading', pct: Math.round(pct * 100), version: upd.version }));
+    await Promise.all([
+      downloadFile(upd.url, dest, (pct) => {
+        const remaining = Math.max(0, MIN_SHOW_MS - (Date.now() - start));
+        const pctSpeed = Math.max(pct, 1 - remaining / MIN_SHOW_MS) * 100;
+        send({ phase: 'downloading', pct: Math.min(100, Math.round(pctSpeed)), version: upd.version });
+      }),
+      (async () => {
+        // نضمن بقاء الرسالة 4 ثوانٍ على الأقل مهما كانت سرعة التحميل
+        const waitMs = Math.max(0, MIN_SHOW_MS - (Date.now() - start));
+        if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
+      })(),
+    ]);
   } catch (e) {
+    updateLog('download failed: ' + (e && e.message));
     send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
     return;
   }
   send({ phase: 'installing', version: upd.version });
+  updateLog('installing ' + upd.version);
   installAndRelaunch(dest);
 }
 

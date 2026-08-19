@@ -117,15 +117,17 @@ api.onUpdateStatus((s) => {
     updateTitle.textContent = 'جاري التحقق من التحديثات...';
     updateSub.textContent = '';
     updateBarWrap.classList.add('hidden');
+    updateBar.style.width = '0%';
   } else if (s.phase === 'downloading') {
-    updateTitle.textContent = '📥 تم العثور على تحديث جديد — جاري تنزيله';
-    updateSub.textContent = s.pct + '%';
+    updateTitle.textContent = 'يوجد تحديث في التطبيق';
+    updateSub.textContent = 'جاري تحديث التطبيق... ' + s.pct + '%';
     updateBarWrap.classList.remove('hidden');
     updateBar.style.width = s.pct + '%';
   } else if (s.phase === 'installing') {
-    updateTitle.textContent = '⚙️ جاري تثبيت التحديث وسيُفتح التطبيق تلقائياً...';
-    updateSub.textContent = 'إصدار ' + s.version;
-    updateBarWrap.classList.add('hidden');
+    updateTitle.textContent = 'يوجد تحديث في التطبيق';
+    updateSub.textContent = 'جاري تثبيت التحديث — سيُفتح التطبيق تلقائياً...';
+    updateBarWrap.classList.remove('hidden');
+    updateBar.style.width = '100%';
   } else if (s.phase === 'none') {
     updateOverlay.classList.remove('visible');
     if (!session) showScreen('screen-login');
