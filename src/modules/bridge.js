@@ -8,7 +8,10 @@ const log = require('../utils/logger');
 const { config, isAdmin } = require('../config');
 const guildCfg = require('../guildCfg');
 const db = require('../db');
-const { buildTicketPanelPayload, buildSuggestionsPanelPayload } = require('../dashboard');
+const { buildTicketPanelPayload, buildSuggestionsPanelPayload, LOG_EVENTS } = require('../dashboard');
+const { uploadLogoFromUrl, setLogoUrl, getLogoUrl } = require('../utils/logo');
+const { sendMessageToUser } = require('./messages');
+const { saveRatingConfig } = require('./ratings');
 
 const BROKER_URL = process.env.BRIDGE_BROKER || 'wss://broker.emqx.io:8084/mqtt';
 
@@ -120,7 +123,7 @@ async function handleMessage(msg, key) {
     case 'state': {
       reply(key, msg, {
         guild: { id: guild.id, name: guild.name, iconUrl: guild.iconURL({ size: 256 }) },
-        logoUrl: config.logoUrl || '',
+        logoUrl: getLogoUrl(guild.id),
         color: config.embedColor || 0x5865F2,
         welcome: guildSettings.welcome || {},
         ticket: {
@@ -132,7 +135,16 @@ async function handleMessage(msg, key) {
         },
         staffRoles: guildSettings.staffRoles || config.adminRoles || [],
         autoRoles: guildSettings.autoRoles || config.autoRoles || {},
-        rating: { reviewsChannelId: config.reviewChannelId || '' },
+        rating: {
+          reviewsChannelId: guildSettings.rating?.reviewsChannelId || config.reviewChannelId || '',
+          products: guildSettings.rating?.products || [],
+        },
+        logChannels: guildSettings.logChannels || {},
+        protection: {
+          protectedRoles: guildSettings.protectedRoles || [],
+          bypassRoles: guildSettings.protectionBypassRoles || [],
+          action: guildSettings.protectionAction || 'kick',
+        },
         channels: Array.from(guild.channels.cache.values())
           .filter(c => c.isTextBased && c.isTextBased())
           .map(c => ({ id: c.id, name: c.name }))
@@ -263,6 +275,113 @@ async function handleMessage(msg, key) {
       const types = (tcfg.ticketTypes || []).filter(tp => tp.id !== id);
       guildCfg.set(guild.id, { ticket: { ...tcfg, ticketTypes: types } });
       reply(key, msg, { typeId: id, deleted: true });
+      break;
+    }
+
+    case 'setLogChannels': {
+      const events = msg.events || {};
+      const cur = guildSettings.logChannels || {};
+      const next = { ...cur };
+      for (const [evId, channelId] of Object.entries(events)) {
+        if (channelId) {
+          const ch = guild.channels.cache.get(String(channelId));
+          if (!ch) {
+            reply(key, msg, null, 'الروم غير موجود: ' + channelId);
+            return;
+          }
+          next[evId] = String(channelId);
+        } else {
+          delete next[evId];
+        }
+      }
+      const stored = db.guildSettings.get(guild.id) || {};
+      stored.logChannels = next;
+      db.guildSettings.set(guild.id, stored);
+      guildCfg.set(guild.id, { logChannels: next });
+      try {
+        const cfgPath = path.join(__dirname, '../../config.json');
+        const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        raw.logChannels = next;
+        fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
+      } catch (err) {
+        log.warn('فشل حفظ logChannels في config.json: ' + err.message);
+      }
+      reply(key, msg, { logChannels: next });
+      break;
+    }
+
+    case 'setProtection': {
+      const protectedRoles = Array.isArray(msg.protectedRoles) ? msg.protectedRoles.map(String) : undefined;
+      const bypassRoles = Array.isArray(msg.bypassRoles) ? msg.bypassRoles.map(String) : undefined;
+      const action = ['kick', 'ban'].includes(msg.action) ? msg.action : undefined;
+      const prot = (protectedRoles !== undefined) ? protectedRoles : (guildSettings.protectedRoles || []);
+      const bypass = (bypassRoles !== undefined) ? bypassRoles : (guildSettings.protectionBypassRoles || []);
+      const act = action !== undefined ? action : (guildSettings.protectionAction || 'kick');
+      guildCfg.set(guild.id, {
+        protectedRoles: prot,
+        protectionBypassRoles: bypass,
+        protectionAction: act,
+      });
+      const after = guildCfg.get(guild.id);
+      reply(key, msg, {
+        protectedRoles: after.protectedRoles || [],
+        bypassRoles: after.protectionBypassRoles || [],
+        action: after.protectionAction || 'kick',
+      });
+      break;
+    }
+
+    case 'setRatingChannel': {
+      const channel = guild.channels.cache.get(String(msg.channelId || ''));
+      if (!channel) {
+        reply(key, msg, null, 'الروم غير موجود');
+        break;
+      }
+      saveRatingConfig(guild.id, {
+        reviewsChannelId: String(channel.id),
+        products: (guildSettings.rating?.products || []),
+      });
+      reply(key, msg, { reviewsChannelId: String(channel.id) });
+      break;
+    }
+
+    case 'addProduct': {
+      const name = String(msg.name || '').trim();
+      if (!name) { reply(key, msg, null, 'اسم المنتج مطلوب'); break; }
+      const id = 'p' + crypto.randomBytes(4).toString('hex');
+      const products = [...(guildSettings.rating?.products || []), { id, name, roleId: null }];
+      saveRatingConfig(guild.id, { reviewsChannelId: guildSettings.rating?.reviewsChannelId || '', products });
+      reply(key, msg, { product: { id, name } });
+      break;
+    }
+
+    case 'delProduct': {
+      const products = (guildSettings.rating?.products || []).filter(p => p.id !== String(msg.productId || ''));
+      saveRatingConfig(guild.id, { reviewsChannelId: guildSettings.rating?.reviewsChannelId || '', products });
+      reply(key, msg, { deleted: true });
+      break;
+    }
+
+    case 'sendDm': {
+      try {
+        const result = await sendMessageToUser(discordClient, guild, String(msg.type || ''), msg.targetId, String(msg.text || ''));
+        reply(key, msg, result);
+      } catch (err) {
+        reply(key, msg, null, err.message || 'فشل الإرسال');
+      }
+      break;
+    }
+
+    case 'setLogo': {
+      const url = String(msg.logoUrl || '').trim();
+      if (!url) { reply(key, msg, null, 'رابط الصورة مطلوب'); break; }
+      try {
+        const finalUrl = await uploadLogoFromUrl(discordClient, url, guild.id);
+        setLogoUrl(guild.id, finalUrl);
+        reply(key, msg, { logoUrl: getLogoUrl(guild.id) });
+      } catch (err) {
+        reply(key, msg, null, 'تعذر رفع الصورة: ' + err.message);
+      }
       break;
     }
 

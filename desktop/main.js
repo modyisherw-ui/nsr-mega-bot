@@ -420,7 +420,8 @@ function createWindow() {
     minWidth: 960,
     minHeight: 620,
     frame: false,
-    backgroundColor: '#0a0a0a',
+    transparent: true,
+    backgroundColor: '#00000000',
     autoHideMenuBar: true,
     title: 'NSR HUB',
     webPreferences: {

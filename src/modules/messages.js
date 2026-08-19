@@ -108,4 +108,38 @@ async function handleMessagesModal(interaction) {
   }
 }
 
-module.exports = { messagesEmbed, messagesRows, handleMessagesButton, handleMessagesModal };
+module.exports = { messagesEmbed, messagesRows, handleMessagesButton, handleMessagesModal, MSG_TYPES, sendMessageToUser };
+
+// إرسال رسالة خاصة عبر الجسر (نفس منطق لوحة ديسكورد)
+async function sendMessageToUser(client, guild, typeId, rawTarget, text) {
+  const t = MSG_TYPES[typeId];
+  if (!t) throw new Error('نوع رسالة غير معروف');
+  const match = String(rawTarget).match(/(\d{15,20})/);
+  if (!match) throw new Error('أدخل معرف العضو الصحيح');
+  const targetId = match[1];
+  const user = await client.users.fetch(targetId).catch(() => null);
+  if (!user) throw new Error('لم يتم العثور على هذا العضو');
+
+  const key = `bridge:${guild.id}:${targetId}`;
+  const now = Date.now();
+  const last = lastSent.get(key);
+  if (last && now - last < COOLDOWN_MS) {
+    const secs = Math.ceil((COOLDOWN_MS - (now - last)) / 1000);
+    throw new Error(`⏳ انتظر ${secs} ثانية قبل إرسال رسالة أخرى لنفس الشخص (تهدئة دقيقة)`);
+  }
+
+  const dmEmbed = new EmbedBuilder()
+    .setColor(t.color)
+    .setTitle(t.dmTitle.replace('{{USER}}', guild.name))
+    .setDescription(t.description.replace('{{TEXT}}', text).replace('{{GUILD}}', guild.name))
+    .setFooter({ text: guild.name })
+    .setTimestamp();
+
+  try {
+    await user.send({ embeds: [dmEmbed] });
+    lastSent.set(key, now);
+    return { targetId, type: t.name };
+  } catch (err) {
+    throw new Error('تعذر إرسال رسالة خاصة (أغلق الرسائل الخاصة)');
+  }
+}
