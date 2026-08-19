@@ -6,7 +6,8 @@ on:
     branches: [main]
     paths:
       - "desktop/**"
-      - ".github/workflows/desktop.yml"
+      - "!.github/workflows/desktop.yml"
+      - "!desktop/LATEST"
 
 permissions:
   contents: write

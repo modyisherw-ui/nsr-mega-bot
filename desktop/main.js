@@ -270,13 +270,17 @@ function pickBestAsset(assets) {
 
 async function checkForUpdate() {
   // المسار الأساسي: ملف LATEST من raw.githubusercontent — بلا حدود طلبات API
+  // صيغة الملف: السطر الأول = الإصدار، السطر الثاني (اختياري) = رابط تحميل مباشر (مرآة)
   try {
     const rawRes = await fetch(UPDATE_RAW, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: AbortSignal.timeout(10000) });
     if (rawRes.ok) {
-      const latest = verStr(await rawRes.text());
+      const text = await rawRes.text();
+      const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const latest = verStr(lines[0] || '');
       if (latest && verLt(app.getVersion(), latest)) {
-        updateLog('update found (raw): installed=' + app.getVersion() + ' latest=' + latest);
-        return { version: latest, url: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe' };
+        const direct = lines.find((l) => /^https?:\/\//i.test(l));
+        updateLog('update found (raw): installed=' + app.getVersion() + ' latest=' + latest + (direct ? ' (mirror)' : ''));
+        return { version: latest, url: direct || (UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe'), fallbackUrl: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe' };
       }
       updateLog('no newer (raw): installed=' + app.getVersion() + ' latest=' + latest);
     }
@@ -401,7 +405,27 @@ async function runUpdateDownload(win, upd) {
       })(),
     ]);
   } catch (e) {
-    updateLog('download failed: ' + (e && e.message));
+    updateLog('download failed (primary): ' + (e && e.message));
+    // محاولة احتياطية: الرابط الثاني إن وجد (غالباً GitHub) — وإلا نعرض الخطأ النهائي
+    if (upd.fallbackUrl && upd.fallbackUrl !== upd.url) {
+      updateLog('trying fallback: ' + upd.fallbackUrl);
+      try {
+        const dest2 = path.join(app.getPath('temp'), 'nsr-hub-update-' + upd.version + '-fb.exe');
+        await downloadFile(upd.fallbackUrl, dest2, (pct) => {
+          const remaining = Math.max(0, MIN_SHOW_MS - (Date.now() - start));
+          const pctSpeed = Math.max(pct, 1 - remaining / MIN_SHOW_MS) * 100;
+          send({ phase: 'downloading', pct: Math.min(100, Math.round(pctSpeed)), version: upd.version });
+        });
+        updateLog('fallback download ok: ' + upd.fallbackUrl);
+        send({ phase: 'installing', version: upd.version });
+        installAndRelaunch(dest2);
+        return;
+      } catch (e2) {
+        updateLog('fallback failed: ' + (e2 && e2.message));
+        send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
+        return;
+      }
+    }
     send({ phase: 'error', message: (e && e.message) || 'فشل التنزيل' });
     return;
   }
