@@ -148,6 +148,8 @@ setTimeout(() => { updateOverlay.classList.remove('visible'); if (!session) show
 // ---------- الإقلاع ----------
 async function init() {
   setTimeout(() => { updateOverlay.classList.add('visible'); }, 50);
+  const ver = await NSR.getVersion();
+  if (ver) $('#titlebar-version').textContent = 'v' + ver;
   settings = await NSR.getSettings();
   if (settings.bridgeKey) await NSR.bridgeConnect(settings.bridgeKey);
   NSR.onBridgeStatus((s) => setBridgeStatus(s.connected));

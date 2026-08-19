@@ -39,6 +39,11 @@ body {
 #titlebar-brand { display: flex; align-items: center; gap: 9px; padding: 0 12px; font-size: 13px; color: var(--muted); letter-spacing: .3px; }
 #titlebar-brand b { color: var(--text); }
 #titlebar-logo { width: 20px; height: 20px; border-radius: 6px; }
+#titlebar-version {
+  font-size: 10.5px; color: var(--muted); opacity: .7;
+  background: rgba(255,255,255,.07); border: 1px solid var(--border);
+  padding: 1px 7px; border-radius: 8px; direction: ltr; letter-spacing: .3px;
+}
 #titlebar-controls { display: flex; height: 100%; -webkit-app-region: no-drag; }
 .tb-btn {
   width: 46px; height: 100%;

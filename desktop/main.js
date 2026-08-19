@@ -464,6 +464,7 @@ ipcMain.handle('window:close', () => { win && win.close(); });
   ipcMain.handle('open:external', (e, url) => {
     if (typeof url === 'string' && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
+  ipcMain.handle('app:version', () => app.getVersion());
 
 // ---------- إقلاع ----------
 app.whenReady().then(() => {
