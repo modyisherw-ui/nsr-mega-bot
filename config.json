@@ -215,8 +215,8 @@
         "message": "أهلاً بك {user} في سيرفر {server}! 🎉",
         "imageUrl": "",
         "mode": "room",
-        "withImage": false,
-        "showCount": false
+        "withImage": true,
+        "showCount": true
       },
       "ticket": {
         "categoryId": "",
@@ -235,7 +235,7 @@
             "description": "Inquire about buying a product or service",
             "emoji": "🛒",
             "color": 91501604,
-            "enabled": true
+            "enabled": false
           },
           {
             "id": "inquiry",
