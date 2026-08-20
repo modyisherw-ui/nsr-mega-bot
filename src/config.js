@@ -60,6 +60,7 @@ const config = {
   reviewChannelId: process.env.REVIEW_CHANNEL_ID || '',
   serverSettings: raw.serverSettings || {},
   bridgeKey: raw.bridgeKey || '',
+  customerRoleId: raw.customerRoleId || '',
 };
 
 function isOwner(userId) {

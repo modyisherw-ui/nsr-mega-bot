@@ -144,6 +144,13 @@ async function handleMessage(msg, key) {
           products: guildSettings.rating?.products || [],
         },
         logChannels: guildSettings.logChannels || {},
+        ai: {
+          enabled: !!(guildSettings.ai && guildSettings.ai.enabled),
+          locked: !!(guildSettings.ai && guildSettings.ai.locked),
+          mode: guildSettings.ai?.mode || 'solve',
+          channelId: guildSettings.ai?.channelId || '',
+          severity: guildSettings.ai?.severity || 'delete',
+        },
         protection: {
           protectedRoles: guildSettings.protectedRoles || [],
           bypassRoles: guildSettings.protectionBypassRoles || [],
@@ -434,6 +441,77 @@ async function handleMessage(msg, key) {
         });
       } catch (err) {
         reply(key, msg, null, 'فشل جلب الإحصائيات: ' + err.message);
+      }
+      break;
+    }
+
+    case 'setAiConfig': {
+      const ai = guildSettings.ai || {};
+      const patch = {};
+      if (msg.mode !== undefined) patch.mode = String(msg.mode) === 'inquiry' ? 'inquiry' : 'solve';
+      if (msg.channelId !== undefined) patch.channelId = String(msg.channelId || '');
+      if (msg.enabled !== undefined) patch.enabled = !!msg.enabled;
+      if (msg.locked !== undefined) patch.locked = !!msg.locked;
+      if (msg.severity !== undefined) patch.severity = ['delete', 'warn', 'mute'].includes(String(msg.severity)) ? String(msg.severity) : 'delete';
+      guildCfg.set(guild.id, { ai: { ...ai, ...patch } });
+      const out = guildCfg.get(guild.id).ai || {};
+      reply(key, msg, { ai: { enabled: !!out.enabled, locked: !!out.locked, mode: out.mode || 'solve', channelId: out.channelId || '', severity: out.severity || 'delete' } });
+      break;
+    }
+
+    case 'testAi': {
+      try {
+        const { testReply } = require('./aiAssistant');
+        const res = testReply(String(msg.text || ''));
+        reply(key, msg, res);
+      } catch (err) {
+        reply(key, msg, null, 'فشل اختبار الرد: ' + err.message);
+      }
+      break;
+    }
+
+    case 'getCustomerStatus': {
+      try {
+        const mainServerId = (config.mainServerId || '');
+        let isCustomer = false;
+        let mainServerName = '';
+        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
+          const mainGuild = discordClient.guilds.cache.get(mainServerId);
+          mainServerName = mainGuild.name;
+          try {
+            const m = await mainGuild.members.fetch(String(msg.userId || '')).catch(() => null);
+            if (m) {
+              const roleId = config.customerRoleId || '';
+              isCustomer = roleId ? m.roles.cache.has(roleId) : true;
+            }
+          } catch (_) {}
+        }
+        reply(key, msg, { isCustomer, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '' });
+      } catch (err) {
+        reply(key, msg, null, 'فشل التحقق: ' + err.message);
+      }
+      break;
+    }
+
+    case 'setCustomerRole': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const roleId = String(msg.roleId || '');
+      // تحديث config.json
+      const fs = require('fs');
+      const path = require('path');
+      try {
+        const cfgPath = path.join(__dirname, '..', '..', 'config.json');
+        const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        raw.customerRoleId = roleId;
+        fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
+        config.customerRoleId = roleId;
+        reply(key, msg, { customerRoleId: roleId });
+      } catch (err) {
+        reply(key, msg, null, 'فشل الحفظ: ' + err.message);
       }
       break;
     }

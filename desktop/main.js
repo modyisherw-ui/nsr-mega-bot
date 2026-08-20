@@ -358,9 +358,15 @@ function installAndRelaunch(installerPath) {
   const exe = process.execPath;
   const iPath = String(installerPath).replace(/'/g, "''");
   const aPath = String(exe).replace(/'/g, "''");
-  // عملية منفصلة: تنتظر خروج التطبيق (2 ثانية) → تشغّل المثبّت بصمت → تفتح التطبيق الجديد
-  // لا نستخدم cmd start لأن المثبّت كان يفشل بصمت عندما يكون التطبيق ما زال يعمل
-  const script = "Start-Sleep -Seconds 2; Start-Process -FilePath '" + iPath + "' -ArgumentList '/S' -Wait; Start-Process -FilePath '" + aPath + "'";
+  const exeBase = path.basename(exe, '.exe').replace(/'/g, "''");
+  // عملية منفصلة: تقتل أي نسخة قديمة قيد التشغيل (وإلا فشل المثبّت في استبدال الملف بصمت)
+  // → تشغّل المثبّت بصمت وتنتظر انتهاءه → تفتح التطبيق الجديد
+  const script =
+    "Start-Sleep -Seconds 1; " +
+    "Get-Process -Name '" + exeBase + "' -ErrorAction SilentlyContinue | Stop-Process -Force; " +
+    "Start-Sleep -Seconds 2; " +
+    "Start-Process -FilePath '" + iPath + "' -ArgumentList '/S' -Wait; " +
+    "Start-Process -FilePath '" + aPath + "'";
   try {
     spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     updateLog('launched updater script: ' + installerPath);

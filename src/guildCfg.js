@@ -38,6 +38,13 @@ const DEFAULTS = {
   logoUrl: '',
   embedColor: '',
   rating: { reviewsChannelId: '', products: [] },
+  ai: {
+    enabled: false,
+    locked: false,
+    mode: 'solve', // solve = حل مشاكل | inquiry = استفسارات
+    channelId: '',
+    severity: 'delete', // delete | warn | mute
+  },
   ticket: {
     categoryId: '',
     logChannelId: '',

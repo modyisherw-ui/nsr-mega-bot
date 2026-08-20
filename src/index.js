@@ -142,6 +142,8 @@ client.on('messageCreate', async message => {
     await security.handleMessageSecurity(message);
     // عدّ الرسائل للإحصائيات
     db.guildStats.record(message.guild.id, 'msg');
+    // معالج AI (حل مشاكل / استفسارات) في الروم المحدد
+    require('./modules/aiAssistant').handleMessage(message).catch(() => {});
   } catch (err) {
     log.warn('خطأ في معالجة رسالة: ' + err.message);
   }
@@ -317,6 +319,7 @@ client.on('guildUpdate', (oldGuild, newGuild) => {
 
 client.on('messageReactionAdd', async (reaction, user) => {
   await giveaway.handleReaction(reaction, user);
+  security.learnFromReaction(reaction, user).catch(() => {});
 });
 
 client.login(config.token).catch(err => {

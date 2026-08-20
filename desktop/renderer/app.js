@@ -12,6 +12,7 @@ let state = null;
 let currentGuild = null;
 let currentPage = 'home';
 let isOwner = false;
+let isCustomer = false;
 
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
@@ -143,6 +144,18 @@ async function refreshBotGuilds() {
     }
   } catch (_) {}
   return [];
+}
+
+async function refreshCustomerStatus() {
+  const badge = $('#customer-badge');
+  if (!session || !settings.bridgeKey) { isCustomer = false; if (badge) badge.classList.add('hidden'); return; }
+  try {
+    const rep = await NSR.bridgeCommand({ type: 'getCustomerStatus', userId: session.user.id, guildId: '' });
+    if (rep && rep.ok) {
+      isCustomer = !!rep.data.isCustomer || isOwner;
+      if (badge) badge.classList.toggle('hidden', !isCustomer);
+    }
+  } catch (_) {}
 }
 
 // ---------- التحديث الإجباري ----------
@@ -311,7 +324,7 @@ async function enterServers() {
   ownerBtn.classList.add('hidden');
   searchInput.classList.add('hidden');
   searchInput.value = '';
-  ownerBtn.textContent = '👑 كل السيرفرات';
+  ownerBtn.classList.remove('active');
   let ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
@@ -325,6 +338,7 @@ async function enterServers() {
 
   await refreshBotGuilds();
   known = botGuilds.length > 0;
+  await refreshCustomerStatus();
 
   const renderList = (search) => {
     grid.innerHTML = '';
@@ -332,11 +346,17 @@ async function enterServers() {
     const q = (search || '').trim().toLowerCase();
     let listed;
     if (ownerMode && known) {
+      // وضع المالك: كل سيرفرات البوت
       listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
-    } else if (known) {
-      listed = botGuilds.filter((g) => g.isAdmin === true && (!q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q)));
     } else {
-      listed = adminGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q));
+      // كل السيرفرات الإدارية: البوت موجود فيها تكون فوق
+      const botIds = new Set(botGuilds.map((g) => String(g.id)));
+      const admin = (known ? botGuilds.filter((g) => g.isAdmin === true) : adminGuilds);
+      const extra = known
+        ? adminGuilds.filter((g) => !botIds.has(String(g.id)))
+        : [];
+      listed = [...admin, ...extra];
+      if (q) listed = listed.filter((g) => String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     }
 
     if (!listed.length) {
@@ -347,6 +367,7 @@ async function enterServers() {
 
     listed.forEach((g, i) => {
       const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
+      const inBot = known && botGuilds.some((x) => String(x.id) === String(g.id));
       const card = document.createElement('div');
       card.className = 'server-card';
       card.style.setProperty('--d', (i * 0.06) + 's');
@@ -355,7 +376,7 @@ async function enterServers() {
         <h3>${esc(g.name)}</h3>
         <div class="meta">السيرفر: ${g.id}</div>
         <div class="badges">
-          ${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}
+          ${known ? (inBot ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير موجود</span>') : '<span class="badge no">⚠ البوت غير متصل</span>'}
           <span class="badge">${ownerMode && g.isAdmin ? '👑 أدمن' : (ownerMode ? '🔍 معاينة' : '👑 إدارة')}</span>
         </div>`;
       if (ownerMode && known) {
@@ -400,7 +421,7 @@ async function enterServers() {
     ownerBtn.addEventListener('click', () => {
       playSound('click');
       ownerMode = !ownerMode;
-      ownerBtn.textContent = ownerMode ? '👑 السيرفرات الإدارية' : '👑 كل السيرفرات';
+      ownerBtn.classList.toggle('active', ownerMode);
       searchInput.classList.toggle('hidden', !ownerMode);
       renderList(searchInput.value);
     });
@@ -467,6 +488,7 @@ function renderPage(page) {
   else if (page === 'logs') renderLogs(main);
   else if (page === 'security') renderSecurity(main);
   else if (page === 'ratings') renderRatings(main);
+  else if (page === 'ai') renderAi(main);
   else if (page === 'messages') renderMessages(main);
   wireFx(main);
 }
@@ -889,20 +911,88 @@ function openChannelPicker(cb) {
   wireFx(main);
 }
 
+// ---------- منتقي الرتب (اختيار من قائمة بدل إظهار كل الرتب) ----------
+function rolePickerHTML(uid, selectedIds, accent) {
+  const sel = new Set(selectedIds.map(String));
+  return `
+    <div class="role-picker" data-rp="${uid}">
+      <div class="rp-selected" data-rp-selected>
+        ${sel.size ? '' : '<span class="rp-empty">لم تُختر رتب بعد</span>'}
+      </div>
+      <button type="button" class="rp-toggle" data-rp-toggle>+ إضافة رتبة</button>
+      <div class="rp-dropdown hidden" data-rp-drop>
+        <input type="text" class="rp-search" data-rp-search placeholder="🔍 ابحث عن رتبة..." />
+        <div class="rp-list" data-rp-list></div>
+      </div>
+    </div>`;
+}
+
+function setupRolePicker(root, uid, opts) {
+  const wrap = root.querySelector(`[data-rp="${uid}"]`);
+  if (!wrap) return;
+  const allRoles = (state.roles || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar'));
+  const accent = opts.accent || 'var(--green)';
+  const selected = new Set((opts.selected || []).map(String));
+  const listEl = wrap.querySelector('[data-rp-list]');
+  const selEl = wrap.querySelector('[data-rp-selected]');
+  const drop = wrap.querySelector('[data-rp-drop]');
+  const search = wrap.querySelector('[data-rp-search]');
+  const toggle = wrap.querySelector('[data-rp-toggle]');
+
+  const renderSelected = () => {
+    const items = allRoles.filter((r) => selected.has(String(r.id)));
+    selEl.innerHTML = items.map((r) => `
+      <span class="member-chip rp-chip" style="border-color:${accent}; color:${accent};">
+        ${esc(r.name)} <b data-rp-remove="${r.id}" style="cursor:pointer; margin-inline-start:6px;">✕</b>
+      </span>`).join('') || '<span class="rp-empty">لم تُختر رتب بعد</span>';
+    selEl.querySelectorAll('[data-rp-remove]').forEach((x) => x.addEventListener('click', () => {
+      playSound('click');
+      selected.delete(String(x.dataset.rpRemove));
+      renderSelected(); renderList('');
+    }));
+  };
+
+  const renderList = (q) => {
+    const ql = (q || '').trim().toLowerCase();
+    const filtered = allRoles.filter((r) => !ql || String(r.name).toLowerCase().includes(ql));
+    if (!filtered.length) { listEl.innerHTML = '<div class="rp-none">لا توجد رتب مطابقة</div>'; return; }
+    listEl.innerHTML = filtered.slice(0, 60).map((r) => `
+      <div class="rp-item" data-rp-pick="${r.id}" style="${selected.has(String(r.id)) ? 'border-color:' + accent + ';' : ''}">
+        <span>${esc(r.name)}</span>
+        <span class="rp-tick">${selected.has(String(r.id)) ? '✓' : ''}</span>
+      </div>`).join('');
+    listEl.querySelectorAll('[data-rp-pick]').forEach((it) => it.addEventListener('click', () => {
+      playSound('click');
+      const id = String(it.dataset.rpPick);
+      if (selected.has(id)) selected.delete(id); else selected.add(id);
+      renderSelected(); renderList(search.value);
+    }));
+  };
+
+  toggle.addEventListener('click', () => {
+    playSound('click');
+    const show = drop.classList.toggle('hidden');
+    if (!show) { renderList(''); search.focus(); }
+  });
+  search.addEventListener('input', () => renderList(search.value));
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) drop.classList.add('hidden');
+  });
+  renderSelected();
+  return () => Array.from(selected);
+}
+
 // ---------- الصلاحيات ----------
 function renderAuth(main) {
   const staffIds = (state.staffRoles || []).map(String);
   const ar = state.autoRoles || {};
-  const roleChips = (state.roles || [])
-    .map((r) => `<span class="member-chip" data-role-id="${r.id}" data-picked="${staffIds.includes(String(r.id)) ? '1' : '0'}" style="cursor:pointer;${staffIds.includes(String(r.id)) ? 'border-color:var(--green); color:var(--green);' : ''}">${esc(r.name)} ${staffIds.includes(String(r.id)) ? '✓' : ''}</span>`)
-    .join('') || '<p style="color:var(--muted)">لا توجد رتب.</p>';
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
         <h4>👔 رتب الإدارة</h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اضغط على الرتب المراد منحها صلاحية لوحة التحكم (أو هي من تسمح بفتح اللوحة)</p>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">${roleChips}</div>
-        <button class="btn ghost" id="save-staff">💾 حفظ رتب الإدارة</button>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اختر الرتب المراد منحها صلاحية لوحة التحكم.</p>
+        ${rolePickerHTML('staff', staffIds, 'var(--green)')}
+        <button class="btn ghost" id="save-staff" style="margin-top:14px;">💾 حفظ رتب الإدارة</button>
       </div>
       <div class="card">
         <h4>🤖 الرولات التلقائية</h4>
@@ -919,18 +1009,9 @@ function renderAuth(main) {
         <button class="btn ghost" id="save-aro" style="margin-top:14px;">💾 حفظ الرولات التلقائية</button>
       </div>
     </div>`;
-  main.querySelectorAll('[data-role-id]').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      playSound('click');
-      const picked = chip.dataset.picked !== '1';
-      chip.dataset.picked = picked ? '1' : '0';
-      chip.style.borderColor = picked ? 'var(--green)' : '';
-      chip.style.color = picked ? 'var(--green)' : '';
-      chip.textContent = chip.textContent.replace(/\s*✓$/, '') + (picked ? ' ✓' : '');
-    });
-  });
+  const getPicked = setupRolePicker(main, 'staff', { selected: staffIds, accent: 'var(--green)' });
   main.querySelector('#save-staff').addEventListener('click', async () => {
-    const ids = Array.from(main.querySelectorAll('[data-role-id][data-picked="1"]')).map((c) => c.dataset.roleId);
+    const ids = getPicked();
     try {
       const rep = await NSR.bridgeCommand({ type: 'setStaffRoles', userId: session.user.id, guildId: currentGuild.id, roleIds: ids });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
@@ -1120,14 +1201,14 @@ function renderSecurity(main) {
       <div class="card">
         <h4>🛡️ الرتب المحمية</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">من يعطي/يحذف/يعدل هذه الرتب يُعاقب تلقائياً.</p>
-        <div class="selected-list">${(state.roles || []).map((r) => `<span class="member-chip" data-prot="${r.id}" data-picked="${protectedIds.includes(String(r.id)) ? '1' : '0'}" style="cursor:pointer;${protectedIds.includes(String(r.id)) ? 'border-color:var(--red); color:var(--red);' : ''}">${esc(r.name)}</span>`).join('') || '<p style="color:var(--muted)">لا توجد رتب.</p>'}</div>
-        <p style="font-size:12px; color:var(--muted);">الحالي: <b style="color:var(--red)">${pick(protectedIds)}</b></p>
+        ${rolePickerHTML('prot', protectedIds, 'var(--red)')}
+        <p style="font-size:12px; color:var(--muted); margin-top:10px;">الحالي: <b style="color:var(--red)">${pick(protectedIds)}</b></p>
       </div>
       <div class="card">
         <h4>🧑‍💼 رتب التجاوز (مستثناة من الحماية)</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">أصحاب هذه الرتب لا تطالهم الحماية التلقائية.</p>
-        <div class="selected-list">${(state.roles || []).map((r) => `<span class="member-chip" data-bypass="${r.id}" data-picked="${bypassIds.includes(String(r.id)) ? '1' : '0'}" style="cursor:pointer;${bypassIds.includes(String(r.id)) ? 'border-color:var(--green); color:var(--green);' : ''}">${esc(r.name)}</span>`).join('') || '<p style="color:var(--muted)">لا توجد رتب.</p>'}</div>
-        <p style="font-size:12px; color:var(--muted);">الحالي: <b style="color:var(--green)">${pick(bypassIds)}</b></p>
+        ${rolePickerHTML('bypass', bypassIds, 'var(--green)')}
+        <p style="font-size:12px; color:var(--muted); margin-top:10px;">الحالي: <b style="color:var(--green)">${pick(bypassIds)}</b></p>
         <label style="margin-top:12px; display:block;">العقوبة الافتراضية للمخالف</label>
         <select id="sec-action">
           <option value="kick" ${pr.action !== 'ban' ? 'selected' : ''}>👢 طرد (Kick)</option>
@@ -1183,17 +1264,8 @@ function renderSecurity(main) {
     <div class="grid-actions">
       <button class="act-btn" data-save="sec"><span class="big-emoji">💾</span> حفظ إعدادات الحماية</button>
     </div>`;
-  const toggle = (attr, colorVar) => {
-    main.querySelectorAll(attr).forEach((chip) => chip.addEventListener('click', () => {
-      playSound('click');
-      const picked = chip.dataset.picked !== '1';
-      chip.dataset.picked = picked ? '1' : '0';
-      chip.style.borderColor = picked ? 'var(' + colorVar + ')' : '';
-      chip.style.color = picked ? 'var(' + colorVar + ')' : '';
-    }));
-  };
-  toggle('[data-prot]', '--red');
-  toggle('[data-bypass]', '--green');
+  const getProt = setupRolePicker(main, 'prot', { selected: protectedIds, accent: 'var(--red)' });
+  const getBypass = setupRolePicker(main, 'bypass', { selected: bypassIds, accent: 'var(--green)' });
   // تبديل إظهار/إخفاء جسم البطاقة
   main.querySelectorAll('.sec-card').forEach((card) => {
     const sw = card.querySelector('[data-sw]');
@@ -1205,8 +1277,8 @@ function renderSecurity(main) {
     });
   });
   main.querySelector('[data-save="sec"]').addEventListener('click', async () => {
-    const protectedRoles = Array.from(main.querySelectorAll('[data-prot][data-picked="1"]')).map((c) => c.dataset.prot);
-    const bypassRoles = Array.from(main.querySelectorAll('[data-bypass][data-picked="1"]')).map((c) => c.dataset.bypass);
+    const protectedRoles = getProt();
+    const bypassRoles = getBypass();
     const action = main.querySelector('#sec-action').value;
     const num = (id, dflt) => { const v = parseInt(main.querySelector(id)?.value, 10); return isNaN(v) ? dflt : Math.max(1, v); };
     const act = (id, dflt) => main.querySelector(id)?.value || dflt;
@@ -1249,6 +1321,148 @@ function renderSecurity(main) {
       toast('✅ تم حفظ إعدادات الحماية');
     } catch (e) { toast('❌ ' + e.message, 'err'); }
   });
+}
+
+// ---------- معالج AI ----------
+function renderAi(main) {
+  const ai = state.ai || {};
+  const features = [
+    { icon: '🧠', name: 'الرد الذكي على المشاكل', desc: 'يكتشف مشكلة العميل ويقدم له خطوات الحل تلقائياً في الروم المحدد.' },
+    { icon: '❓', name: 'الرد على الاستفسارات', desc: 'يجيب على الأسئلة العامة (باند، تكت، شرح، أماكن) دون سوالف.' },
+    { icon: '🛡️', name: 'فلترة ذكية (كشف التحايل)', desc: 'يكشف السب حتى لو كُتب بطريقة ملتوية (f-u-c-k / fuuuck) ويتصرف حسب الشدة.' },
+    { icon: '🧠', name: 'التعلم من المودرز', desc: 'المود يضع 🚫 على رسالة → يتعلم البوت الكلمات الجديدة تلقائياً.' },
+  ];
+
+  if (!isCustomer) {
+    main.innerHTML = `
+      <div class="card" style="max-width:620px; margin:0 auto; text-align:center; padding:30px;">
+        <img src="logo.png" alt="AI" style="width:84px; height:84px; border-radius:20px; margin-bottom:14px; border:1px solid var(--border);" />
+        <h4>🧠 معالج AI — ميزة مدفوعة</h4>
+        <p style="color:var(--muted); font-size:13px; line-height:1.9; margin-top:8px;">
+          هذه الميزة <b style="color:var(--text)">مقفلة</b> — تحتاج شراء باقة <b style="color:var(--text)">كوستمر</b> لفتحها.<br/>
+          اضغط على أي ميزة بالأسفل لمعرفة محتواها، وعند الضغط على زر الفتح سيوصلك لسيرفر NSR HUB للشراء.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:18px; text-align:right;">
+          ${features.map((f, idx) => `
+            <div class="ai-locked" data-ai-i="${idx}" style="cursor:pointer;">
+              <span style="font-size:22px;">${f.icon}</span>
+              <div style="flex:1;"><b>${f.name}</b><div class="sec-desc">${f.desc}</div></div>
+              <span class="lock-badge">🔒</span>
+            </div>`).join('')}
+        </div>
+        <button class="btn primary big" id="ai-unlock-btn" style="margin-top:20px; width:100%;">🔓 فتح المعالج (شراء من NSR HUB)</button>
+        <p id="ai-unlock-msg" style="font-size:12px; color:var(--muted); margin-top:10px;"></p>
+      </div>`;
+    main.querySelectorAll('[data-ai-i]').forEach((el) => {
+      el.addEventListener('click', () => {
+        playSound('click');
+        toast('🔒 هذه الميزة مقفلة — تشتري باقة كوستمر لفتحها');
+        openPurchaseModal(features[el.dataset.aiI]);
+      });
+    });
+    main.querySelector('#ai-unlock-btn').addEventListener('click', () => {
+      playSound('click');
+      openPurchaseModal();
+    });
+    return;
+  }
+
+  const mode = ai.mode === 'inquiry' ? 'inquiry' : 'solve';
+  main.innerHTML = `
+    <div class="grid2">
+      <div class="card">
+        <h4>🧠 معالج AI</h4>
+        <div class="toggle-row" style="margin-bottom:6px;">
+          <span>🔘 تفعيل المعالج</span>
+          <label class="switch"><input type="checkbox" id="ai-enabled" ${ai.enabled ? 'checked' : ''}/><span class="slider"></span></label>
+        </div>
+        <p style="font-size:12px; color:var(--muted);">يعمل فقط في الروم الذي تختاره أدناه.</p>
+        <label>اختر الروم الذي يرد فيه البوت</label>
+        <select id="ai-channel">
+          <option value="">— اختر الروم —</option>
+          ${(state.channels || []).map((c) => `<option value="${c.id}" ${String(ai.channelId) === String(c.id) ? 'selected' : ''}># ${esc(c.name)}</option>`).join('')}
+        </select>
+        <label>نمط الرد</label>
+        <select id="ai-mode">
+          <option value="solve" ${mode === 'solve' ? 'selected' : ''}>🛠 حل مشاكل — يرد على المشاكل فقط</option>
+          <option value="inquiry" ${mode === 'inquiry' ? 'selected' : ''}>❓ استفسارات — يجيب على الأسئلة العامة</option>
+        </select>
+        <label>شدة التعامل مع السب</label>
+        <select id="ai-severity">
+          <option value="delete" ${(ai.severity || 'delete') === 'delete' ? 'selected' : ''}>🗑 حذف فقط</option>
+          <option value="warn" ${ai.severity === 'warn' ? 'selected' : ''}>⚠ حذف + تحذير خاص</option>
+          <option value="mute" ${ai.severity === 'mute' ? 'selected' : ''}>🔇 حذف + كتم دقيقة</option>
+        </select>
+      </div>
+      <div class="card">
+        <h4>✍️ جرب الرد الذكي</h4>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اكتب مشكلة أو سؤالاً وشاهد كيف سيرد البوت.</p>
+        <textarea id="ai-test" placeholder="مثال: وين ألقى معرض السيارات في فايف ام؟"></textarea>
+        <button class="btn primary" id="ai-test-btn" style="margin-top:10px; width:100%;">🧠 اختبر الرد</button>
+        <div id="ai-test-result" class="ai-test-result" style="margin-top:12px;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>🛡️ الفلترة الذكية (كشف التحايل + التعلم)</h4>
+      <p style="font-size:12.5px; color:var(--muted); line-height:1.9;">
+        • يكشف الكلمات المحظورة حتى لو كُتبت ملتوية: <code>f-u-c-k</code>، <code>fuuuck</code>، <code>f0ck</code>، <code>ك-س</code>.<br/>
+        • المودرز يضعون تفاعل 🚫 على أي رسالة مخالفة فاتت الفلتر → يتعلم البوت كلماتها تلقائياً.<br/>
+        • يرد فقط على الرسائل التي فيها مشكلة أو سؤال واضح — ما يسولف ولا يرد على الإعلانات.
+      </p>
+    </div>
+    <div class="grid-actions">
+      <button class="act-btn" data-save="ai"><span class="big-emoji">💾</span> حفظ إعدادات معالج AI</button>
+    </div>`;
+  main.querySelector('#ai-test-btn').addEventListener('click', async () => {
+    const text = main.querySelector('#ai-test').value.trim();
+    const resEl = main.querySelector('#ai-test-result');
+    if (!text) { toast('❌ اكتب سؤالاً أو مشكلة أولاً', 'err'); return; }
+    resEl.innerHTML = '<span style="color:var(--muted);">⏳ جاري التفكير...</span>';
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'testAi', userId: session.user.id, guildId: currentGuild.id, text });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      resEl.innerHTML = `<b style="color:var(--green);">${rep.data.matched ? '✓ سيُرد على هذه الرسالة' : '— لن يرد (كلام عادي)'}</b><br/><span style="font-size:13px; line-height:1.8;">${esc(rep.data.reply)}</span>`;
+    } catch (e) {
+      resEl.innerHTML = '<span style="color:var(--red);">❌ ' + esc(e.message) + '</span>';
+    }
+  });
+  main.querySelector('[data-save="ai"]').addEventListener('click', async () => {
+    const payload = {
+      enabled: main.querySelector('#ai-enabled').checked,
+      channelId: main.querySelector('#ai-channel').value,
+      mode: main.querySelector('#ai-mode').value,
+      severity: main.querySelector('#ai-severity').value,
+    };
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'setAiConfig', userId: session.user.id, guildId: currentGuild.id, ...payload });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      state.ai = rep.data.ai;
+      toast('✅ تم حفظ إعدادات معالج AI');
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+}
+
+// نافذة الشراء (ميزة مقفلة)
+function openPurchaseModal(feature) {
+  const main = $('#dash-main');
+  main.innerHTML = `
+    <div class="card" style="max-width:520px; margin:0 auto; text-align:center; padding:28px;">
+      ${feature ? `<div style="font-size:40px; margin-bottom:8px;">${feature.icon}</div>` : '<img src="logo.png" alt="" style="width:76px; height:76px; border-radius:18px; margin-bottom:8px;" />'}
+      <h4>🔒 ${feature ? esc(feature.name) : 'معالج AI — ميزة مدفوعة'}</h4>
+      <p style="color:var(--muted); font-size:13px; line-height:1.9; margin-top:8px;">
+        ${feature ? esc(feature.desc) : 'باقة كوستمر تفتح لك معالج AI كاملاً: الرد الذكي على المشاكل والاستفسارات والفلترة الذكية.'}<br/>
+        <b style="color:var(--text);">اشترك من سيرفر NSR HUB الرسمي للشراء والتفعيل.</b>
+      </p>
+      <button class="btn primary big" id="buy-now-btn" style="margin-top:18px; width:100%;">🛒 الشراء من سيرفر NSR HUB</button>
+      <button class="btn ghost" id="buy-back" style="margin-top:8px; width:100%;">🔙 رجوع</button>
+    </div>`;
+  main.querySelector('#buy-now-btn').addEventListener('click', () => {
+    playSound('click');
+    NSR.openExternal(NSR_DISCORD_SERVER);
+    toast('🔗 تم فتح سيرفر NSR HUB');
+  });
+  main.querySelector('#buy-back').addEventListener('click', () => { playSound('click'); renderAi(main); });
+  wireFx(main);
 }
 
 // ---------- المنتجات والتقييمات ----------
