@@ -11,6 +11,7 @@ let botClientId = '';
 let state = null;
 let currentGuild = null;
 let currentPage = 'home';
+let isOwner = false;
 
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
@@ -135,6 +136,9 @@ async function refreshBotGuilds() {
     if (rep && rep.ok && Array.isArray(rep.data.guilds)) {
       botGuilds = rep.data.guilds;
       botClientId = rep.data.botClientId || botClientId;
+      isOwner = !!rep.data.isOwner;
+      const ownerNav = $('#nav-owner');
+      if (ownerNav) ownerNav.classList.toggle('hidden', !isOwner);
       return botGuilds;
     }
   } catch (_) {}
@@ -170,9 +174,8 @@ NSR.onUpdateStatus((s) => {
     updateBtn.classList.remove('hidden');
     updateManualBtn.classList.toggle('hidden', !s.manualUrl);
     if (s.manualUrl) updateManualBtn.dataset.url = s.manualUrl;
-  } else if (s.phase === 'downloading' || s.phase === 'installing') {
+  } else if (s.phase === 'downloading') {
     updateManualBtn.classList.add('hidden');
-  }
     updateTitle.textContent = 'يوجد تحديث في التطبيق';
     updateSub.textContent = 'جاري تحديث التطبيق... ' + s.pct + '%';
     updateBarWrap.classList.remove('hidden');
@@ -301,8 +304,15 @@ async function enterServers() {
   $('#user-name').textContent = session.user.username;
 
   const grid = $('#servers-grid');
+  const ownerBtn = $('#btn-owner-view');
+  const searchInput = $('#servers-search');
   grid.innerHTML = '<div class="loading">جاري جلب السيرفرات...</div>';
   $('#servers-empty').classList.add('hidden');
+  ownerBtn.classList.add('hidden');
+  searchInput.classList.add('hidden');
+  searchInput.value = '';
+  ownerBtn.textContent = '👑 كل السيرفرات';
+  let ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
   if (!settings.bridgeKey) {
@@ -316,37 +326,88 @@ async function enterServers() {
   await refreshBotGuilds();
   known = botGuilds.length > 0;
 
-  // السيرفرات اللي فيها البوت وعندك عليها صلاحية إدارة (أدمن أو رول ستاف) حسب تعريف البوت
-  let listed;
-  if (known) {
-    listed = botGuilds.filter((g) => g.isAdmin === true);
-  } else {
-    // احتياط: من صلاحيات OAuth إذا الجسر غير متصل
-    listed = adminGuilds;
-  }
-
-  if (!listed.length) {
+  const renderList = (search) => {
     grid.innerHTML = '';
-    $('#servers-empty').classList.remove('hidden');
-    return;
-  }
-  grid.innerHTML = '';
+    $('#servers-empty').classList.add('hidden');
+    const q = (search || '').trim().toLowerCase();
+    let listed;
+    if (ownerMode && known) {
+      listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+    } else if (known) {
+      listed = botGuilds.filter((g) => g.isAdmin === true && (!q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q)));
+    } else {
+      listed = adminGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q));
+    }
 
-  listed.forEach((g, i) => {
-    const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
-    const card = document.createElement('div');
-    card.className = 'server-card';
-    card.style.setProperty('--d', (i * 0.06) + 's');
-    card.innerHTML = `
-      <div class="icon">${iconUrl ? `<img src="${iconUrl}" alt="" />` : '🎮'}</div>
-      <h3>${esc(g.name)}</h3>
-      <div class="meta">السيرفر: ${g.id}</div>
-      <div class="badges">${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}<span class="badge">👑 إدارة</span></div>`;
-    card.addEventListener('click', () => openGuild(g));
-    grid.appendChild(card);
-    requestAnimationFrame(() => card.classList.add('in'));
-  });
-  wireFx(grid);
+    if (!listed.length) {
+      grid.innerHTML = '';
+      $('#servers-empty').classList.remove('hidden');
+      return;
+    }
+
+    listed.forEach((g, i) => {
+      const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
+      const card = document.createElement('div');
+      card.className = 'server-card';
+      card.style.setProperty('--d', (i * 0.06) + 's');
+      card.innerHTML = `
+        <div class="icon">${iconUrl ? `<img src="${iconUrl}" alt="" />` : '🎮'}</div>
+        <h3>${esc(g.name)}</h3>
+        <div class="meta">السيرفر: ${g.id}</div>
+        <div class="badges">
+          ${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}
+          <span class="badge">${ownerMode && g.isAdmin ? '👑 إدارة' : (ownerMode ? '📋 عادي' : '👑 إدارة')}</span>
+        </div>`;
+      if (ownerMode && known) {
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex; gap:8px; margin-top:12px;';
+        actions.innerHTML = `
+          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">⚙️ الدخول</button>
+          <button class="btn ghost" data-owner-invite="${g.id}">🔗 ديسكورد</button>`;
+        card.appendChild(actions);
+      } else {
+        card.addEventListener('click', () => openGuild(g));
+      }
+      grid.appendChild(card);
+      requestAnimationFrame(() => card.classList.add('in'));
+    });
+    wireFx(grid);
+
+    if (ownerMode && known) {
+      grid.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
+        if (g) openGuild(g);
+      }));
+      grid.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = b.dataset.ownerInvite;
+        playSound('click');
+        b.textContent = '...';
+        try {
+          const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
+          if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+          toast('🔗 تم إنشاء رابط الدعوة');
+          NSR.openExternal(rep.data.invite);
+        } catch (err) { toast('❌ ' + err.message, 'err'); }
+        b.textContent = '🔗 ديسكورد';
+      }));
+    }
+  };
+
+  if (isOwner && known) {
+    ownerBtn.classList.remove('hidden');
+    ownerBtn.addEventListener('click', () => {
+      playSound('click');
+      ownerMode = !ownerMode;
+      ownerBtn.textContent = ownerMode ? '👑 سيرفراتي' : '👑 كل السيرفرات';
+      searchInput.classList.toggle('hidden', !ownerMode);
+      renderList(searchInput.value);
+    });
+    searchInput.addEventListener('input', () => renderList(searchInput.value));
+  }
+
+  renderList('');
 }
 
 // ---------- فتح اللوحة ----------
@@ -394,7 +455,7 @@ function goPage(page) {
 
 function renderPage(page) {
   const main = $('#dash-main');
-  if (!state) return;
+  if (!state && page !== 'owner') return;
   main.innerHTML = '';
   if (page === 'home') renderHome(main);
   else if (page === 'welcome') renderWelcome(main);
@@ -407,6 +468,7 @@ function renderPage(page) {
   else if (page === 'security') renderSecurity(main);
   else if (page === 'ratings') renderRatings(main);
   else if (page === 'messages') renderMessages(main);
+  else if (page === 'owner') renderOwner(main);
   wireFx(main);
 }
 
@@ -1097,6 +1159,7 @@ function renderRatings(main) {
 // ---------- الرسائل ----------
 function renderMessages(main) {
   let msgType = 'send';
+  let themeColor = state.embedColor ? '#' + Number(state.embedColor).toString(16).padStart(6, '0') : '#5865F2';
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
@@ -1114,6 +1177,28 @@ function renderMessages(main) {
         <h4>👁️ معاينة رسالة الخاص (كما تصله في ديسكورد)</h4>
         <div id="msg-preview"></div>
         <p style="font-size:12px; color:var(--muted); margin-top:10px;">⏳ تهدئة دقيقة واحدة بين رسالتين لنفس الشخص.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>🎨 إرسال ثيم لروم</h4>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">أرسل رسالة مُنسّقة (ثيم) إلى أي روم في السيرفر مباشرةً.</p>
+      <div class="grid2">
+        <div>
+          <label>اختر الروم</label>
+          <select id="theme-channel">
+            <option value="">— اختر الروم —</option>
+            ${(state.channels || []).map((c) => `<option value="${c.id}"># ${esc(c.name)}</option>`).join('')}
+          </select>
+          <label>عنوان الثيم</label>
+          <input id="theme-title" type="text" placeholder="مثال: 🎉 حدث جديد" />
+          <label>اللون</label>
+          <input id="theme-color" type="color" value="${themeColor}" style="width:100%; height:38px; padding:2px; cursor:pointer;" />
+        </div>
+        <div>
+          <label>نص الثيم</label>
+          <textarea id="theme-text" placeholder="اكتب محتوى الثيم هنا..." style="min-height:110px;"></textarea>
+          <button class="btn primary" id="theme-send" style="margin-top:14px; width:100%;">🚀 إرسال الثيم للروم</button>
+        </div>
       </div>
     </div>`;
   const renderMsgPreview = () => {
@@ -1151,6 +1236,74 @@ function renderMessages(main) {
       renderMsgPreview();
     } catch (e) { toast('❌ ' + e.message, 'err'); }
   });
+  main.querySelector('#theme-send').addEventListener('click', async () => {
+    const channelId = main.querySelector('#theme-channel').value;
+    const title = main.querySelector('#theme-title').value.trim();
+    const text = main.querySelector('#theme-text').value.trim();
+    const rawColor = main.querySelector('#theme-color').value;
+    const color = parseInt(rawColor.replace('#', ''), 16);
+    if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
+    if (!text) { toast('❌ اكتب نص الثيم أولاً', 'err'); return; }
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'sendTheme', userId: session.user.id, guildId: currentGuild.id, channelId, title, text, color });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
+      toast('✅ تم إرسال الثيم للروم');
+      main.querySelector('#theme-title').value = '';
+      main.querySelector('#theme-text').value = '';
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+}
+
+// ---------- كل السيرفرات (المالك فقط) ----------
+function renderOwner(main) {
+  let query = '';
+  const render = () => {
+    const q = query.trim().toLowerCase();
+    const list = (botGuilds || []).filter((g) => {
+      if (!q) return true;
+      return String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q);
+    });
+    main.innerHTML = `
+      <div class="card">
+        <h4>👑 كل سيرفرات البوت <span class="badge ok" style="margin-left:6px;">${(botGuilds || []).length} سيرفر</span></h4>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">أنت مالك البوت — يمكنك دخول أي سيرفر ومعاينة إعداداته.</p>
+        <input id="owner-search" type="text" placeholder="🔍 ابحث في السيرفرات..." value="${esc(query)}" />
+        <div id="owner-list" style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+          ${list.map((g) => `
+            <div class="server-card" data-owner-id="${g.id}" style="margin:0; width:100%;">
+              <div class="icon">${g.iconUrl ? `<img src="${g.iconUrl}" alt="" />` : '🎮'}</div>
+              <div style="flex:1; min-width:0;">
+                <h3 style="margin:0 0 2px;">${esc(g.name)}</h3>
+                <div class="meta">${g.id} · ${g.isAdmin ? 'أنت أدمن هنا' : 'لست أدمن'}</div>
+              </div>
+              <button class="btn primary" data-owner-enter="${g.id}" style="margin-left:10px;">⚙️ الدخول</button>
+              <button class="btn ghost" data-owner-invite="${g.id}" style="margin-left:8px;">🔗 ديسكورد</button>
+            </div>`).join('') || '<p style="color:var(--muted); text-align:center; padding:20px;">لا توجد نتائج مطابقة.</p>'}
+        </div>
+      </div>`;
+    main.querySelector('#owner-search').addEventListener('input', (e) => {
+      query = e.target.value;
+      render();
+    });
+    main.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', () => {
+      const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
+      if (g) openGuild(g);
+    }));
+    main.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async () => {
+      const id = b.dataset.ownerInvite;
+      playSound('click');
+      b.textContent = '...';
+      try {
+        const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+        toast('🔗 تم إنشاء رابط الدعوة');
+        NSR.openExternal(rep.data.invite);
+      } catch (e) { toast('❌ ' + e.message, 'err'); }
+      b.textContent = '🔗 ديسكورد';
+    }));
+    wireFx(main);
+  };
+  render();
 }
 
 init();

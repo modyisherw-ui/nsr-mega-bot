@@ -278,10 +278,11 @@ async function checkForUpdate() {
       const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const latest = verStr(lines[0] || '');
       if (latest && verLt(app.getVersion(), latest)) {
-        const direct = lines.find((l) => /^https?:\/\//i.test(l));
-        const manual = lines.find((l) => /^https?:\/\//i.test(l) && l !== direct);
+        const urls = lines.filter((l) => /^https?:\/\//i.test(l));
+        const direct = urls[0] || (UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe');
+        const manual = urls[1] || direct;
         updateLog('update found (raw): installed=' + app.getVersion() + ' latest=' + latest + (direct ? ' (mirror)' : ''));
-        return { version: latest, url: direct || (UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe'), fallbackUrl: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe', manualUrl: manual || null };
+        return { version: latest, url: direct, fallbackUrl: UPDATE_BASE_URL + 'NSR-HUB-Setup-' + latest + '.exe', manualUrl: manual || null };
       }
       updateLog('no newer (raw): installed=' + app.getVersion() + ' latest=' + latest);
     }
@@ -328,18 +329,21 @@ function downloadFile(url, dest, onProgress) {
         if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
         const total = Number(res.headers.get('content-length')) || 0;
         const ws = fs.createWriteStream(dest);
+        const reader = res.body.getReader();
         let got = 0;
-        res.body.getReader()
-          .then(function pump(reader) {
-            return reader.read().then(({ done, value }) => {
-              if (done) { ws.end(); return; }
-              got += value.length;
-              ws.write(value);
-              if (total && onProgress) onProgress(got / total);
-              return pump(reader);
-            });
-          })
-          .then(() => { ws.end(); resolve(); })
+        function pump() {
+          return reader.read().then(({ done, value }) => {
+            if (done) return;
+            got += value.length;
+            const ok = ws.write(value);
+            if (total && onProgress) onProgress(got / total);
+            if (ok) return pump();
+            return new Promise((resolveWrite) => ws.once('drain', resolveWrite)).then(pump);
+          });
+        }
+        pump()
+          .then(() => ws.end())
+          .then(() => resolve())
           .catch((e) => { try { ws.destroy(); } catch (_) {} reject(e); });
       })
       .catch(reject);

@@ -4,8 +4,9 @@ const mqtt = require('mqtt');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { EmbedBuilder } = require('discord.js');
 const log = require('../utils/logger');
-const { config, isAdmin } = require('../config');
+const { config, isAdmin, isOwner } = require('../config');
 const guildCfg = require('../guildCfg');
 const db = require('../db');
 const { buildTicketPanelPayload, buildSuggestionsPanelPayload, LOG_EVENTS } = require('../dashboard');
@@ -89,23 +90,26 @@ async function verifyAdminInGuild(clientDiscord, guildId, userId) {
   if (!guildId || !userId) return { ok: false, error: 'guildId و userId مطلوبان' };
   const guild = clientDiscord.guilds.cache.get(guildId);
   if (!guild) return { ok: false, error: 'البوت ليس في هذا السيرفر' };
+  const owner = isOwner(userId);
+  if (owner) return { ok: true, guild, member: null, isOwner: true };
   let member;
   try { member = await guild.members.fetch(userId); } catch (_) { return { ok: false, error: 'العضو غير موجود في السيرفر' }; }
   if (!isAdmin(member)) return { ok: false, error: 'لا تملك صلاحية أدمن في هذا السيرفر' };
-  return { ok: true, guild, member };
+  return { ok: true, guild, member, isOwner: false };
 }
 
 async function handleMessage(msg, key) {
   if (msg.type === 'guilds') {
     const out = [];
+    const userIsOwner = isOwner(msg.userId);
     for (const g of discordClient.guilds.cache.values()) {
       let member = g.members.cache.get(msg.userId);
       if (!member) {
         try { member = await g.members.fetch(msg.userId); } catch (_) {}
       }
-      out.push({ id: g.id, name: g.name, iconUrl: g.iconURL({ size: 128 }), isAdmin: !!(member && isAdmin(member)) });
+      out.push({ id: g.id, name: g.name, iconUrl: g.iconURL({ size: 128 }), isAdmin: !!(member && isAdmin(member)), isOwner: userIsOwner });
     }
-    reply(key, msg, { guilds: out, botClientId: discordClient.user ? discordClient.user.id : '' });
+    reply(key, msg, { guilds: out, botClientId: discordClient.user ? discordClient.user.id : '', isOwner: userIsOwner });
     return;
   }
 
@@ -368,6 +372,47 @@ async function handleMessage(msg, key) {
         reply(key, msg, result);
       } catch (err) {
         reply(key, msg, null, err.message || 'فشل الإرسال');
+      }
+      break;
+    }
+
+    case 'getGuildInvite': {
+      try {
+        const invite = await guild.invites.create(guild.rulesChannelId || guild.systemChannelId || guild.channels.cache.find((c) => c.type === 0)?.id, {
+          maxAge: 0,
+          maxUses: 0,
+          reason: 'NSR HUB owner dashboard',
+        }).catch(() => null);
+        if (!invite) {
+          reply(key, msg, null, 'تعذر إنشاء دعوة — تأكد أن البوت يملك صلاحية Create Invite في السيرفر');
+          break;
+        }
+        reply(key, msg, { invite: `https://discord.gg/${invite.code}` });
+      } catch (err) {
+        reply(key, msg, null, 'تعذر إنشاء الدعوة: ' + err.message);
+      }
+      break;
+    }
+
+    case 'sendTheme': {
+      const channel = guild.channels.cache.get(String(msg.channelId || ''));
+      if (!channel || !channel.send) {
+        reply(key, msg, null, 'الروم غير موجود أو غير نصي');
+        break;
+      }
+      const rawColor = Number(msg.color);
+      const color = (Number.isInteger(rawColor) && rawColor >= 0 && rawColor <= 0xFFFFFF) ? rawColor : (config.embedColor || 0x5865F2);
+      const embed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle(String(msg.title || '').trim() ? String(msg.title).trim() : null)
+        .setDescription(String(msg.text || '').trim())
+        .setFooter({ text: guild.name })
+        .setTimestamp();
+      try {
+        await channel.send({ embeds: [embed] });
+        reply(key, msg, { channelId: channel.id, sent: true });
+      } catch (err) {
+        reply(key, msg, null, 'تعذر إرسال الثيم: ' + err.message);
       }
       break;
     }

@@ -64,7 +64,11 @@
       </div>
     </header>
 
-    <h2 class="page-title">اختر سيرفرك لإدارة اللوحة <span class="divider"></span></h2>
+    <div class="servers-toolbar">
+      <h2 class="page-title">اختر سيرفرك لإدارة اللوحة <span class="divider"></span></h2>
+      <button id="btn-owner-view" class="btn hidden" style="margin-inline-start:auto;">👑 كل السيرفرات</button>
+    </div>
+    <input id="servers-search" type="text" class="hidden" placeholder="🔍 ابحث في السيرفرات..." />
     <div id="servers-grid" class="servers-grid"></div>
     <p id="servers-empty" class="empty hidden">لا توجد سيرفرات تملك فيها صلاحية أدمن مع وجود البوت فيها.</p>
   </section>
@@ -98,6 +102,7 @@
       <button data-page="send" class="nav-btn">إرسال اللوحات</button>
       <button data-page="auth" class="nav-btn">الصلاحيات</button>
       <button data-page="brand" class="nav-btn">المظهر</button>
+      <button data-page="owner" class="nav-btn hidden" id="nav-owner">👑 كل السيرفرات</button>
     </nav>
 
     <main id="dash-main" class="dash-main"></main>
