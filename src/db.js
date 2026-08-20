@@ -132,6 +132,13 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS panel_info (
     channel_id TEXT PRIMARY KEY, message_id TEXT NOT NULL, server_name TEXT
   );
+
+  -- 📊 إحصائيات السيرفر (الدخول والرسائل يومياً)
+  CREATE TABLE IF NOT EXISTS guild_stats (
+    guild_id TEXT PRIMARY KEY,
+    joins_total INTEGER DEFAULT 0, joins_today INTEGER DEFAULT 0, joins_date TEXT DEFAULT '',
+    msgs_total INTEGER DEFAULT 0, msgs_today INTEGER DEFAULT 0, msgs_date TEXT DEFAULT ''
+  );
 `);
 
 // ═══════════════ Ratings ═══════════════
@@ -364,5 +371,24 @@ setInterval(() => {
   try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch (_) {}
 }, 60 * 1000);
 
-module.exports = { db, ratings, productReviews, tickets, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe };
+// ═══════════════ إحصائيات السيرفر ═══════════════
+const guildStats = {
+  record(guildId, type) {
+    const today = new Date().toISOString().slice(0, 10);
+    const field = type === 'join' ? 'joins' : 'msgs';
+    const row = guildStats.get(guildId);
+    if (!row || row[field + '_date'] !== today) {
+      db.prepare(`INSERT INTO guild_stats (guild_id, ${field}_total, ${field}_today, ${field}_date) VALUES (?,1,1,?)
+        ON CONFLICT(guild_id) DO UPDATE SET ${field}_today=1, ${field}_date=excluded.${field}_date`).run(guildId, today);
+      return;
+    }
+    db.prepare(`UPDATE guild_stats SET ${field}_total=${field}_total+1, ${field}_today=${field}_today+1 WHERE guild_id=?`).run(guildId);
+  },
+  get(guildId) {
+    const r = db.prepare(`SELECT * FROM guild_stats WHERE guild_id=?`).get(guildId);
+    return r || { guild_id: guildId, joins_total: 0, joins_today: 0, joins_date: '', msgs_total: 0, msgs_today: 0, msgs_date: '' };
+  },
+};
+
+module.exports = { db, ratings, productReviews, tickets, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe, guildStats };
 

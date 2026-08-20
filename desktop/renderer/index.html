@@ -66,7 +66,9 @@
 
     <div class="servers-toolbar">
       <h2 class="page-title">اختر سيرفرك لإدارة اللوحة <span class="divider"></span></h2>
+      <button id="btn-owner-view" class="btn ghost hidden" style="margin-inline-start:auto;">👑 كل السيرفرات</button>
     </div>
+    <input id="servers-search" type="text" class="hidden" placeholder="🔍 ابحث في السيرفرات..." />
     <div id="servers-grid" class="servers-grid"></div>
     <p id="servers-empty" class="empty hidden">لا توجد سيرفرات تملك فيها صلاحية أدمن مع وجود البوت فيها.</p>
   </section>
@@ -74,19 +76,17 @@
   <!-- شاشة اللوحة -->
   <section id="screen-dashboard" class="screen">
     <header class="topbar">
+      <button id="btn-back" class="btn ghost back-btn">
+        <img id="back-logo" src="https://cdn.discordapp.com/emojis/1537843770911891466.png?size=64" alt="" />
+        السيرفرات
+      </button>
       <div class="guild-chip">
         <img id="guild-icon" class="avatar" alt="guild" />
         <span id="guild-name">—</span>
       </div>
-      <div class="topbar-right">
-        <button id="btn-back" class="btn ghost back-btn">
-          <img id="back-logo" src="https://cdn.discordapp.com/emojis/1537843770911891466.png?size=64" alt="" />
-          السيرفرات
-        </button>
-        <div class="bridge-status">
-          <span id="bridge-dot2" class="dot off"></span>
-          <span id="bridge-text2">الجسر غير متصل</span>
-        </div>
+      <div class="bridge-status">
+        <span id="bridge-dot2" class="dot off"></span>
+        <span id="bridge-text2">الجسر غير متصل</span>
       </div>
     </header>
 
@@ -95,14 +95,13 @@
       <button data-page="welcome" class="nav-btn">الترحيب</button>
       <button data-page="tickets" class="nav-btn">التذاكر</button>
       <button data-page="suggestions" class="nav-btn">الاقتراحات</button>
-      <button data-page="ratings" class="nav-btn">المتاجر</button>
+      <button data-page="ratings" class="nav-btn">المتجر</button>
       <button data-page="logs" class="nav-btn">اللوقات</button>
       <button data-page="security" class="nav-btn">الأمان</button>
       <button data-page="messages" class="nav-btn">الرسائل</button>
       <button data-page="send" class="nav-btn">إرسال اللوحات</button>
       <button data-page="auth" class="nav-btn">الصلاحيات</button>
       <button data-page="brand" class="nav-btn">المظهر</button>
-      <button data-page="owner" class="nav-btn hidden" id="nav-owner">👑 كل السيرفرات</button>
     </nav>
 
     <main id="dash-main" class="dash-main"></main>

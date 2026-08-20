@@ -518,3 +518,29 @@ body.maximized {
 .sec-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
 .sec-field label { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 4px; }
 .sec-field input, .sec-field select { width: 100%; }
+
+/* ─── إحصائيات الرئيسية ─── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; margin-top: 16px;
+}
+.stat-box {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 14px; text-align: center; transition: .2s;
+}
+.stat-box:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.stat-ico { font-size: 22px; display: block; margin-bottom: 6px; }
+.stat-box b { font-size: 24px; display: block; line-height: 1.1; }
+.stat-box small { color: var(--muted); font-size: 11.5px; }
+.bans-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.ban-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 12px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 12.5px;
+}
+.ban-tag { font-weight: 600; color: var(--red); }
+.ban-info { color: var(--muted); }
+.ban-info b { color: var(--text); font-weight: 600; }
+
+/* ─── إرسال تقييم لعميل ─── */
+.send-rate-row { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }

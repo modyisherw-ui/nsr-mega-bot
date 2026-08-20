@@ -140,6 +140,8 @@ client.on('messageCreate', async message => {
 
     await roles.handleJoinRole(message);
     await security.handleMessageSecurity(message);
+    // عدّ الرسائل للإحصائيات
+    db.guildStats.record(message.guild.id, 'msg');
   } catch (err) {
     log.warn('خطأ في معالجة رسالة: ' + err.message);
   }
@@ -265,6 +267,8 @@ client.on('guildMemberAdd', async member => {
   await security.handleBotJoin(member);
   // رسالة الترحيب حسب إعدادات اللوحة (روم/خاص + {user} {count} {server} + صورة)
   require('./modules/welcome').sendWelcome(member).catch(() => {});
+  // عدّ الدخول للإحصائيات
+  if (!member.user.bot) db.guildStats.record(member.guild.id, 'join');
 });
 
 // ═══════════ نظام الحماية (حذف الرومات + التدمير + الباند + الطرد + الرتب + الويبهوك) ═══════════

@@ -137,8 +137,8 @@ async function refreshBotGuilds() {
       botGuilds = rep.data.guilds;
       botClientId = rep.data.botClientId || botClientId;
       isOwner = !!rep.data.isOwner;
-      const ownerNav = $('#nav-owner');
-      if (ownerNav) ownerNav.classList.toggle('hidden', !isOwner);
+      const ownerBtn = $('#btn-owner-view');
+      if (ownerBtn) ownerBtn.classList.toggle('hidden', !isOwner);
       return botGuilds;
     }
   } catch (_) {}
@@ -304,8 +304,15 @@ async function enterServers() {
   $('#user-name').textContent = session.user.username;
 
   const grid = $('#servers-grid');
+  const ownerBtn = $('#btn-owner-view');
+  const searchInput = $('#servers-search');
   grid.innerHTML = '<div class="loading">جاري جلب السيرفرات...</div>';
   $('#servers-empty').classList.add('hidden');
+  ownerBtn.classList.add('hidden');
+  searchInput.classList.add('hidden');
+  searchInput.value = '';
+  ownerBtn.textContent = '👑 كل السيرفرات';
+  let ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
   if (!settings.bridgeKey) {
@@ -324,7 +331,9 @@ async function enterServers() {
     $('#servers-empty').classList.add('hidden');
     const q = (search || '').trim().toLowerCase();
     let listed;
-    if (known) {
+    if (ownerMode && known) {
+      listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+    } else if (known) {
       listed = botGuilds.filter((g) => g.isAdmin === true && (!q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q)));
     } else {
       listed = adminGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q));
@@ -347,14 +356,56 @@ async function enterServers() {
         <div class="meta">السيرفر: ${g.id}</div>
         <div class="badges">
           ${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}
-          <span class="badge">👑 إدارة</span>
+          <span class="badge">${ownerMode && g.isAdmin ? '👑 أدمن' : (ownerMode ? '🔍 معاينة' : '👑 إدارة')}</span>
         </div>`;
-      card.addEventListener('click', () => openGuild(g));
+      if (ownerMode && known) {
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex; gap:8px; margin-top:12px;';
+        actions.innerHTML = `
+          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">⚙️ الدخول</button>
+          <button class="btn ghost" data-owner-invite="${g.id}">🔗 ديسكورد</button>`;
+        card.appendChild(actions);
+      } else {
+        card.addEventListener('click', () => openGuild(g));
+      }
       grid.appendChild(card);
       requestAnimationFrame(() => card.classList.add('in'));
     });
     wireFx(grid);
+
+    if (ownerMode && known) {
+      grid.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
+        if (g) openGuild(g);
+      }));
+      grid.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = b.dataset.ownerInvite;
+        playSound('click');
+        b.textContent = '...';
+        try {
+          const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
+          if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+          toast('🔗 تم إنشاء رابط الدعوة');
+          NSR.openExternal(rep.data.invite);
+        } catch (err) { toast('❌ ' + err.message, 'err'); }
+        b.textContent = '🔗 ديسكورد';
+      }));
+    }
   };
+
+  if (isOwner && known) {
+    ownerBtn.classList.remove('hidden');
+    ownerBtn.addEventListener('click', () => {
+      playSound('click');
+      ownerMode = !ownerMode;
+      ownerBtn.textContent = ownerMode ? '👑 السيرفرات الإدارية' : '👑 كل السيرفرات';
+      searchInput.classList.toggle('hidden', !ownerMode);
+      renderList(searchInput.value);
+    });
+    searchInput.addEventListener('input', () => renderList(searchInput.value));
+  }
 
   renderList('');
 }
@@ -404,7 +455,7 @@ function goPage(page) {
 
 function renderPage(page) {
   const main = $('#dash-main');
-  if (!state && page !== 'owner') return;
+  if (!state) return;
   main.innerHTML = '';
   if (page === 'home') renderHome(main);
   else if (page === 'welcome') renderWelcome(main);
@@ -417,7 +468,6 @@ function renderPage(page) {
   else if (page === 'security') renderSecurity(main);
   else if (page === 'ratings') renderRatings(main);
   else if (page === 'messages') renderMessages(main);
-  else if (page === 'owner') renderOwner(main);
   wireFx(main);
 }
 
@@ -459,7 +509,7 @@ async function refreshState() {
 }
 
 // ---------- الرئيسية ----------
-function renderHome(main) {
+async function renderHome(main) {
   const w = state.welcome || {};
   const types = (state.ticket.ticketTypes || []).filter((t) => t.enabled !== false);
   main.innerHTML = `
@@ -483,21 +533,65 @@ function renderHome(main) {
           <button class="btn ghost" data-quick="welcome">👋 الترحيب</button>
           <button class="btn ghost" data-quick="suggestions">💡 الاقتراحات</button>
           <button class="btn ghost" data-quick="send">📨 الإرسال</button>
+          <button class="btn ghost" data-quick="ratings">🛍️ المتجر</button>
         </div>
         <p style="color:var(--muted); font-size:12px; margin-top:14px;">الجسر: <b id="home-bridge"></b></p>
       </div>
     </div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-box"><span class="stat-ico">🎫</span><b id="st-tickets">…</b><small>التذاكر المفتوحة</small></div>
+      <div class="stat-box"><span class="stat-ico">✅</span><b id="st-tickets-closed">…</b><small>التذاكر المغلقة</small></div>
+      <div class="stat-box"><span class="stat-ico">🚪</span><b id="st-joins">…</b><small>الدخول اليوم</small></div>
+      <div class="stat-box"><span class="stat-ico">💬</span><b id="st-msgs">…</b><small>الرسائل اليوم</small></div>
+      <div class="stat-box"><span class="stat-ico">⛔</span><b id="st-bans">…</b><small>المتبندين</small></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>⛔ قائمة المتبندين <span style="font-size:11px;color:var(--muted);font-weight:400;">(السبب + من متبند)</span></h4>
+      <div id="bans-list" class="bans-list"><p style="color:var(--muted); font-size:12.5px;">جاري التحميل…</p></div>
+    </div>
     <div class="grid-actions">
       <button class="act-btn" data-act="refresh"><span class="big-emoji">🔄</span> تحديث الإعدادات</button>
+      <button class="act-btn" data-act="stats"><span class="big-emoji">📊</span> تحديث الإحصائيات</button>
       <button class="act-btn" data-act="servers"><span class="big-emoji">📡</span> تحديث قائمة السيرفرات</button>
     </div>`;
   const bridgeState = $('.bridge-status .dot').className.includes('on');
   $('#home-bridge').textContent = bridgeState ? 'متصل ✅' : 'غير متصل';
   main.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => goPage(b.dataset.quick)));
   main.querySelector('[data-act="refresh"]').addEventListener('click', refreshState);
+  main.querySelector('[data-act="stats"]').addEventListener('click', () => loadHomeStats(main));
   main.querySelector('[data-act="servers"]').addEventListener('click', async () => {
     playSound('click'); enterServers();
   });
+  loadHomeStats(main);
+}
+
+async function loadHomeStats(main) {
+  const set = (id, v) => { const el = main.querySelector('#' + id); if (el) el.textContent = String(v); };
+  try {
+    const rep = await NSR.bridgeCommand({ type: 'stats', userId: session.user.id, guildId: currentGuild.id });
+    if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'لا استجابة');
+    const d = rep.data;
+    set('st-tickets', d.tickets.open);
+    set('st-tickets-closed', d.tickets.closed);
+    set('st-joins', d.joins.today);
+    set('st-msgs', d.messages.today);
+    set('st-bans', d.bansTotal);
+    const listEl = main.querySelector('#bans-list');
+    if (!d.bans.length) {
+      listEl.innerHTML = '<p style="color:var(--muted); font-size:12.5px;">لا يوجد متبندون في السيرفر 🎉</p>';
+    } else {
+      listEl.innerHTML = d.bans.map((b) => `
+        <div class="ban-row">
+          <span class="ban-tag">${esc(b.username)}</span>
+          <span class="ban-info">السبب: <b>${esc(b.reason)}</b></span>
+          <span class="ban-info">من متبند: <b>${esc(b.bannedBy)}</b></span>
+        </div>`).join('');
+    }
+  } catch (e) {
+    set('st-tickets', '—'); set('st-tickets-closed', '—'); set('st-joins', '—'); set('st-msgs', '—'); set('st-bans', '—');
+    const listEl = main.querySelector('#bans-list');
+    if (listEl) listEl.innerHTML = '<p style="color:var(--red); font-size:12.5px;">تعذر تحميل الإحصائيات: ' + esc(e.message) + '</p>';
+  }
 }
 
 // ---------- الترحيب ----------
@@ -1181,7 +1275,23 @@ function renderRatings(main) {
           <option value="">— اختر الروم —</option>
           ${(state.channels || []).map((c) => `<option value="${c.id}" ${String(rt.reviewsChannelId || '') === String(c.id) ? 'selected' : ''}># ${esc(c.name)}</option>`).join('')}
         </select>
-        <button class="btn ghost" id="save-rating" style="margin-top:14px;">💾 حفظ الروم</button>
+        <label>إرسال تقييم لعميل (مثل /rate)</label>
+        <div class="send-rate-row">
+          <input id="rate-member-search" type="text" placeholder="🔍 ابحث عن العميل..." />
+          <select id="rate-member" style="margin-top:8px;">
+            <option value="">— اختر العميل —</option>
+            ${(state.members || []).map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}
+          </select>
+          <select id="rate-product" style="margin-top:8px;">
+            <option value="">— اختر المنتج —</option>
+            ${products.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button class="btn ghost" id="save-rating" style="flex:1;">💾 حفظ الروم</button>
+          <button class="btn primary" id="send-rating" style="flex:1;">📨 إرسال التقييم</button>
+        </div>
+        <p id="send-rate-msg" style="font-size:11.5px; color:var(--muted); margin-top:8px;"></p>
       </div>
     </div>`;
   main.querySelector('#prod-add').addEventListener('click', async () => {
@@ -1213,6 +1323,42 @@ function renderRatings(main) {
       state.rating.reviewsChannelId = channelId;
       toast('✅ تم حفظ روم التقييمات');
     } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+
+  // بحث فوري عن العملاء (أصحاب المتجر)
+  const searchInput = main.querySelector('#rate-member-search');
+  const memberSel = main.querySelector('#rate-member');
+  let searchTimer = null;
+  const searchMembers = async (q) => {
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'searchMembers', userId: session.user.id, guildId: currentGuild.id, query: q });
+      if (!rep || !rep.ok) return;
+      const cur = memberSel.value;
+      memberSel.innerHTML = '<option value="">— اختر العميل —</option>' +
+        rep.data.members.map((m) => `<option value="${m.id}">${esc(m.name)}${m.nick ? ' (' + esc(m.nick) + ')' : ''}</option>`).join('');
+      if (cur) memberSel.value = cur;
+    } catch (_) {}
+  };
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => searchMembers(searchInput.value.trim()), 300);
+  });
+  main.querySelector('#send-rating').addEventListener('click', async () => {
+    const targetId = memberSel.value;
+    const productId = main.querySelector('#rate-product').value;
+    const msgEl = main.querySelector('#send-rate-msg');
+    if (!targetId) { toast('❌ اختر العميل أولاً', 'err'); return; }
+    if (!productId) { toast('❌ اختر المنتج أولاً', 'err'); return; }
+    msgEl.textContent = '⏳ جاري الإرسال…';
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'sendRating', userId: session.user.id, guildId: currentGuild.id, targetId, productId });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
+      msgEl.textContent = '✅ تم إرسال رسالة التقييم إلى العميل على الخاص';
+      toast('✅ تم إرسال التقييم');
+    } catch (e) {
+      msgEl.textContent = '❌ ' + e.message;
+      toast('❌ ' + e.message, 'err');
+    }
   });
 }
 
@@ -1379,58 +1525,4 @@ function renderMessages(main) {
 }
 
 // ---------- كل السيرفرات (المالك فقط) ----------
-function renderOwner(main) {
-  let query = '';
-  const render = () => {
-    const q = query.trim().toLowerCase();
-    const list = (botGuilds || []).filter((g) => {
-      if (!q) return true;
-      return String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q);
-    });
-    main.innerHTML = `
-      <div class="card">
-        <h4>👑 كل سيرفرات البوت <span class="badge ok" style="margin-left:6px;">${(botGuilds || []).length} سيرفر</span></h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">أنت مالك البوت — يمكنك دخول أي سيرفر ومعاينة إعداداته.</p>
-        <div style="position:relative;">
-          <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; z-index:1;">🔍</span>
-          <input id="owner-search" class="search-bar" type="text" placeholder="ابحث في السيرفرات..." value="${esc(query)}" style="padding-left:42px;" />
-        </div>
-        <div id="owner-list" style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
-          ${list.map((g) => `
-            <div class="server-card" data-owner-id="${g.id}" style="margin:0; width:100%;">
-              <div class="icon">${g.iconUrl ? `<img src="${g.iconUrl}" alt="" />` : '🎮'}</div>
-              <div style="flex:1; min-width:0;">
-                <h3 style="margin:0 0 2px;">${esc(g.name)}</h3>
-                <div class="meta">${g.id} · ${g.isAdmin ? 'أنت أدمن هنا' : 'لست أدمن'}</div>
-              </div>
-              <button class="btn primary" data-owner-enter="${g.id}" style="margin-left:10px;">⚙️ الدخول</button>
-              <button class="btn ghost" data-owner-invite="${g.id}" style="margin-left:8px;">🔗 ديسكورد</button>
-            </div>`).join('') || '<p style="color:var(--muted); text-align:center; padding:20px;">لا توجد نتائج مطابقة.</p>'}
-        </div>
-      </div>`;
-    main.querySelector('#owner-search').addEventListener('input', (e) => {
-      query = e.target.value;
-      render();
-    });
-    main.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', () => {
-      const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
-      if (g) openGuild(g);
-    }));
-    main.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async () => {
-      const id = b.dataset.ownerInvite;
-      playSound('click');
-      b.textContent = '...';
-      try {
-        const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
-        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('🔗 تم إنشاء رابط الدعوة');
-        NSR.openExternal(rep.data.invite);
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
-      b.textContent = '🔗 ديسكورد';
-    }));
-    wireFx(main);
-  };
-  render();
-}
-
 init();

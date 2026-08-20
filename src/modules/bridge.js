@@ -158,6 +158,10 @@ async function handleMessage(msg, key) {
           .filter(r => r.name !== '@everyone')
           .map(r => ({ id: r.id, name: r.name }))
           .slice(0, 100),
+        members: Array.from(guild.members.cache.values())
+          .filter(m => !m.user.bot)
+          .map(m => ({ id: m.id, name: m.user.username }))
+          .slice(0, 100),
       });
       break;
     }
@@ -371,6 +375,69 @@ async function handleMessage(msg, key) {
       break;
     }
 
+    case 'sendRating': {
+      try {
+        const { sendPurchaseDM, findProduct } = require('./ratings');
+        const product = findProduct(guild.id, String(msg.productId || ''));
+        if (!product) {
+          reply(key, msg, null, 'المنتج غير موجود');
+          break;
+        }
+        const targetId = String(msg.targetId || '');
+        let target = guild.members.cache.get(targetId);
+        if (!target) {
+          try { target = await guild.members.fetch(targetId); } catch (_) {}
+        }
+        if (!target || target.user.bot) {
+          reply(key, msg, null, 'العميل غير موجود أو غير صالح');
+          break;
+        }
+        const ok = await sendPurchaseDM(target.user, product, discordClient, guild);
+        if (!ok) {
+          reply(key, msg, null, 'تعذر إرسال رسالة خاصة — ربما قفل العميل الخاص');
+          break;
+        }
+        reply(key, msg, { sent: true, targetId: target.id, productId: product.id });
+      } catch (err) {
+        reply(key, msg, null, 'فشل إرسال التقييم: ' + err.message);
+      }
+      break;
+    }
+
+    case 'stats': {
+      try {
+        const tickets = db.tickets.stats(guild.id);
+        const gs = db.guildStats.get(guild.id);
+        const bans = [];
+        let bansTotal = 0;
+        try {
+          const banList = await guild.bans.fetch();
+          bansTotal = banList.size;
+          const { AuditLogEvent } = require('discord.js');
+          let byUser = {};
+          try {
+            const audit = await guild.fetchAuditLogs({ type: AuditLogEvent.MemberBanAdd, limit: 20 });
+            for (const e of audit.entries.values()) {
+              if (e.target) byUser[e.target.id] = e.executor?.username || 'غير معروف';
+            }
+          } catch (_) {}
+          banList.forEach((b, id) => {
+            bans.push({ userId: id, username: b.user.username, reason: b.reason || 'بدون سبب', bannedBy: byUser[id] || 'غير معروف' });
+          });
+        } catch (_) {}
+        reply(key, msg, {
+          tickets,
+          joins: { today: gs.joins_today, total: gs.joins_total },
+          messages: { today: gs.msgs_today, total: gs.msgs_total },
+          bansTotal,
+          bans: bans.slice(0, 15),
+        });
+      } catch (err) {
+        reply(key, msg, null, 'فشل جلب الإحصائيات: ' + err.message);
+      }
+      break;
+    }
+
     case 'sendDm': {
       try {
         const { checkSwearAndNotify } = require('./security');
@@ -447,6 +514,25 @@ async function handleMessage(msg, key) {
         reply(key, msg, { logoUrl: getLogoUrl(guild.id) });
       } catch (err) {
         reply(key, msg, null, 'تعذر رفع الصورة: ' + err.message);
+      }
+      break;
+    }
+
+    case 'searchMembers': {
+      try {
+        const q = String(msg.query || '').trim().toLowerCase();
+        let members = [];
+        if (guild.members.cache.size < 150) {
+          try { await guild.members.fetch(); } catch (_) {}
+        }
+        members = Array.from(guild.members.cache.values())
+          .filter(m => !m.user.bot)
+          .filter(m => !q || m.user.username.toLowerCase().includes(q) || (m.nickname || '').toLowerCase().includes(q) || m.id.includes(q))
+          .map(m => ({ id: m.id, name: m.user.username, nick: m.nickname || null }))
+          .slice(0, 50);
+        reply(key, msg, { members });
+      } catch (err) {
+        reply(key, msg, null, 'فشل البحث عن الأعضاء: ' + err.message);
       }
       break;
     }
