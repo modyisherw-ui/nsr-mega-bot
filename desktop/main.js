@@ -356,24 +356,67 @@ function installAndRelaunch(installerPath) {
     return;
   }
   const exe = process.execPath;
-  const iPath = String(installerPath).replace(/'/g, "''");
-  const aPath = String(exe).replace(/'/g, "''");
-  const exeBase = path.basename(exe, '.exe').replace(/'/g, "''");
-  // عملية منفصلة: تقتل أي نسخة قديمة قيد التشغيل (وإلا فشل المثبّت في استبدال الملف بصمت)
-  // → تشغّل المثبّت بصمت وتنتظر انتهاءه → تفتح التطبيق الجديد
-  const script =
-    "Start-Sleep -Seconds 1; " +
-    "Get-Process -Name '" + exeBase + "' -ErrorAction SilentlyContinue | Stop-Process -Force; " +
-    "Start-Sleep -Seconds 2; " +
-    "Start-Process -FilePath '" + iPath + "' -ArgumentList '/S' -Wait; " +
-    "Start-Process -FilePath '" + aPath + "'";
+  const iPath = String(installerPath);
+  const aPath = String(exe);
+  const exeName = path.basename(exe) + ''; // e.g. "NSR HUB.exe"
+  const tmpDir = app.getPath('temp');
+  const logFile = path.join(tmpDir, 'nsr-hub-updater.log');
+  const scriptFile = path.join(tmpDir, 'nsr-hub-updater-' + Date.now() + '.ps1');
+
+  // سكربت منفصل مكتوب في ملف (بدل -Command المضمن) — يتجنب مشاكل الاقتباس
+  // ويضمن: انتظار خروج التطبيق → قتل أي عملية باقية → التثبيت → التحقق → إعادة الفتح
+  const ps = `
+$ErrorActionPreference = "Continue"
+$log = '${logFile.replace(/'/g, "''")}'
+function L($m) { Add-Content -Path $log -Value ("[" + (Get-Date -Format "HH:mm:ss") + "] " + $m) }
+L "=== updater start ==="
+$exeName = '${exeName.replace(/'/g, "''")}'
+$iPath = '${iPath.replace(/'/g, "''")}'
+$aPath = '${aPath.replace(/'/g, "''")}'
+
+# 1) انتظر حتى يخرج التطبيق الحالي نهائياً (حتى 20 ثانية) ثم اقتل الباقي
+$deadline = (Get-Date).AddSeconds(20)
+while ((Get-Process -Name ([System.IO.Path]::GetFileNameWithoutExtension($exeName)) -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+  Start-Sleep -Milliseconds 500
+}
+Get-Process -Name ([System.IO.Path]::GetFileNameWithoutExtension($exeName)) -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+L "old app stopped"
+
+# 2) قم بتثبيت النسخة الجديدة بصمت
+if (-not (Test-Path $iPath)) { L "INSTALLER MISSING: $iPath"; exit 1 }
+L "running installer"
+$proc = Start-Process -FilePath $iPath -ArgumentList '/S' -PassThru -Wait
+L ("installer exit code: " + $proc.ExitCode)
+
+Start-Sleep -Seconds 2
+
+# 3) تحقق من وجود التطبيق الجديد ثم افتحه
+if (Test-Path $aPath) {
+  L "launching: $aPath"
+  Start-Process -FilePath $aPath
+  L "=== updater done ==="
+} else {
+  # محاولة في مسار التثبيت الافتراضي
+  $alt = Join-Path $env:LOCALAPPDATA ('Programs\\nsr-hub\\' + $exeName)
+  if (Test-Path $alt) {
+    L "launching alt: $alt"
+    Start-Process -FilePath $alt
+    L "=== updater done (alt) ==="
+  } else {
+    L "APP NOT FOUND: $aPath | $alt"
+  }
+}
+`;
   try {
-    spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
-    updateLog('launched updater script: ' + installerPath);
+    fs.writeFileSync(scriptFile, ps, 'utf8');
+    spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', scriptFile], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    updateLog('launched updater script: ' + installerPath + ' (log: ' + logFile + ')');
   } catch (e) {
     updateLog('launch updater failed: ' + (e && e.message));
   }
-  setTimeout(() => { try { app.exit(0); } catch (_) {} }, 1200);
+  // نترك التطبيق يخرج بسرعة حتى يتسنى للمثبّت استبدال الملفات
+  setTimeout(() => { try { app.exit(0); } catch (_) {} }, 1500);
 }
 
 async function runUpdateCheck(win) {
