@@ -69,13 +69,37 @@
 
     <div class="servers-toolbar">
       <h2 class="page-title">اختر سيرفرك لإدارة اللوحة <span class="divider"></span></h2>
-      <button id="btn-owner-view" class="owner-view-btn hidden" title="كل السيرفرات (المالك)">
-        <img src="logo.png" alt="كل السيرفرات" />
-      </button>
+      <div id="btn-owner-wrap" class="owner-wrap hidden">
+        <button id="btn-owner-view" class="owner-view-btn" title="قائمة المالك">
+          <img src="logo.png" alt="قائمة المالك" />
+        </button>
+        <div id="owner-menu" class="owner-menu hidden">
+          <button data-owner-opt="subs"><span>🎟️</span> الاشتراكات</button>
+          <button data-owner-opt="all"><span>🌐</span> كل السيرفرات</button>
+        </div>
+      </div>
     </div>
     <input id="servers-search" type="text" class="hidden" placeholder="🔍 ابحث في السيرفرات..." />
     <div id="servers-grid" class="servers-grid"></div>
     <p id="servers-empty" class="empty hidden">لا توجد سيرفرات تملك فيها صلاحية أدمن مع وجود البوت فيها.</p>
+  </section>
+
+  <!-- شاشة الاشتراكات (المالك) -->
+  <section id="screen-subs" class="screen">
+    <header class="topbar">
+      <button id="btn-subs-back" class="btn ghost back-btn">
+        <img id="subs-back-logo" src="logo.png" alt="" />
+        السيرفرات
+      </button>
+      <div class="guild-chip">
+        <span>🎟️ الاشتراكات والرتب</span>
+      </div>
+      <div class="bridge-status">
+        <span id="bridge-dot3" class="dot off"></span>
+        <span id="bridge-text3">الجسر غير متصل</span>
+      </div>
+    </header>
+    <main id="subs-main" class="subs-main"></main>
   </section>
 
   <!-- شاشة اللوحة -->

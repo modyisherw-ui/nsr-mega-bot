@@ -16,6 +16,39 @@ const { saveRatingConfig } = require('./ratings');
 
 const BROKER_URL = process.env.BRIDGE_BROKER || 'wss://broker.emqx.io:8084/mqtt';
 
+// الميزات/الأزرار في اللوحة — يمكن ربط كل ميزة برتب (featureRoles) لتقييد الوصول لها
+const FEATURES = {
+  home: { icon: '🏠', name: 'الرئيسية' },
+  welcome: { icon: '👋', name: 'الترحيب' },
+  tickets: { icon: '🎫', name: 'التذاكر' },
+  suggestions: { icon: '💡', name: 'الاقتراحات' },
+  ai: { icon: '🧠', name: 'معالج AI' },
+  ratings: { icon: '🛍️', name: 'المتجر' },
+  logs: { icon: '📜', name: 'اللوقات' },
+  security: { icon: '🛡️', name: 'الأمان' },
+  messages: { icon: '💬', name: 'الرسائل' },
+  send: { icon: '📨', name: 'إرسال اللوحات' },
+  auth: { icon: '🔐', name: 'الصلاحيات' },
+  brand: { icon: '🎨', name: 'المظهر' },
+};
+
+function getMemberFeatureAccess(member) {
+  // المالك يملك كل الميزات
+  if (member && member.user && isOwner(member.user.id)) {
+    return Object.keys(FEATURES).reduce((acc, f) => { acc[f] = true; return acc; }, {});
+  }
+  const roleIds = new Set();
+  if (member && member.roles) member.roles.cache.forEach((r) => roleIds.add(r.id));
+  const fr = config.featureRoles || {};
+  const out = {};
+  for (const f of Object.keys(FEATURES)) {
+    const allowed = fr[f] || [];
+    // إذا لم يُحدد ميزة رتب معينة → مفتوحة للجميع
+    out[f] = allowed.length === 0 || allowed.some((rid) => roleIds.has(String(rid)));
+  }
+  return out;
+}
+
 function ensureKey() {
   if (config.bridgeKey) return config.bridgeKey;
   const key = crypto.randomBytes(16).toString('hex');
@@ -475,18 +508,20 @@ async function handleMessage(msg, key) {
         const mainServerId = (config.mainServerId || '');
         let isCustomer = false;
         let mainServerName = '';
+        let member = null;
         if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
           const mainGuild = discordClient.guilds.cache.get(mainServerId);
           mainServerName = mainGuild.name;
           try {
-            const m = await mainGuild.members.fetch(String(msg.userId || '')).catch(() => null);
-            if (m) {
+            member = await mainGuild.members.fetch(String(msg.userId || '')).catch(() => null);
+            if (member) {
               const roleId = config.customerRoleId || '';
-              isCustomer = roleId ? m.roles.cache.has(roleId) : true;
+              isCustomer = roleId ? member.roles.cache.has(roleId) : true;
             }
           } catch (_) {}
         }
-        reply(key, msg, { isCustomer, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '' });
+        const features = getMemberFeatureAccess(member);
+        reply(key, msg, { isCustomer, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '', features });
       } catch (err) {
         reply(key, msg, null, 'فشل التحقق: ' + err.message);
       }
@@ -513,6 +548,60 @@ async function handleMessage(msg, key) {
         reply(key, msg, { roles, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '', isOwner: isOwn });
       } catch (err) {
         reply(key, msg, null, 'فشل جلب الرتب: ' + err.message);
+      }
+      break;
+    }
+
+    case 'getSubscriptions': {
+      try {
+        const { isOwner: isBotOwner } = require('../config');
+        if (!isBotOwner(String(msg.userId || ''))) {
+          reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+          break;
+        }
+        const mainServerId = (config.mainServerId || '');
+        const roles = [];
+        let mainServerName = '';
+        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
+          const mainGuild = discordClient.guilds.cache.get(mainServerId);
+          mainServerName = mainGuild.name;
+          mainGuild.roles.cache.forEach((r) => {
+            if (r.name !== '@everyone') roles.push({ id: r.id, name: r.name, color: r.hexColor });
+          });
+          roles.sort((a, b) => (a.name < b.name ? -1 : 1));
+        }
+        reply(key, msg, {
+          roles,
+          mainServerId,
+          mainServerName,
+          customerRoleId: config.customerRoleId || '',
+          featureRoles: config.featureRoles || {},
+          features: FEATURES,
+        });
+      } catch (err) {
+        reply(key, msg, null, 'فشل جلب الاشتراكات: ' + err.message);
+      }
+      break;
+    }
+
+    case 'setFeatureRoles': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const feature = String(msg.feature || '');
+      const roleIds = Array.isArray(msg.roles) ? msg.roles.map(String).filter(Boolean) : [];
+      try {
+        const cfgPath = path.join(__dirname, '..', '..', 'config.json');
+        const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        raw.featureRoles = raw.featureRoles || {};
+        raw.featureRoles[feature] = roleIds;
+        fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
+        config.featureRoles = raw.featureRoles;
+        reply(key, msg, { feature, roles: roleIds });
+      } catch (err) {
+        reply(key, msg, null, 'فشل الحفظ: ' + err.message);
       }
       break;
     }
@@ -549,6 +638,96 @@ async function handleMessage(msg, key) {
         reply(key, msg, result);
       } catch (err) {
         reply(key, msg, null, err.message || 'فشل الإرسال');
+      }
+      break;
+    }
+
+    case 'assignRoleToUser': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const mainServerId = (config.mainServerId || '');
+      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
+        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
+        break;
+      }
+      const mainGuild = discordClient.guilds.cache.get(mainServerId);
+      const targetId = String(msg.targetId || '');
+      const roleId = String(msg.roleId || '');
+      if (!targetId || !roleId) { reply(key, msg, null, 'العضو والرتبة مطلوبان'); break; }
+      try {
+        const role = mainGuild.roles.cache.get(roleId);
+        if (!role) { reply(key, msg, null, 'الرتبة غير موجودة في السيرفر الرئيسي'); break; }
+        const target = await mainGuild.members.fetch(targetId).catch(() => null);
+        if (!target) { reply(key, msg, null, 'العضو غير موجود في سيرفر NSR HUB'); break; }
+        const has = target.roles.cache.has(roleId);
+        if (msg.remove) {
+          if (has) await target.roles.remove(role, 'NSR HUB dashboard (owner)');
+        } else {
+          if (!has) await target.roles.add(role, 'NSR HUB dashboard (owner)');
+        }
+        reply(key, msg, { targetId, roleId, assigned: !msg.remove, removed: !!msg.remove, name: target.user.username });
+      } catch (err) {
+        reply(key, msg, null, 'فشل تعديل الرتبة: ' + err.message);
+      }
+      break;
+    }
+
+    case 'createRole': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const mainServerId = (config.mainServerId || '');
+      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
+        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
+        break;
+      }
+      const mainGuild = discordClient.guilds.cache.get(mainServerId);
+      const name = String(msg.name || '').trim();
+      if (!name) { reply(key, msg, null, 'اسم الرتبة مطلوب'); break; }
+      try {
+        const role = await mainGuild.roles.create({ name, reason: 'NSR HUB dashboard (owner)' });
+        reply(key, msg, { id: role.id, name: role.name });
+      } catch (err) {
+        reply(key, msg, null, 'فشل إنشاء الرتبة: ' + err.message);
+      }
+      break;
+    }
+
+    case 'searchMainServerMembers': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const mainServerId = (config.mainServerId || '');
+      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
+        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
+        break;
+      }
+      const mainGuild = discordClient.guilds.cache.get(mainServerId);
+      const q = String(msg.query || '').trim().toLowerCase();
+      try {
+        if (mainGuild.members.cache.size < 150) {
+          try { await mainGuild.members.fetch(); } catch (_) {}
+        }
+        let members = Array.from(mainGuild.members.cache.values())
+          .filter((m) => !m.user.bot)
+          .filter((m) => !q || m.user.username.toLowerCase().includes(q) || (m.nickname || '').toLowerCase().includes(q) || m.id.includes(q))
+          .map((m) => ({
+            id: m.id,
+            name: m.user.username,
+            nick: m.nickname || null,
+            roles: m.roles.cache.map((r) => r.id),
+          }))
+          .slice(0, 40);
+        reply(key, msg, { members });
+      } catch (err) {
+        reply(key, msg, null, 'فشل البحث عن الأعضاء: ' + err.message);
       }
       break;
     }

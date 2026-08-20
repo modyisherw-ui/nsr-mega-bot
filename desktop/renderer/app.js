@@ -13,6 +13,7 @@ let currentGuild = null;
 let currentPage = 'home';
 let isOwner = false;
 let isCustomer = false;
+let featureAccess = {};
 
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
@@ -116,8 +117,8 @@ async function waitBridgeReady(timeoutMs) {
 function setBridgeStatus(connected) {
   const was = bridgeConnected;
   bridgeConnected = connected;
-  const dots = ['#bridge-dot', '#bridge-dot2'];
-  const texts = ['#bridge-text', '#bridge-text2'];
+  const dots = ['#bridge-dot', '#bridge-dot2', '#bridge-dot3'];
+  const texts = ['#bridge-text', '#bridge-text2', '#bridge-text3'];
   dots.forEach((s) => { const d = $(s); if (d) d.className = 'dot ' + (connected ? 'on' : 'off'); });
   texts.forEach((s) => { const t = $(s); if (t) t.textContent = connected ? 'الجسر متصل ✅' : 'الجسر غير متصل'; });
   // اتصال الجسر بعد الدخول → أعد تعبئة قائمة السيرفرات تلقائياً
@@ -148,12 +149,14 @@ async function refreshBotGuilds() {
 
 async function refreshCustomerStatus() {
   const badge = $('#customer-badge');
-  if (!session || !settings.bridgeKey) { isCustomer = false; if (badge) badge.classList.add('hidden'); return; }
+  if (!session || !settings.bridgeKey) { isCustomer = false; featureAccess = {}; if (badge) badge.classList.add('hidden'); return; }
   try {
     const rep = await NSR.bridgeCommand({ type: 'getCustomerStatus', userId: session.user.id, guildId: '' });
     if (rep && rep.ok) {
       isCustomer = !!rep.data.isCustomer || isOwner;
+      if (rep.data.features) featureAccess = rep.data.features;
       if (badge) badge.classList.toggle('hidden', !isCustomer);
+      if (window.__applyNavLocks) window.__applyNavLocks();
     }
   } catch (_) {}
 }
@@ -251,6 +254,7 @@ async function init() {
 
   $('#btn-login').addEventListener('click', doLogin);
   $('#btn-back').addEventListener('click', () => { playSound('click'); enterServers(); });
+  $('#btn-subs-back').addEventListener('click', () => { playSound('click'); enterServers(); });
 
   // زر الصورة الشخصية → القائمة الشخصية
   $('#btn-user-menu').addEventListener('click', () => {
@@ -264,6 +268,10 @@ async function init() {
     if (!$('#user-menu').classList.contains('hidden') && !e.target.closest('.user-chip')) {
       $('#user-menu').classList.add('hidden');
     }
+    const om = $('#owner-menu');
+    if (om && !om.classList.contains('hidden') && !e.target.closest('#btn-owner-wrap')) {
+      om.classList.add('hidden');
+    }
   });
 
   // علامة الديسكورد → رابط سيرفر NSR HUB
@@ -275,6 +283,24 @@ async function init() {
   document.querySelectorAll('.nav-btn').forEach((b) => {
     b.addEventListener('click', () => { playSound('click'); goPage(b.dataset.page); });
   });
+
+  // علامة قفل على الأزرار المقفلة
+  const applyNavLocks = () => {
+    document.querySelectorAll('.nav-btn').forEach((b) => {
+      const pg = b.dataset.page;
+      const locked = featureLocked(pg);
+      if (locked && !b.dataset.locked) {
+        b.dataset.locked = '1';
+        b.innerHTML = (FEATURE_LABELS[pg] && FEATURE_LABELS[pg].icon ? FEATURE_LABELS[pg].icon + ' ' : '') + '🔒 ' + b.textContent.trim();
+      } else if (!locked && b.dataset.locked) {
+        delete b.dataset.locked;
+        const icon = FEATURE_LABELS[pg] ? FEATURE_LABELS[pg].icon : '';
+        b.textContent = (icon ? icon + ' ' : '') + b.textContent.replace(/^🔒\s*/, '').trim();
+      }
+    });
+  };
+  applyNavLocks();
+  window.__applyNavLocks = applyNavLocks;
 }
 
 function fillUserMenu() {
@@ -317,14 +343,15 @@ async function enterServers() {
   $('#user-name').textContent = session.user.username;
 
   const grid = $('#servers-grid');
-  const ownerBtn = $('#btn-owner-view');
+  const ownerWrap = $('#btn-owner-wrap');
+  const ownerMenu = $('#owner-menu');
   const searchInput = $('#servers-search');
   grid.innerHTML = '<div class="loading">جاري جلب السيرفرات...</div>';
   $('#servers-empty').classList.add('hidden');
-  ownerBtn.classList.add('hidden');
+  ownerWrap.classList.add('hidden');
+  ownerMenu.classList.add('hidden');
   searchInput.classList.add('hidden');
   searchInput.value = '';
-  ownerBtn.classList.remove('active');
   let ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
@@ -346,14 +373,17 @@ async function enterServers() {
     const q = (search || '').trim().toLowerCase();
     let listed;
     if (ownerMode && known) {
-      // وضع المالك: كل سيرفرات البوت
-      listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+      // وضع المالك "كل السيرفرات": كل سيرفرات البوت + كل السيرفرات الإدارية من OAuth (حتى اللي البوت مو فيها)
+      const botIds = new Set(botGuilds.map((g) => String(g.id)));
+      const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+      listed = [...botGuilds, ...fromOAuth];
+      listed = listed.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     } else {
       // كل السيرفرات الإدارية: البوت موجود فيها تكون فوق
       const botIds = new Set(botGuilds.map((g) => String(g.id)));
       const admin = (known ? botGuilds.filter((g) => g.isAdmin === true) : adminGuilds);
       const extra = known
-        ? adminGuilds.filter((g) => !botIds.has(String(g.id)))
+        ? (adminGuilds || []).filter((g) => !botIds.has(String(g.id)))
         : [];
       listed = [...admin, ...extra];
       if (q) listed = listed.filter((g) => String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
@@ -368,6 +398,9 @@ async function enterServers() {
     listed.forEach((g, i) => {
       const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
       const inBot = known && botGuilds.some((x) => String(x.id) === String(g.id));
+      const isAdminHere = known
+        ? botGuilds.some((x) => String(x.id) === String(g.id) && x.isAdmin === true)
+        : (adminGuilds || []).some((x) => String(x.id) === String(g.id));
       const card = document.createElement('div');
       card.className = 'server-card';
       card.style.setProperty('--d', (i * 0.06) + 's');
@@ -377,13 +410,13 @@ async function enterServers() {
         <div class="meta">السيرفر: ${g.id}</div>
         <div class="badges">
           ${known ? (inBot ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير موجود</span>') : '<span class="badge no">⚠ البوت غير متصل</span>'}
-          <span class="badge">${ownerMode && g.isAdmin ? '👑 أدمن' : (ownerMode ? '🔍 معاينة' : '👑 إدارة')}</span>
+          <span class="badge">${ownerMode ? (isAdminHere ? '👑 أدمن' : '🔍 معاينة') : '👑 إدارة'}</span>
         </div>`;
       if (ownerMode && known) {
         const actions = document.createElement('div');
         actions.style.cssText = 'display:flex; gap:8px; margin-top:12px;';
         actions.innerHTML = `
-          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">⚙️ الدخول</button>
+          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">${inBot ? '⚙️ الدخول' : '🔗 دعوة البوت'}</button>
           <button class="btn ghost" data-owner-invite="${g.id}">🔗 ديسكورد</button>`;
         card.appendChild(actions);
       } else {
@@ -397,8 +430,14 @@ async function enterServers() {
     if (ownerMode && known) {
       grid.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', (e) => {
         e.stopPropagation();
-        const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
+        const id = b.dataset.ownerEnter;
+        const g = botGuilds.find((x) => String(x.id) === String(id));
         if (g) openGuild(g);
+        else {
+          // البوت غير موجود في هذا السيرفر → دعوة
+          const cid = botClientId || settings.clientId || BOT_CLIENT_ID;
+          NSR.openExternal(`https://discord.com/api/oauth2/authorize?client_id=${cid}&permissions=8&scope=bot%20applications.commands`);
+        }
       }));
       grid.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -417,18 +456,202 @@ async function enterServers() {
   };
 
   if (isOwner && known) {
-    ownerBtn.classList.remove('hidden');
-    ownerBtn.addEventListener('click', () => {
+    ownerWrap.classList.remove('hidden');
+    ownerWrap.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-owner-view')) {
+        playSound('click');
+        ownerMenu.classList.toggle('hidden');
+        return;
+      }
+      const opt = e.target.closest('[data-owner-opt]');
+      if (!opt) return;
+      ownerMenu.classList.add('hidden');
       playSound('click');
-      ownerMode = !ownerMode;
-      ownerBtn.classList.toggle('active', ownerMode);
-      searchInput.classList.toggle('hidden', !ownerMode);
+      if (opt.dataset.ownerOpt === 'subs') {
+        openSubscriptions();
+        return;
+      }
+      // كل السيرفرات
+      ownerMode = true;
+      searchInput.classList.remove('hidden');
       renderList(searchInput.value);
     });
     searchInput.addEventListener('input', () => renderList(searchInput.value));
   }
 
   renderList('');
+}
+
+// ---------- شاشة الاشتراكات (المالك) ----------
+async function openSubscriptions() {
+  playSound('click');
+  showScreen('screen-subs');
+  const main = $('#subs-main');
+  main.innerHTML = '<div class="loading">جاري تحميل الاشتراكات...</div>';
+  try {
+    const rep = await NSR.bridgeCommand({ type: 'getSubscriptions', userId: session.user.id, guildId: '' });
+    if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+    renderSubscriptions(main, rep.data);
+  } catch (e) {
+    main.innerHTML = '<div class="loading">❌ ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderSubscriptions(main, data) {
+  const roles = data.roles || [];
+  const customerRoleId = String(data.customerRoleId || '');
+  const featureRoles = data.featureRoles || {};
+  const features = data.features || {};
+
+  main.innerHTML = `
+    <div class="grid2">
+      <div class="card">
+        <h4>🎟️ رتبة الكوستمر (تفتح كل الميزات)</h4>
+        <p style="font-size:12px; color:var(--muted); line-height:1.9;">الرتبة الأساسية التي تحملها تفتح لك كل الأزرار والميزات في اللوحة.</p>
+        <label>رتبة الكوستمر (من سيرفر ${esc(data.mainServerName || 'NSR HUB')})</label>
+        <select id="subs-customer-role">
+          <option value="">— بدون رتبة (الكل يعتبر كوستمر) —</option>
+          ${roles.map((r) => `<option value="${r.id}" ${String(r.id) === customerRoleId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+        </select>
+        <button class="btn primary" id="subs-customer-save" style="margin-top:10px;">💾 حفظ رتبة الكوستمر</button>
+      </div>
+      <div class="card">
+        <h4>✨ إنشاء رتبة جديدة</h4>
+        <p style="font-size:12px; color:var(--muted); line-height:1.9;">أنشئ رتبة في سيرفر NSR HUB ثم اربطها بأي زر/ميزة تريد.</p>
+        <label>اسم الرتبة الجديدة</label>
+        <input id="subs-new-role-name" type="text" placeholder="مثال: باقة VIP" />
+        <button class="btn primary" id="subs-create-role" style="margin-top:10px;">➕ إنشاء الرتبة</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>🎛️ ربط الميزات بالرتب</h4>
+      <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">
+        لكل زر في اللوحة حدد الرتب المسموح لها بفتحه. إذا لم تختر أي رتبة → الزر مفتوح للجميع.
+      </p>
+      <div class="subs-features" id="subs-features">
+        ${Object.keys(features).map((f) => `
+          <div class="subs-feature-row" data-feature="${f}">
+            <div class="subs-feature-info">
+              <span style="font-size:20px;">${features[f].icon}</span>
+              <b>${esc(features[f].name)}</b>
+            </div>
+            <div class="subs-feature-roles">
+              ${roles.map((r) => {
+                const on = (featureRoles[f] || []).some((rid) => String(rid) === String(r.id));
+                return `<label class="subs-role-check ${on ? 'on' : ''}" data-role="${r.id}">
+                  <input type="checkbox" ${on ? 'checked' : ''} /> ${esc(r.name)}
+                </label>`;
+              }).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="btn primary" id="subs-features-save" style="margin-top:14px;">💾 حفظ ربط الميزات</button>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h4>👥 إعطاء/سحب رتبة لعضو</h4>
+      <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">ابحث عن عضو في سيرفر NSR HUB وامنحه أو اسحب منه رتبة.</p>
+      <div class="grid2" style="gap:10px; align-items:end;">
+        <div>
+          <label>ابحث عن عضو</label>
+          <input id="subs-member-search" type="text" placeholder="الاسم أو ID..." />
+          <div id="subs-member-results" class="subs-member-results"></div>
+        </div>
+        <div>
+          <label>الرتبة</label>
+          <select id="subs-member-role">
+            ${roles.map((r) => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}
+          </select>
+          <button class="btn primary" id="subs-member-give" style="margin-top:10px;">➕ إعطاء الرتبة</button>
+          <button class="btn ghost" id="subs-member-remove" style="margin-top:8px;">➖ سحب الرتبة</button>
+        </div>
+      </div>
+    </div>`;
+  wireFx(main);
+
+  // رتبة الكوستمر
+  main.querySelector('#subs-customer-save').addEventListener('click', async () => {
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: '', roleId: main.querySelector('#subs-customer-role').value });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      toast('✅ تم حفظ رتبة الكوستمر');
+      await refreshCustomerStatus();
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+
+  // إنشاء رتبة
+  main.querySelector('#subs-create-role').addEventListener('click', async () => {
+    const name = main.querySelector('#subs-new-role-name').value.trim();
+    if (!name) { toast('❌ اكتب اسم الرتبة أولاً', 'err'); return; }
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'createRole', userId: session.user.id, guildId: '', name });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      toast('✅ تم إنشاء رتبة: ' + rep.data.name);
+      openSubscriptions();
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+
+  // تفعيل/تعطيل رتبة في ميزة
+  main.querySelectorAll('.subs-role-check').forEach((c) => c.addEventListener('click', () => {
+    c.classList.toggle('on');
+    const input = c.querySelector('input');
+    input.checked = !input.checked;
+  }));
+
+  // حفظ الميزات
+  main.querySelector('#subs-features-save').addEventListener('click', async () => {
+    const rows = main.querySelectorAll('.subs-feature-row');
+    try {
+      for (const row of rows) {
+        const f = row.dataset.feature;
+        const sel = Array.from(row.querySelectorAll('input:checked')).map((i) => i.closest('.subs-role-check').dataset.role);
+        const rep = await NSR.bridgeCommand({ type: 'setFeatureRoles', userId: session.user.id, guildId: '', feature: f, roles: sel });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      }
+      toast('✅ تم حفظ ربط الميزات بالرتب');
+      await refreshCustomerStatus();
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  });
+
+  // البحث عن عضو
+  let memberSearchTimer = null;
+  const searchInput = main.querySelector('#subs-member-search');
+  const resultsEl = main.querySelector('#subs-member-results');
+  let selectedMember = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(memberSearchTimer);
+    memberSearchTimer = setTimeout(async () => {
+      const q = searchInput.value.trim();
+      if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+      try {
+        const rep = await NSR.bridgeCommand({ type: 'searchMainServerMembers', userId: session.user.id, guildId: '', query: q });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+        resultsEl.innerHTML = (rep.data.members || []).map((m) => `
+          <div class="subs-member-item" data-mid="${m.id}" data-mname="${esc(m.nick || m.name)}">
+            <b>${esc(m.nick || m.name)}</b> <small>${m.id}</small>
+          </div>`).join('') || '<div class="rp-none">لا يوجد نتائج</div>';
+        resultsEl.querySelectorAll('.subs-member-item').forEach((it) => it.addEventListener('click', () => {
+          selectedMember = { id: it.dataset.mid, name: it.dataset.mname };
+          searchInput.value = it.dataset.mname;
+          resultsEl.innerHTML = '';
+        }));
+      } catch (e) { resultsEl.innerHTML = '<div class="rp-none">❌ ' + esc(e.message) + '</div>'; }
+    }, 350);
+  });
+
+  const giveBtn = main.querySelector('#subs-member-give');
+  const removeBtn = main.querySelector('#subs-member-remove');
+  const doAssign = async (remove) => {
+    if (!selectedMember) { toast('❌ ابحث واختر عضواً أولاً', 'err'); return; }
+    const roleId = main.querySelector('#subs-member-role').value;
+    if (!roleId) { toast('❌ اختر رتبة', 'err'); return; }
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'assignRoleToUser', userId: session.user.id, guildId: '', targetId: selectedMember.id, roleId, remove });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      toast('✅ ' + (remove ? 'تم سحب' : 'تم إعطاء') + ' رتبة من/لـ ' + selectedMember.name);
+    } catch (e) { toast('❌ ' + e.message, 'err'); }
+  };
+  giveBtn.addEventListener('click', () => doAssign(false));
+  removeBtn.addEventListener('click', () => doAssign(true));
 }
 
 // ---------- فتح اللوحة ----------
@@ -474,9 +697,20 @@ function goPage(page) {
   renderPage(page);
 }
 
+function featureLocked(page) {
+  if (isOwner) return false;
+  if (!featureAccess || !Object.prototype.hasOwnProperty.call(featureAccess, page)) return false;
+  return featureAccess[page] === false;
+}
+
 function renderPage(page) {
   const main = $('#dash-main');
   if (!state) return;
+  if (featureLocked(page)) {
+    // ميزة مقفلة برتبة — أظهر شاشة الشراء
+    renderLockedFeature(page, main);
+    return;
+  }
   main.innerHTML = '';
   if (page === 'home') renderHome(main);
   else if (page === 'welcome') renderWelcome(main);
@@ -491,6 +725,44 @@ function renderPage(page) {
   else if (page === 'ai') renderAi(main);
   else if (page === 'messages') renderMessages(main);
   wireFx(main);
+}
+
+const FEATURE_LABELS = {
+  home: { icon: '🏠', name: 'الرئيسية' },
+  welcome: { icon: '👋', name: 'الترحيب' },
+  tickets: { icon: '🎫', name: 'التذاكر' },
+  suggestions: { icon: '💡', name: 'الاقتراحات' },
+  ai: { icon: '🧠', name: 'معالج AI' },
+  ratings: { icon: '🛍️', name: 'المتجر' },
+  logs: { icon: '📜', name: 'اللوقات' },
+  security: { icon: '🛡️', name: 'الأمان' },
+  messages: { icon: '💬', name: 'الرسائل' },
+  send: { icon: '📨', name: 'إرسال اللوحات' },
+  auth: { icon: '🔐', name: 'الصلاحيات' },
+  brand: { icon: '🎨', name: 'المظهر' },
+};
+
+function renderLockedFeature(page, main) {
+  const f = FEATURE_LABELS[page] || { icon: '🔒', name: page };
+  main.innerHTML = `
+    <div class="card" style="max-width:560px; margin:40px auto; text-align:center; padding:34px;">
+      <div style="font-size:52px; margin-bottom:12px;">🔒</div>
+      <h4>${f.icon} ${esc(f.name)} — ميزة مقفلة</h4>
+      <p style="color:var(--muted); font-size:13.5px; line-height:1.9; margin-top:10px;">
+        هذه الميزة مخصصة لحاملي رتبة معينة في سيرفر <b style="color:var(--text)">NSR HUB</b>.<br/>
+        اشترك في الباقة المناسبة ليتم فتحها لك تلقائياً.
+      </p>
+      <button class="btn primary big" id="locked-buy-btn" style="margin-top:20px;">🛒 الشراء / الاشتراك من NSR HUB</button>
+      <button class="btn ghost" id="locked-back" style="margin-top:10px;">🏠 العودة للرئيسية</button>
+    </div>`;
+  main.querySelector('#locked-buy-btn').addEventListener('click', () => {
+    playSound('click');
+    NSR.openExternal(NSR_DISCORD_SERVER);
+  });
+  main.querySelector('#locked-back').addEventListener('click', () => {
+    playSound('click');
+    goPage('home');
+  });
 }
 
 // ---------- مكوّن المعاينة الحية (تشبه ديسكورد) ----------

@@ -61,6 +61,7 @@ const config = {
   serverSettings: raw.serverSettings || {},
   bridgeKey: raw.bridgeKey || '',
   customerRoleId: raw.customerRoleId || '',
+  featureRoles: raw.featureRoles || {},
 };
 
 function isOwner(userId) {
