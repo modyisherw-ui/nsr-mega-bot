@@ -445,8 +445,16 @@
         "swearWords": {
           "enabled": true
         }
+      },
+      "ai": {
+        "enabled": true,
+        "locked": false,
+        "mode": "solve",
+        "channelId": "1536305527485759519",
+        "severity": "warn"
       }
     }
   },
-  "bridgeKey": "cdb56f759d076b3257db98097a1634e7"
+  "bridgeKey": "cdb56f759d076b3257db98097a1634e7",
+  "customerRoleId": "1409932044607295529"
 }
