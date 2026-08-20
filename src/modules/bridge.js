@@ -402,10 +402,20 @@ async function handleMessage(msg, key) {
       }
       const rawColor = Number(msg.color);
       const color = (Number.isInteger(rawColor) && rawColor >= 0 && rawColor <= 0xFFFFFF) ? rawColor : (config.embedColor || 0x5865F2);
+      if (msg.asMessage) {
+        try {
+          await channel.send({ content: String(msg.text || '').trim() });
+          reply(key, msg, { channelId: channel.id, sent: true, asMessage: true });
+        } catch (err) {
+          reply(key, msg, null, 'تعذر إرسال الثيم: ' + err.message);
+        }
+        break;
+      }
       const embed = new EmbedBuilder()
         .setColor(color)
         .setTitle(String(msg.title || '').trim() ? String(msg.title).trim() : null)
         .setDescription(String(msg.text || '').trim())
+        .setImage(String(msg.imageUrl || '').trim() ? String(msg.imageUrl).trim() : null)
         .setFooter({ text: guild.name })
         .setTimestamp();
       try {

@@ -304,15 +304,8 @@ async function enterServers() {
   $('#user-name').textContent = session.user.username;
 
   const grid = $('#servers-grid');
-  const ownerBtn = $('#btn-owner-view');
-  const searchInput = $('#servers-search');
   grid.innerHTML = '<div class="loading">جاري جلب السيرفرات...</div>';
   $('#servers-empty').classList.add('hidden');
-  ownerBtn.classList.add('hidden');
-  searchInput.classList.add('hidden');
-  searchInput.value = '';
-  ownerBtn.textContent = '👑 كل السيرفرات';
-  let ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
   if (!settings.bridgeKey) {
@@ -331,9 +324,7 @@ async function enterServers() {
     $('#servers-empty').classList.add('hidden');
     const q = (search || '').trim().toLowerCase();
     let listed;
-    if (ownerMode && known) {
-      listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
-    } else if (known) {
+    if (known) {
       listed = botGuilds.filter((g) => g.isAdmin === true && (!q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q)));
     } else {
       listed = adminGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q));
@@ -356,56 +347,14 @@ async function enterServers() {
         <div class="meta">السيرفر: ${g.id}</div>
         <div class="badges">
           ${known ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير متصل</span>'}
-          <span class="badge">${ownerMode && g.isAdmin ? '👑 إدارة' : (ownerMode ? '📋 عادي' : '👑 إدارة')}</span>
+          <span class="badge">👑 إدارة</span>
         </div>`;
-      if (ownerMode && known) {
-        const actions = document.createElement('div');
-        actions.style.cssText = 'display:flex; gap:8px; margin-top:12px;';
-        actions.innerHTML = `
-          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">⚙️ الدخول</button>
-          <button class="btn ghost" data-owner-invite="${g.id}">🔗 ديسكورد</button>`;
-        card.appendChild(actions);
-      } else {
-        card.addEventListener('click', () => openGuild(g));
-      }
+      card.addEventListener('click', () => openGuild(g));
       grid.appendChild(card);
       requestAnimationFrame(() => card.classList.add('in'));
     });
     wireFx(grid);
-
-    if (ownerMode && known) {
-      grid.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const g = botGuilds.find((x) => String(x.id) === b.dataset.ownerEnter);
-        if (g) openGuild(g);
-      }));
-      grid.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = b.dataset.ownerInvite;
-        playSound('click');
-        b.textContent = '...';
-        try {
-          const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
-          if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-          toast('🔗 تم إنشاء رابط الدعوة');
-          NSR.openExternal(rep.data.invite);
-        } catch (err) { toast('❌ ' + err.message, 'err'); }
-        b.textContent = '🔗 ديسكورد';
-      }));
-    }
   };
-
-  if (isOwner && known) {
-    ownerBtn.classList.remove('hidden');
-    ownerBtn.addEventListener('click', () => {
-      playSound('click');
-      ownerMode = !ownerMode;
-      ownerBtn.textContent = ownerMode ? '👑 سيرفراتي' : '👑 كل السيرفرات';
-      searchInput.classList.toggle('hidden', !ownerMode);
-      renderList(searchInput.value);
-    });
-    searchInput.addEventListener('input', () => renderList(searchInput.value));
-  }
 
   renderList('');
 }
@@ -1196,11 +1145,55 @@ function renderMessages(main) {
         </div>
         <div>
           <label>نص الثيم</label>
-          <textarea id="theme-text" placeholder="اكتب محتوى الثيم هنا..." style="min-height:110px;"></textarea>
+          <textarea id="theme-text" placeholder="اكتب محتوى الثيم هنا..." style="min-height:72px;"></textarea>
+          <label>صورة الثيم (رابط — اختياري)</label>
+          <input id="theme-img" type="text" placeholder="https://...png" />
+          <div class="toggle-row" style="margin-top:8px;">
+            <span>📨 إرسال كرسالة نصية بدل الإمبد</span>
+            <label class="switch"><input type="checkbox" id="theme-asmsg"/><span class="slider"></span></label>
+          </div>
           <button class="btn primary" id="theme-send" style="margin-top:14px; width:100%;">🚀 إرسال الثيم للروم</button>
         </div>
       </div>
+      <div class="theme-preview-wrap" style="margin-top:16px;">
+        <h4 style="font-size:12.5px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:8px;">👁️ معاينة الثيم (كما تصل في ديسكورد)</h4>
+        <div id="theme-preview"></div>
+      </div>
     </div>`;
+  const renderThemePreview = () => {
+    const c = colorToHex(Number.parseInt(main.querySelector('#theme-color').value.replace('#', ''), 16) || 5793266);
+    const logo = state.logoUrl || APP_LOGO_URL;
+    const title = main.querySelector('#theme-title').value.trim();
+    const text = main.querySelector('#theme-text').value.trim();
+    const img = main.querySelector('#theme-img').value.trim();
+    const asMsg = main.querySelector('#theme-asmsg').checked;
+    const tdesc = text.replace(/\n/g, '\n');
+    if (asMsg) {
+      main.querySelector('#theme-preview').innerHTML = `
+        <div class="theme-msg">
+          <img class="theme-msg-avatar" src="${esc(logo)}" alt="" />
+          <div class="theme-msg-body">
+            <div class="theme-msg-head"><b>NSR HUB</b><span class="tag">لوحة التحكم</span><small>اليوم</small></div>
+            <div class="theme-msg-text">${esc(tdesc) || 'اكتب نص الثيم هنا...'}</div>
+          </div>
+        </div>`;
+      return;
+    }
+    main.querySelector('#theme-preview').innerHTML = `
+      <div class="theme-msg">
+        <img class="theme-msg-avatar" src="${esc(logo)}" alt="" />
+        <div class="theme-msg-body">
+          <div class="theme-msg-head"><b>NSR HUB</b><span class="tag">لوحة التحكم</span><small>اليوم</small></div>
+          <div class="theme-msg-embed" style="border-left-color:${c}">
+            ${title ? `<div class="t-title">${esc(title)}</div>` : ''}
+            <div class="t-desc">${esc(tdesc) || 'اكتب نص الثيم هنا...'}</div>
+            ${img ? `<img class="t-img" src="${esc(img)}" alt="" onerror="this.style.display='none'" />` : ''}
+            <div class="t-foot"><img src="${esc(logo)}" alt="" />${esc(currentGuild.name)} · اليوم</div>
+          </div>
+        </div>
+      </div>`;
+  };
+
   const renderMsgPreview = () => {
     const t = MSG_TYPES[msgType];
     const text = main.querySelector('#msg-text').value.trim() || 'اكتب نص الرسالة هنا...';
@@ -1223,6 +1216,9 @@ function renderMessages(main) {
   }));
   main.querySelector('#msg-text').addEventListener('input', renderMsgPreview);
   renderMsgPreview();
+  ['#theme-title', '#theme-text', '#theme-img', '#theme-color'].forEach((sel) => main.querySelector(sel).addEventListener('input', renderThemePreview));
+  main.querySelector('#theme-asmsg').addEventListener('change', renderThemePreview);
+  renderThemePreview();
   main.querySelector('#msg-send').addEventListener('click', async () => {
     const targetId = main.querySelector('#msg-user').value.trim();
     const text = main.querySelector('#msg-text').value.trim();
@@ -1240,16 +1236,20 @@ function renderMessages(main) {
     const channelId = main.querySelector('#theme-channel').value;
     const title = main.querySelector('#theme-title').value.trim();
     const text = main.querySelector('#theme-text').value.trim();
+    const img = main.querySelector('#theme-img').value.trim();
     const rawColor = main.querySelector('#theme-color').value;
     const color = parseInt(rawColor.replace('#', ''), 16);
+    const asMsg = main.querySelector('#theme-asmsg').checked;
     if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
     if (!text) { toast('❌ اكتب نص الثيم أولاً', 'err'); return; }
     try {
-      const rep = await NSR.bridgeCommand({ type: 'sendTheme', userId: session.user.id, guildId: currentGuild.id, channelId, title, text, color });
+      const rep = await NSR.bridgeCommand({ type: 'sendTheme', userId: session.user.id, guildId: currentGuild.id, channelId, title, text, imageUrl: img, color, asMessage: asMsg });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
       toast('✅ تم إرسال الثيم للروم');
       main.querySelector('#theme-title').value = '';
       main.querySelector('#theme-text').value = '';
+      main.querySelector('#theme-img').value = '';
+      renderThemePreview();
     } catch (e) { toast('❌ ' + e.message, 'err'); }
   });
 }
@@ -1267,7 +1267,10 @@ function renderOwner(main) {
       <div class="card">
         <h4>👑 كل سيرفرات البوت <span class="badge ok" style="margin-left:6px;">${(botGuilds || []).length} سيرفر</span></h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">أنت مالك البوت — يمكنك دخول أي سيرفر ومعاينة إعداداته.</p>
-        <input id="owner-search" type="text" placeholder="🔍 ابحث في السيرفرات..." value="${esc(query)}" />
+        <div style="position:relative;">
+          <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; z-index:1;">🔍</span>
+          <input id="owner-search" class="search-bar" type="text" placeholder="ابحث في السيرفرات..." value="${esc(query)}" style="padding-left:42px;" />
+        </div>
         <div id="owner-list" style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
           ${list.map((g) => `
             <div class="server-card" data-owner-id="${g.id}" style="margin:0; width:100%;">

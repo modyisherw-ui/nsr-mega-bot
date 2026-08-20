@@ -47,7 +47,7 @@ body.maximized {
 }
 #titlebar-brand { display: flex; align-items: center; gap: 9px; padding: 0 12px; font-size: 13px; color: var(--muted); letter-spacing: .3px; }
 #titlebar-brand b { color: var(--text); }
-#titlebar-logo { width: 20px; height: 20px; border-radius: 6px; }
+#titlebar-logo { width: 20px; height: 20px; border-radius: 50%; }
 #titlebar-version {
   font-size: 10.5px; color: var(--muted); opacity: .7;
   background: rgba(255,255,255,.07); border: 1px solid var(--border);
@@ -83,7 +83,7 @@ body.maximized {
   align-items: center;
   text-align: center;
 }
-.login-logo { width: 110px; height: 110px; border-radius: 30px; margin-bottom: 18px; box-shadow: var(--glow); }
+.login-logo { width: 110px; height: 110px; border-radius: 32px; margin-bottom: 18px; box-shadow: var(--glow); }
 .brand { font-size: 34px; letter-spacing: .5px; margin-bottom: 40px; }
 .brand span { color: var(--accent2); }
 #screen-login .field-row { width: 320px; max-width: 86vw; }
@@ -138,8 +138,19 @@ body.maximized {
 .um-logout:hover { background: rgba(255,93,108,.15); }
 
 /* زر الرجوع باللوقو */
-.back-btn { display: inline-flex; align-items: center; gap: 8px; }
-#back-logo { width: 22px; height: 22px; border-radius: 6px; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 7px 14px 7px 8px;
+  color: var(--text);
+  font-size: 13.5px;
+}
+.back-btn:hover { background: var(--panel2); border-color: var(--accent); }
+#back-logo { width: 26px; height: 26px; border-radius: 50%; }
+
+.topbar-right { display: flex; align-items: center; gap: 14px; }
 
 .btn {
   border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
@@ -183,7 +194,20 @@ body.maximized {
 
 /* ---------- شبكة السيرفرات ---------- */
 .servers-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-#servers-search { width: 100%; margin-bottom: 14px; }
+.search-bar {
+  width: 100%;
+  padding: 12px 18px 12px 42px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  color: var(--text);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  position: relative;
+}
+.search-bar::placeholder { color: var(--muted); }
+.search-bar:focus { border-color: var(--accent); background: rgba(255,255,255,.09); box-shadow: 0 0 0 3px rgba(255,255,255,.1); }
 .servers-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 18px; overflow-y: auto; padding: 6px 2px 20px;
@@ -422,6 +446,48 @@ body.maximized {
 }
 .d-prev-label.blurple { background: #5865F2; color: #fff; }
 .d-prev-label.grey { background: #4e5058; color: #fff; }
+
+/* معاينة الثيم المدمجة (بحجم الرسالة الفعلية في ديسكورد) */
+.theme-preview-wrap {
+  max-width: 380px;
+  margin: 0 auto;
+  background: #313338;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 12px;
+}
+.theme-msg {
+  background: transparent;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.theme-msg-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  flex: none; background: #5865F2;
+  object-fit: cover;
+}
+.theme-msg-body { flex: 1; min-width: 0; }
+.theme-msg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.theme-msg-head b { font-size: 14px; color: #fff; font-weight: 600; }
+.theme-msg-head .tag { font-size: 10px; color: #fff; background: #5865F2; border-radius: 4px; padding: 1px 5px; font-weight: 600; }
+.theme-msg-head small { font-size: 11px; color: #949ba4; }
+.theme-msg-text { font-size: 13px; color: #dbdee1; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.theme-msg-embed {
+  margin-top: 8px;
+  background: #2b2d31;
+  border-left: 4px solid #5865F2;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+.theme-msg-embed .t-title { font-size: 14.5px; font-weight: 600; color: #fff; margin-bottom: 4px; white-space: pre-wrap; word-break: break-word; }
+.theme-msg-embed .t-desc { font-size: 12.5px; color: #dbdee1; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.theme-msg-embed img.t-img {
+  margin-top: 8px; border-radius: 6px; max-width: 100%; max-height: 260px; object-fit: cover;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.theme-msg-embed .t-foot { font-size: 10.5px; color: #949ba4; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.theme-msg-embed .t-foot img { width: 14px; height: 14px; border-radius: 50%; }
 
 /* ---------- صفحات الأنظمة ---------- */
 .log-row {
