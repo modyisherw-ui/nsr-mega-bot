@@ -291,13 +291,8 @@
         "kickAdd": "1530565626245021868",
         "protectedRoleViolation": "1530565626245021868"
       },
-      "protectedRoles": [
-        "1490204310980661470",
-        "1490074333996122214"
-      ],
-      "protectionBypassRoles": [
-        "1490067785349333142"
-      ],
+      "protectedRoles": [],
+      "protectionBypassRoles": [],
       "protectionAction": "kick",
       "staffRoles": [
         "1409931979692048394"
@@ -400,6 +395,56 @@
         "mode": "room",
         "withImage": true,
         "showCount": true
+      },
+      "protection": {
+        "channelDelete": {
+          "enabled": true,
+          "threshold": 3,
+          "window": 10,
+          "action": "kick",
+          "requiredRole": ""
+        },
+        "nuke": {
+          "enabled": true,
+          "threshold": 8,
+          "window": 20,
+          "action": "kick"
+        },
+        "ban": {
+          "enabled": true,
+          "threshold": 3,
+          "window": 10,
+          "action": "kick"
+        },
+        "kick": {
+          "enabled": true,
+          "threshold": 3,
+          "window": 10,
+          "action": "kick"
+        },
+        "roleDelete": {
+          "enabled": true,
+          "threshold": 3,
+          "window": 10,
+          "action": "kick"
+        },
+        "webhook": {
+          "enabled": true,
+          "action": "kick"
+        },
+        "bot": {
+          "enabled": true,
+          "action": "kick"
+        },
+        "automod": {
+          "enabled": true,
+          "links": true,
+          "spam": true,
+          "everyone": true
+        },
+        "swearWords": {
+          "enabled": true
+        }
       }
     }
   },
