@@ -235,7 +235,7 @@
             "description": "Inquire about buying a product or service",
             "emoji": "🛒",
             "color": 91501604,
-            "enabled": false
+            "enabled": true
           },
           {
             "id": "inquiry",
@@ -259,7 +259,7 @@
             "description": "Report a user or issue",
             "emoji": "🚨",
             "color": 15548997,
-            "enabled": true
+            "enabled": false
           }
         ]
       }
