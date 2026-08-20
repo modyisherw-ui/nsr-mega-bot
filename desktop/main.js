@@ -222,11 +222,20 @@ function startOAuth(settings) {
 }
 
 function getAdminGuilds(session) {
-  // السيرفرات التي يملك فيها المستخدم صلاحية Administrator (0x8) أو ManageGuild (0x20)
+  // السيرفرات التي يملك فيها المستخدم صلاحية Administrator (0x8) أو ManageGuild (0x20) أو يملك السيرفر
   const ADMIN = 0x8, MANAGE = 0x20;
   return (session.guilds || []).filter(g => {
     const perms = Number(g.permissions || 0);
-    return (perms & (ADMIN | MANAGE)) > 0;
+    return g.owner === true || (perms & (ADMIN | MANAGE)) > 0;
+  });
+}
+
+// السيرفرات الظاهرة: التي يملكها المستخدم أو لديه فيها أي صلاحية إدارة (تتضمن أي صلاحيات إشراف)
+function getVisibleGuilds(session) {
+  const ADMIN = 0x8, MANAGE = 0x20, MODERATE = 0x100000000;
+  return (session.guilds || []).filter(g => {
+    const perms = Number(g.permissions || 0);
+    return g.owner === true || (perms & (ADMIN | MANAGE | MODERATE)) > 0;
   });
 }
 
@@ -531,7 +540,7 @@ ipcMain.handle('auth:login', async () => {
     if (win) win.webContents.send('bridge:status', { connected: false });
   }
   const session = await startOAuth(cfg);
-  return { session, adminGuilds: getAdminGuilds(session), allGuilds: session.guilds || [] };
+  return { session, adminGuilds: getAdminGuilds(session), allGuilds: getVisibleGuilds(session) };
 });
 ipcMain.handle('auth:session', () => {
   const s = loadSession();
@@ -540,7 +549,7 @@ ipcMain.handle('auth:session', () => {
     clearSession();
     return null;
   }
-  return { session: s, adminGuilds: getAdminGuilds(s), allGuilds: s.guilds || [] };
+  return { session: s, adminGuilds: getAdminGuilds(s), allGuilds: getVisibleGuilds(s) };
 });
 ipcMain.handle('auth:logout', () => {
   clearSession();

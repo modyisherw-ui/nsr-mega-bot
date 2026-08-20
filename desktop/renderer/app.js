@@ -315,10 +315,8 @@ async function init() {
     if (grid) {
       grid.innerHTML = '';
       const q = ownerSearch.value;
-      // إعادة عرض كل السيرفرات (البوت + الإدارية)
-      const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
-      const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
+      // وضع "كل السيرفرات": فقط السيرفرات التي البوت موجود فيها
+      const listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
       const empty = $('#servers-empty');
       empty.classList.toggle('hidden', listed.length > 0);
       listed.forEach((g, i) => grid.appendChild(serverCard(g, i)));
@@ -331,9 +329,7 @@ async function init() {
     if (!grid) return;
     grid.innerHTML = '';
     const q = ownerSearch.value;
-    const botIds = new Set(botGuilds.map((g) => String(g.id)));
-    const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
-    const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
+    const listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
     const empty = $('#servers-empty');
     empty.classList.toggle('hidden', listed.length > 0);
     listed.forEach((g, i) => grid.appendChild(serverCard(g, i)));
@@ -458,18 +454,15 @@ async function enterServers() {
     const q = (search || '').trim().toLowerCase();
     let listed;
     if (ownerMode && known) {
-      // وضع المالك "كل السيرفرات": كل سيرفرات البوت + كل السيرفرات من OAuth
-      const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
-      listed = [...botGuilds, ...fromOAuth];
-      listed = listed.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+      // وضع "كل السيرفرات": فقط السيرفرات التي البوت موجود فيها
+      listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     } else {
-      // كل السيرفرات التي أنا عضو فيها: البوت فيها فوق، والإدارية موسومة
+      // السيرفرات الإدارية/المملوكة: البوت فيها فوق، والباقي موسوم
       const botIds = new Set(botGuilds.map((g) => String(g.id)));
       const all = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []);
-      const adminIds = new Set((known ? botGuilds.filter((g) => g.isAdmin === true) : adminGuilds).map((g) => String(g.id)));
-      const merged = all.map((g) => ({ ...g, isAdminMine: adminIds.has(String(g.id)) }));
-      const extras = (known ? botGuilds.filter((g) => !all.some((x) => String(x.id) === String(g.id))) : []);
+      const adminIds = new Set(all.map((g) => String(g.id)));
+      const merged = all.map((g) => ({ ...g, isAdminMine: true }));
+      const extras = (known ? botGuilds.filter((g) => !adminIds.has(String(g.id))) : []);
       const bots = extras.map((g) => ({ ...g, isAdminMine: g.isAdmin === true }));
       listed = [...bots, ...merged].filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     }
