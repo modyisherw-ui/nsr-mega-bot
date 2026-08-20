@@ -531,7 +531,7 @@ ipcMain.handle('auth:login', async () => {
     if (win) win.webContents.send('bridge:status', { connected: false });
   }
   const session = await startOAuth(cfg);
-  return { session, adminGuilds: getAdminGuilds(session) };
+  return { session, adminGuilds: getAdminGuilds(session), allGuilds: session.guilds || [] };
 });
 ipcMain.handle('auth:session', () => {
   const s = loadSession();
@@ -540,7 +540,7 @@ ipcMain.handle('auth:session', () => {
     clearSession();
     return null;
   }
-  return { session: s, adminGuilds: getAdminGuilds(s) };
+  return { session: s, adminGuilds: getAdminGuilds(s), allGuilds: s.guilds || [] };
 });
 ipcMain.handle('auth:logout', () => {
   clearSession();

@@ -5,6 +5,7 @@ const $ = (sel) => document.querySelector(sel);
 let settings = {};
 let session = null;
 let adminGuilds = [];
+let allGuilds = [];
 let botGuilds = [];
 let known = false;
 let botClientId = '';
@@ -281,6 +282,7 @@ async function init() {
   if (sess && sess.session) {
     session = sess.session;
     adminGuilds = sess.adminGuilds;
+    allGuilds = sess.allGuilds || (session.guilds || []);
     enterServers();
   }
 
@@ -315,7 +317,7 @@ async function init() {
       const q = ownerSearch.value;
       // إعادة عرض كل السيرفرات (البوت + الإدارية)
       const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+      const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
       const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
       const empty = $('#servers-empty');
       empty.classList.toggle('hidden', listed.length > 0);
@@ -330,7 +332,7 @@ async function init() {
     grid.innerHTML = '';
     const q = ownerSearch.value;
     const botIds = new Set(botGuilds.map((g) => String(g.id)));
-    const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+    const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
     const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
     const empty = $('#servers-empty');
     empty.classList.toggle('hidden', listed.length > 0);
@@ -390,7 +392,7 @@ function fillUserMenu() {
   $('#um-avatar').src = session.user.avatarUrl || '';
   $('#um-name').textContent = session.user.username;
   $('#um-id').textContent = '#' + session.user.id;
-  const count = known ? botGuilds.filter((g) => g.isAdmin === true).length : adminGuilds.length;
+  const count = (allGuilds && allGuilds.length ? allGuilds : adminGuilds).length;
   $('#um-count').textContent = String(count);
 }
 
@@ -403,6 +405,7 @@ async function doLogin() {
     const res = await NSR.login();
     session = res.session;
     adminGuilds = res.adminGuilds;
+    allGuilds = res.allGuilds || (session.guilds || []);
     toast('تم تسجيل الدخول بنجاح!');
     enterServers();
   } catch (e) {
@@ -413,7 +416,7 @@ async function doLogin() {
 async function doLogout() {
   playSound('click');
   await NSR.logout();
-  session = null; adminGuilds = []; botGuilds = []; known = false; botClientId = '';
+  session = null; adminGuilds = []; allGuilds = []; botGuilds = []; known = false; botClientId = '';
   showScreen('screen-login');
   $('#login-error').textContent = '';
 }
@@ -455,20 +458,20 @@ async function enterServers() {
     const q = (search || '').trim().toLowerCase();
     let listed;
     if (ownerMode && known) {
-      // وضع المالك "كل السيرفرات": كل سيرفرات البوت + كل السيرفرات الإدارية من OAuth (حتى اللي البوت مو فيها)
+      // وضع المالك "كل السيرفرات": كل سيرفرات البوت + كل السيرفرات من OAuth
       const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+      const fromOAuth = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
       listed = [...botGuilds, ...fromOAuth];
       listed = listed.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     } else {
-      // كل السيرفرات الإدارية: البوت موجود فيها تكون فوق
+      // كل السيرفرات التي أنا عضو فيها: البوت فيها فوق، والإدارية موسومة
       const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const admin = (known ? botGuilds.filter((g) => g.isAdmin === true) : adminGuilds);
-      const extra = known
-        ? (adminGuilds || []).filter((g) => !botIds.has(String(g.id)))
-        : [];
-      listed = [...admin, ...extra];
-      if (q) listed = listed.filter((g) => String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+      const all = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []);
+      const adminIds = new Set((known ? botGuilds.filter((g) => g.isAdmin === true) : adminGuilds).map((g) => String(g.id)));
+      const merged = all.map((g) => ({ ...g, isAdminMine: adminIds.has(String(g.id)) }));
+      const extras = (known ? botGuilds.filter((g) => !all.some((x) => String(x.id) === String(g.id))) : []);
+      const bots = extras.map((g) => ({ ...g, isAdminMine: g.isAdmin === true }));
+      listed = [...bots, ...merged].filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     }
 
     if (!listed.length) {
@@ -493,14 +496,14 @@ function serverCard(g, i) {
   const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
   const inBot = known && botGuilds.some((x) => String(x.id) === String(g.id));
   const isAdminHere = known
-    ? botGuilds.some((x) => String(x.id) === String(g.id) && x.isAdmin === true)
+    ? (g.isAdminMine !== undefined ? g.isAdminMine : (botGuilds.some((x) => String(x.id) === String(g.id) && x.isAdmin === true)))
     : (adminGuilds || []).some((x) => String(x.id) === String(g.id));
   const badgeBot = known
     ? (inBot ? `<span class="badge ok">${ICONS.check} البوت موجود</span>` : `<span class="badge no">${ICONS.warn} البوت غير موجود</span>`)
     : `<span class="badge no">${ICONS.warn} البوت غير متصل</span>`;
   const badgeRole = ownerMode
-    ? (isAdminHere ? `${ICONS.crown} أدمن` : `${ICONS.eye} معاينة`)
-    : `${ICONS.crown} إدارة`;
+    ? (isAdminHere ? `${ICONS.crown} أدمن` : `${ICONS.eye} عضو`)
+    : (isAdminHere ? `${ICONS.crown} أدمن` : `${ICONS.eye} عضو`);
   const iconHtml = iconUrl ? `<img src="${iconUrl}" alt="" />` : `<span class="svg-icon">${ICONS.server}</span>`;
   const card = document.createElement('div');
   card.className = 'server-card';
@@ -543,7 +546,10 @@ function serverCard(g, i) {
       btn.innerHTML = ICONS.discord;
     });
   } else {
-    card.addEventListener('click', () => openGuild(g));
+    card.addEventListener('click', () => {
+      if (isAdminHere) openGuild(g);
+      else toast('لا تملك صلاحية أدمن في هذا السيرفر — الدخول متاح فقط للسيرفرات الإدارية', 'err');
+    });
   }
   requestAnimationFrame(() => card.classList.add('in'));
   return card;
