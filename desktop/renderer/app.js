@@ -1,4 +1,4 @@
-﻿// NSR Dashboard — منطق الواجهة
+// NSR Dashboard — منطق الواجهة
 const NSR = window.api;
 const $ = (sel) => document.querySelector(sel);
 
@@ -14,14 +14,46 @@ let currentPage = 'home';
 let isOwner = false;
 let isCustomer = false;
 let featureAccess = {};
+let ownerMode = false;
 
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
 const APP_LOGO_URL = 'https://cdn.discordapp.com/emojis/1537843770911891466.png?size=128'; // icon2
+
+// أيقونات SVG بيضاء (بدل الإيموجيات) — stroke باللون الحالي
+const ICONS = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z"/></svg>',
+  brain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44A2.5 2.5 0 0 1 4 17.5v-3a2.5 2.5 0 0 1-.5-4.92A2.5 2.5 0 0 1 5 5.5h3.5A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44A2.5 2.5 0 0 0 20 17.5v-3a2.5 2.5 0 0 0 .5-4.92A2.5 2.5 0 0 0 19 5.5h-3.5A2.5 2.5 0 0 0 14.5 2Z"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.35 8.5 8.5 0 0 1-3.1-.59L3 21l1.74-5.9A8.5 8.5 0 0 1 3 11.5 8.38 8.38 0 0 1 12 3a8.38 8.38 0 0 1 9 8.5Z"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.6 1.5-1.4 0-.35-.13-.66-.35-.9a1.4 1.4 0 0 1-.9-1.3c0-.8.65-1.4 1.45-1.4H17c3.3 0 5-2.2 5-4.8C22 6 17.5 2 12 2Z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5l6 5 4-7 4 7 6-5-2 13H4Z"/><path d="M4 21h16"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+  discord: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.32 4.37a19.8 19.8 0 0 0-4.89-1.52.07.07 0 0 0-.08.04c-.21.38-.45.88-.61 1.27a18.3 18.3 0 0 0-5.48 0 12.6 12.6 0 0 0-.62-1.27.08.08 0 0 0-.08-.04c-1.71.29-3.34.8-4.88 1.52a.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06c0 .02.01.04.03.05a19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.22-2a.08.08 0 0 0-.04-.1 13 13 0 0 1-1.87-.9.08.08 0 0 1-.01-.13c.13-.1.25-.19.37-.29a.07.07 0 0 1 .08-.01c3.92 1.79 8.18 1.79 12.05 0a.07.07 0 0 1 .08.01c.12.1.25.2.37.3a.08.08 0 0 1-.01.12 12.4 12.4 0 0 1-1.88.9.08.08 0 0 0-.04.1c.36.7.77 1.37 1.22 2a.08.08 0 0 0 .08.03 19.9 19.9 0 0 0 6-3.03.08.08 0 0 0 .03-.05c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.96 0c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.95 2.42-2.16 2.42Z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+};
 const MSG_TYPES = {
-  send: { emoji: '💬', name: 'رسالة', color: '#5865F2', title: '💬 رسالة خاصة', description: '{{TEXT}}\n\n**{{GUILD}}**', canEditText: true },
-  summon: { emoji: '📣', name: 'استدعاء', color: '#F1C40F', title: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', canEditText: false },
-  thanks: { emoji: '🙏', name: 'شكر', color: '#57F287', title: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', canEditText: false },
+  send: { emoji: ICONS.chat, name: 'رسالة', color: '#5865F2', title: 'رسالة خاصة', description: '{{TEXT}}\n\n**{{GUILD}}**', canEditText: true },
+  summon: { emoji: ICONS.send, name: 'استدعاء', color: '#F1C40F', title: 'استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', canEditText: false },
+  thanks: { emoji: ICONS.check, name: 'شكر', color: '#57F287', title: 'شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', canEditText: false },
 };
 
 function esc(s) {
@@ -120,7 +152,7 @@ function setBridgeStatus(connected) {
   const dots = ['#bridge-dot', '#bridge-dot2', '#bridge-dot3'];
   const texts = ['#bridge-text', '#bridge-text2', '#bridge-text3'];
   dots.forEach((s) => { const d = $(s); if (d) d.className = 'dot ' + (connected ? 'on' : 'off'); });
-  texts.forEach((s) => { const t = $(s); if (t) t.textContent = connected ? 'الجسر متصل ✅' : 'الجسر غير متصل'; });
+  texts.forEach((s) => { const t = $(s); if (t) t.textContent = connected ? 'الجسر متصل' : 'الجسر غير متصل'; });
   // اتصال الجسر بعد الدخول → أعد تعبئة قائمة السيرفرات تلقائياً
   if (connected && !was && session && $('#screen-servers').classList.contains('active')) {
     enterServers();
@@ -256,6 +288,56 @@ async function init() {
   $('#btn-back').addEventListener('click', () => { playSound('click'); enterServers(); });
   $('#btn-subs-back').addEventListener('click', () => { playSound('click'); enterServers(); });
 
+  // زر المالك → قائمة منسدلة (مرة واحدة فقط)
+  const ownerWrap = $('#btn-owner-wrap');
+  const ownerMenu = $('#owner-menu');
+  const ownerSearch = $('#servers-search');
+  ownerWrap.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-owner-view')) {
+      playSound('click');
+      ownerMenu.classList.toggle('hidden');
+      return;
+    }
+    const opt = e.target.closest('[data-owner-opt]');
+    if (!opt) return;
+    ownerMenu.classList.add('hidden');
+    playSound('click');
+    if (opt.dataset.ownerOpt === 'subs') {
+      openSubscriptions();
+      return;
+    }
+    ownerMode = true;
+    $('#servers-search-wrap').classList.remove('hidden');
+    if (currentGuild) currentGuild = null;
+    const grid = $('#servers-grid');
+    if (grid) {
+      grid.innerHTML = '';
+      const q = ownerSearch.value;
+      // إعادة عرض كل السيرفرات (البوت + الإدارية)
+      const botIds = new Set(botGuilds.map((g) => String(g.id)));
+      const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+      const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
+      const empty = $('#servers-empty');
+      empty.classList.toggle('hidden', listed.length > 0);
+      listed.forEach((g, i) => grid.appendChild(serverCard(g, i)));
+      wireFx(grid);
+    }
+  });
+  ownerSearch.addEventListener('input', () => {
+    if (!ownerMode) return;
+    const grid = $('#servers-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const q = ownerSearch.value;
+    const botIds = new Set(botGuilds.map((g) => String(g.id)));
+    const fromOAuth = (adminGuilds || []).filter((g) => !botIds.has(String(g.id)));
+    const listed = [...botGuilds, ...fromOAuth].filter((g) => !q || String(g.name || '').toLowerCase().includes(q.toLowerCase()) || String(g.id || '').includes(q));
+    const empty = $('#servers-empty');
+    empty.classList.toggle('hidden', listed.length > 0);
+    listed.forEach((g, i) => grid.appendChild(serverCard(g, i)));
+    wireFx(grid);
+  });
+
   // زر الصورة الشخصية → القائمة الشخصية
   $('#btn-user-menu').addEventListener('click', () => {
     playSound('click');
@@ -291,11 +373,11 @@ async function init() {
       const locked = featureLocked(pg);
       if (locked && !b.dataset.locked) {
         b.dataset.locked = '1';
-        b.innerHTML = (FEATURE_LABELS[pg] && FEATURE_LABELS[pg].icon ? FEATURE_LABELS[pg].icon + ' ' : '') + '🔒 ' + b.textContent.trim();
+        b.innerHTML = (FEATURE_LABELS[pg] && FEATURE_LABELS[pg].icon ? FEATURE_LABELS[pg].icon : '') + '<span class="nav-lock">' + ICONS.lock + '</span>' + '<span class="nav-txt">' + (FEATURE_LABELS[pg] ? FEATURE_LABELS[pg].name : b.textContent.trim()) + '</span>';
       } else if (!locked && b.dataset.locked) {
         delete b.dataset.locked;
         const icon = FEATURE_LABELS[pg] ? FEATURE_LABELS[pg].icon : '';
-        b.textContent = (icon ? icon + ' ' : '') + b.textContent.replace(/^🔒\s*/, '').trim();
+        b.innerHTML = icon + '<span class="nav-txt">' + (FEATURE_LABELS[pg] ? FEATURE_LABELS[pg].name : b.textContent.trim()) + '</span>';
       }
     });
   };
@@ -321,10 +403,10 @@ async function doLogin() {
     const res = await NSR.login();
     session = res.session;
     adminGuilds = res.adminGuilds;
-    toast('✅ تم تسجيل الدخول بنجاح!');
+    toast('تم تسجيل الدخول بنجاح!');
     enterServers();
   } catch (e) {
-    err.textContent = '❌ ' + e.message;
+    err.textContent = e.message;
   }
 }
 
@@ -350,9 +432,9 @@ async function enterServers() {
   $('#servers-empty').classList.add('hidden');
   ownerWrap.classList.add('hidden');
   ownerMenu.classList.add('hidden');
-  searchInput.classList.add('hidden');
+  $('#servers-search-wrap').classList.add('hidden');
   searchInput.value = '';
-  let ownerMode = false;
+  ownerMode = false;
 
   // انتظر اتصال الجسر أولاً حتى تظهر السيرفرات التي فيها البوت مباشرة (بدل قائمة OAuth)
   if (!settings.bridgeKey) {
@@ -395,91 +477,76 @@ async function enterServers() {
       return;
     }
 
-    listed.forEach((g, i) => {
-      const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
-      const inBot = known && botGuilds.some((x) => String(x.id) === String(g.id));
-      const isAdminHere = known
-        ? botGuilds.some((x) => String(x.id) === String(g.id) && x.isAdmin === true)
-        : (adminGuilds || []).some((x) => String(x.id) === String(g.id));
-      const card = document.createElement('div');
-      card.className = 'server-card';
-      card.style.setProperty('--d', (i * 0.06) + 's');
-      card.innerHTML = `
-        <div class="icon">${iconUrl ? `<img src="${iconUrl}" alt="" />` : '🎮'}</div>
-        <h3>${esc(g.name)}</h3>
-        <div class="meta">السيرفر: ${g.id}</div>
-        <div class="badges">
-          ${known ? (inBot ? '<span class="badge ok">✅ البوت موجود</span>' : '<span class="badge no">⚠ البوت غير موجود</span>') : '<span class="badge no">⚠ البوت غير متصل</span>'}
-          <span class="badge">${ownerMode ? (isAdminHere ? '👑 أدمن' : '🔍 معاينة') : '👑 إدارة'}</span>
-        </div>`;
-      if (ownerMode && known) {
-        const actions = document.createElement('div');
-        actions.style.cssText = 'display:flex; gap:8px; margin-top:12px;';
-        actions.innerHTML = `
-          <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">${inBot ? '⚙️ الدخول' : '🔗 دعوة البوت'}</button>
-          <button class="btn ghost" data-owner-invite="${g.id}">🔗 ديسكورد</button>`;
-        card.appendChild(actions);
-      } else {
-        card.addEventListener('click', () => openGuild(g));
-      }
-      grid.appendChild(card);
-      requestAnimationFrame(() => card.classList.add('in'));
-    });
+    listed.forEach((g, i) => grid.appendChild(serverCard(g, i)));
     wireFx(grid);
-
-    if (ownerMode && known) {
-      grid.querySelectorAll('[data-owner-enter]').forEach((b) => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = b.dataset.ownerEnter;
-        const g = botGuilds.find((x) => String(x.id) === String(id));
-        if (g) openGuild(g);
-        else {
-          // البوت غير موجود في هذا السيرفر → دعوة
-          const cid = botClientId || settings.clientId || BOT_CLIENT_ID;
-          NSR.openExternal(`https://discord.com/api/oauth2/authorize?client_id=${cid}&permissions=8&scope=bot%20applications.commands`);
-        }
-      }));
-      grid.querySelectorAll('[data-owner-invite]').forEach((b) => b.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = b.dataset.ownerInvite;
-        playSound('click');
-        b.textContent = '...';
-        try {
-          const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: id });
-          if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-          toast('🔗 تم إنشاء رابط الدعوة');
-          NSR.openExternal(rep.data.invite);
-        } catch (err) { toast('❌ ' + err.message, 'err'); }
-        b.textContent = '🔗 ديسكورد';
-      }));
-    }
   };
 
   if (isOwner && known) {
     ownerWrap.classList.remove('hidden');
-    ownerWrap.addEventListener('click', (e) => {
-      if (e.target.closest('#btn-owner-view')) {
-        playSound('click');
-        ownerMenu.classList.toggle('hidden');
-        return;
-      }
-      const opt = e.target.closest('[data-owner-opt]');
-      if (!opt) return;
-      ownerMenu.classList.add('hidden');
-      playSound('click');
-      if (opt.dataset.ownerOpt === 'subs') {
-        openSubscriptions();
-        return;
-      }
-      // كل السيرفرات
-      ownerMode = true;
-      searchInput.classList.remove('hidden');
-      renderList(searchInput.value);
-    });
-    searchInput.addEventListener('input', () => renderList(searchInput.value));
   }
 
   renderList('');
+}
+
+// بطاقة سيرفر واحدة (تُستخدم في وضع العادي ووضع المالك "كل السيرفرات")
+function serverCard(g, i) {
+  const iconUrl = g.iconUrl || (g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=128` : '');
+  const inBot = known && botGuilds.some((x) => String(x.id) === String(g.id));
+  const isAdminHere = known
+    ? botGuilds.some((x) => String(x.id) === String(g.id) && x.isAdmin === true)
+    : (adminGuilds || []).some((x) => String(x.id) === String(g.id));
+  const badgeBot = known
+    ? (inBot ? `<span class="badge ok">${ICONS.check} البوت موجود</span>` : `<span class="badge no">${ICONS.warn} البوت غير موجود</span>`)
+    : `<span class="badge no">${ICONS.warn} البوت غير متصل</span>`;
+  const badgeRole = ownerMode
+    ? (isAdminHere ? `${ICONS.crown} أدمن` : `${ICONS.eye} معاينة`)
+    : `${ICONS.crown} إدارة`;
+  const iconHtml = iconUrl ? `<img src="${iconUrl}" alt="" />` : `<span class="svg-icon">${ICONS.server}</span>`;
+  const card = document.createElement('div');
+  card.className = 'server-card';
+  card.style.setProperty('--d', (i * 0.06) + 's');
+  card.innerHTML = `
+    <div class="icon">${iconHtml}</div>
+    <h3>${esc(g.name)}</h3>
+    <div class="meta">السيرفر: ${g.id}</div>
+    <div class="badges">
+      ${badgeBot}
+      <span class="badge">${badgeRole}</span>
+    </div>`;
+  if (ownerMode && known) {
+    const actions = document.createElement('div');
+    actions.className = 'server-actions';
+    actions.innerHTML = `
+      <button class="btn primary" data-owner-enter="${g.id}" style="flex:1;">${inBot ? `${ICONS.gear} الدخول` : `${ICONS.plus} دعوة البوت`}</button>
+      <button class="btn ghost" data-owner-invite="${g.id}">${ICONS.discord}</button>`;
+    card.appendChild(actions);
+    card.querySelector('[data-owner-enter]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const gg = botGuilds.find((x) => String(x.id) === String(g.id));
+      if (gg) openGuild(gg);
+      else {
+        const cid = botClientId || settings.clientId || BOT_CLIENT_ID;
+        NSR.openExternal(`https://discord.com/api/oauth2/authorize?client_id=${cid}&permissions=8&scope=bot%20applications.commands`);
+      }
+    });
+    card.querySelector('[data-owner-invite]').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      playSound('click');
+      btn.textContent = '...';
+      try {
+        const rep = await NSR.bridgeCommand({ type: 'getGuildInvite', userId: session.user.id, guildId: g.id });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+        toast('تم إنشاء رابط الدعوة');
+        NSR.openExternal(rep.data.invite);
+      } catch (err) { toast(err.message, 'err'); }
+      btn.innerHTML = ICONS.discord;
+    });
+  } else {
+    card.addEventListener('click', () => openGuild(g));
+  }
+  requestAnimationFrame(() => card.classList.add('in'));
+  return card;
 }
 
 // ---------- شاشة الاشتراكات (المالك) ----------
@@ -493,7 +560,7 @@ async function openSubscriptions() {
     if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
     renderSubscriptions(main, rep.data);
   } catch (e) {
-    main.innerHTML = '<div class="loading">❌ ' + esc(e.message) + '</div>';
+    main.innerHTML = '<div class="loading">' + esc(e.message) + '</div>';
   }
 }
 
@@ -506,25 +573,25 @@ function renderSubscriptions(main, data) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🎟️ رتبة الكوستمر (تفتح كل الميزات)</h4>
+        <h4>${ic('crown')} رتبة الكوستمر (تفتح كل الميزات)</h4>
         <p style="font-size:12px; color:var(--muted); line-height:1.9;">الرتبة الأساسية التي تحملها تفتح لك كل الأزرار والميزات في اللوحة.</p>
         <label>رتبة الكوستمر (من سيرفر ${esc(data.mainServerName || 'NSR HUB')})</label>
         <select id="subs-customer-role">
           <option value="">— بدون رتبة (الكل يعتبر كوستمر) —</option>
           ${roles.map((r) => `<option value="${r.id}" ${String(r.id) === customerRoleId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
         </select>
-        <button class="btn primary" id="subs-customer-save" style="margin-top:10px;">💾 حفظ رتبة الكوستمر</button>
+        <button class="btn primary" id="subs-customer-save" style="margin-top:10px;">${ic('check')} حفظ رتبة الكوستمر</button>
       </div>
       <div class="card">
-        <h4>✨ إنشاء رتبة جديدة</h4>
+        <h4>${ic('plus')} إنشاء رتبة جديدة</h4>
         <p style="font-size:12px; color:var(--muted); line-height:1.9;">أنشئ رتبة في سيرفر NSR HUB ثم اربطها بأي زر/ميزة تريد.</p>
         <label>اسم الرتبة الجديدة</label>
         <input id="subs-new-role-name" type="text" placeholder="مثال: باقة VIP" />
-        <button class="btn primary" id="subs-create-role" style="margin-top:10px;">➕ إنشاء الرتبة</button>
+        <button class="btn primary" id="subs-create-role" style="margin-top:10px;">${ic('plus')} إنشاء الرتبة</button>
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <h4>🎛️ ربط الميزات بالرتب</h4>
+      <h4>${ic('settings')} ربط الميزات بالرتب</h4>
       <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">
         لكل زر في اللوحة حدد الرتب المسموح لها بفتحه. إذا لم تختر أي رتبة → الزر مفتوح للجميع.
       </p>
@@ -532,7 +599,7 @@ function renderSubscriptions(main, data) {
         ${Object.keys(features).map((f) => `
           <div class="subs-feature-row" data-feature="${f}">
             <div class="subs-feature-info">
-              <span style="font-size:20px;">${features[f].icon}</span>
+              <span class="ic">${features[f].icon}</span>
               <b>${esc(features[f].name)}</b>
             </div>
             <div class="subs-feature-roles">
@@ -545,10 +612,10 @@ function renderSubscriptions(main, data) {
             </div>
           </div>`).join('')}
       </div>
-      <button class="btn primary" id="subs-features-save" style="margin-top:14px;">💾 حفظ ربط الميزات</button>
+      <button class="btn primary" id="subs-features-save" style="margin-top:14px;">${ic('check')} حفظ ربط الميزات</button>
     </div>
     <div class="card" style="margin-top:16px;">
-      <h4>👥 إعطاء/سحب رتبة لعضو</h4>
+      <h4>${ic('users')} إعطاء/سحب رتبة لعضو</h4>
       <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">ابحث عن عضو في سيرفر NSR HUB وامنحه أو اسحب منه رتبة.</p>
       <div class="grid2" style="gap:10px; align-items:end;">
         <div>
@@ -561,8 +628,8 @@ function renderSubscriptions(main, data) {
           <select id="subs-member-role">
             ${roles.map((r) => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}
           </select>
-          <button class="btn primary" id="subs-member-give" style="margin-top:10px;">➕ إعطاء الرتبة</button>
-          <button class="btn ghost" id="subs-member-remove" style="margin-top:8px;">➖ سحب الرتبة</button>
+          <button class="btn primary" id="subs-member-give" style="margin-top:10px;">${ic('plus')} إعطاء الرتبة</button>
+          <button class="btn ghost" id="subs-member-remove" style="margin-top:8px;">${ic('close')} سحب الرتبة</button>
         </div>
       </div>
     </div>`;
@@ -573,21 +640,21 @@ function renderSubscriptions(main, data) {
     try {
       const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: '', roleId: main.querySelector('#subs-customer-role').value });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('✅ تم حفظ رتبة الكوستمر');
+      toast('تم حفظ رتبة الكوستمر');
       await refreshCustomerStatus();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast(e.message, 'err'); }
   });
 
   // إنشاء رتبة
   main.querySelector('#subs-create-role').addEventListener('click', async () => {
     const name = main.querySelector('#subs-new-role-name').value.trim();
-    if (!name) { toast('❌ اكتب اسم الرتبة أولاً', 'err'); return; }
+    if (!name) { toast('اكتب اسم الرتبة أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'createRole', userId: session.user.id, guildId: '', name });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('✅ تم إنشاء رتبة: ' + rep.data.name);
+      toast('تم إنشاء رتبة: ' + rep.data.name);
       openSubscriptions();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 
   // تفعيل/تعطيل رتبة في ميزة
@@ -607,9 +674,9 @@ function renderSubscriptions(main, data) {
         const rep = await NSR.bridgeCommand({ type: 'setFeatureRoles', userId: session.user.id, guildId: '', feature: f, roles: sel });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       }
-      toast('✅ تم حفظ ربط الميزات بالرتب');
+      toast('تم حفظ ربط الميزات بالرتب');
       await refreshCustomerStatus();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 
   // البحث عن عضو
@@ -634,21 +701,21 @@ function renderSubscriptions(main, data) {
           searchInput.value = it.dataset.mname;
           resultsEl.innerHTML = '';
         }));
-      } catch (e) { resultsEl.innerHTML = '<div class="rp-none">❌ ' + esc(e.message) + '</div>'; }
+      } catch (e) { resultsEl.innerHTML = '<div class="rp-none">' + esc(e.message) + '</div>'; }
     }, 350);
   });
 
   const giveBtn = main.querySelector('#subs-member-give');
   const removeBtn = main.querySelector('#subs-member-remove');
   const doAssign = async (remove) => {
-    if (!selectedMember) { toast('❌ ابحث واختر عضواً أولاً', 'err'); return; }
+    if (!selectedMember) { toast('ابحث واختر عضواً أولاً', 'err'); return; }
     const roleId = main.querySelector('#subs-member-role').value;
-    if (!roleId) { toast('❌ اختر رتبة', 'err'); return; }
+    if (!roleId) { toast('اختر رتبة', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'assignRoleToUser', userId: session.user.id, guildId: '', targetId: selectedMember.id, roleId, remove });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('✅ ' + (remove ? 'تم سحب' : 'تم إعطاء') + ' رتبة من/لـ ' + selectedMember.name);
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('' + (remove ? 'تم سحب' : 'تم إعطاء') + ' رتبة من/لـ ' + selectedMember.name);
+    } catch (e) { toast('' + e.message, 'err'); }
   };
   giveBtn.addEventListener('click', () => doAssign(false));
   removeBtn.addEventListener('click', () => doAssign(true));
@@ -669,7 +736,7 @@ async function openGuild(g) {
     if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'لا استجابة');
     state = rep.data;
     renderPage(currentPage);
-    toast('📡 تم تحميل إعدادات السيرفر');
+    toast('تم تحميل إعدادات السيرفر');
   } catch (e) {
     state = null;
     const missing = /البوت ليس في هذا السيرفر/.test(e.message || '');
@@ -685,7 +752,7 @@ async function openGuild(g) {
         NSR.openExternal(`https://discord.com/api/oauth2/authorize?client_id=${cid}&permissions=8&scope=bot%20applications.commands`);
       });
     } else {
-      toast('❌ ' + e.message, 'err');
+      toast('' + e.message, 'err');
       $('#dash-main').innerHTML = '<div class="loading">تعذر الاتصال بالبوت — تأكد أن البوت شغال وأن مفتاح الجسر صحيح</div>';
     }
   }
@@ -728,32 +795,37 @@ function renderPage(page) {
 }
 
 const FEATURE_LABELS = {
-  home: { icon: '🏠', name: 'الرئيسية' },
-  welcome: { icon: '👋', name: 'الترحيب' },
-  tickets: { icon: '🎫', name: 'التذاكر' },
-  suggestions: { icon: '💡', name: 'الاقتراحات' },
-  ai: { icon: '🧠', name: 'معالج AI' },
-  ratings: { icon: '🛍️', name: 'المتجر' },
-  logs: { icon: '📜', name: 'اللوقات' },
-  security: { icon: '🛡️', name: 'الأمان' },
-  messages: { icon: '💬', name: 'الرسائل' },
-  send: { icon: '📨', name: 'إرسال اللوحات' },
-  auth: { icon: '🔐', name: 'الصلاحيات' },
-  brand: { icon: '🎨', name: 'المظهر' },
+  home: { icon: ICONS.home, name: 'الرئيسية' },
+  welcome: { icon: ICONS.users, name: 'الترحيب' },
+  tickets: { icon: ICONS.ticket, name: 'التذاكر' },
+  suggestions: { icon: ICONS.bulb, name: 'الاقتراحات' },
+  ai: { icon: ICONS.brain, name: 'معالج AI' },
+  ratings: { icon: ICONS.cart, name: 'المتجر' },
+  logs: { icon: ICONS.list, name: 'اللوقات' },
+  security: { icon: ICONS.shield, name: 'الأمان' },
+  messages: { icon: ICONS.chat, name: 'الرسائل' },
+  send: { icon: ICONS.send, name: 'إرسال اللوحات' },
+  auth: { icon: ICONS.lock, name: 'الصلاحيات' },
+  brand: { icon: ICONS.palette, name: 'المظهر' },
 };
 
+function featureIconHTML(name) {
+  return '<span class="ic">' + (ICONS[name] || '') + '</span>';
+}
+function ic(name) { return '<span class="ic">' + (ICONS[name] || '') + '</span>'; }
+
 function renderLockedFeature(page, main) {
-  const f = FEATURE_LABELS[page] || { icon: '🔒', name: page };
+  const f = FEATURE_LABELS[page] || { icon: ICONS.lock, name: page };
   main.innerHTML = `
     <div class="card" style="max-width:560px; margin:40px auto; text-align:center; padding:34px;">
-      <div style="font-size:52px; margin-bottom:12px;">🔒</div>
+      <div class="locked-ico">${ICONS.lock}</div>
       <h4>${f.icon} ${esc(f.name)} — ميزة مقفلة</h4>
       <p style="color:var(--muted); font-size:13.5px; line-height:1.9; margin-top:10px;">
         هذه الميزة مخصصة لحاملي رتبة معينة في سيرفر <b style="color:var(--text)">NSR HUB</b>.<br/>
         اشترك في الباقة المناسبة ليتم فتحها لك تلقائياً.
       </p>
-      <button class="btn primary big" id="locked-buy-btn" style="margin-top:20px;">🛒 الشراء / الاشتراك من NSR HUB</button>
-      <button class="btn ghost" id="locked-back" style="margin-top:10px;">🏠 العودة للرئيسية</button>
+      <button class="btn primary big" id="locked-buy-btn" style="margin-top:20px;">${ICONS.cart} الشراء / الاشتراك من NSR HUB</button>
+      <button class="btn ghost" id="locked-back" style="margin-top:10px;">${ICONS.home} العودة للرئيسية</button>
     </div>`;
   main.querySelector('#locked-buy-btn').addEventListener('click', () => {
     playSound('click');
@@ -798,8 +870,8 @@ async function refreshState() {
     if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'لا استجابة');
     state = rep.data;
     renderPage(currentPage);
-    toast('✅ تم تحديث الإعدادات');
-  } catch (e) { toast('❌ ' + e.message, 'err'); }
+    toast('تم تحديث الإعدادات');
+  } catch (e) { toast('' + e.message, 'err'); }
 }
 
 // ---------- الرئيسية ----------
@@ -809,47 +881,47 @@ async function renderHome(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🏠 السيرفر</h4>
+        <h4>${ic('home')} السيرفر</h4>
         <p style="font-size:13.5px; color:var(--muted); margin-bottom:10px;">
           <b style="color:var(--text)">${esc(state.guild.name)}</b><br/>
           المعرّف: ${state.guild.id}<br/>
           يوجد ${types.length} نوع تذاكر مفعّل
         </p>
         <div class="badges">
-          <span class="badge ok">👋 ترحيب ${w.channelId ? 'مفعّل' : 'غير مضبوط'}</span>
-          <span class="badge ok">🎫 التذاكر جاهزة</span>
+          <span class="badge ok">${ic('users')} ترحيب ${w.channelId ? 'مفعّل' : 'غير مضبوط'}</span>
+          <span class="badge ok">${ic('ticket')} التذاكر جاهزة</span>
         </div>
       </div>
       <div class="card">
-        <h4>📊 اختصارات سريعة</h4>
+        <h4>${ic('settings')} اختصارات سريعة</h4>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn ghost" data-quick="tickets">🎫 التذاكر</button>
-          <button class="btn ghost" data-quick="welcome">👋 الترحيب</button>
-          <button class="btn ghost" data-quick="suggestions">💡 الاقتراحات</button>
-          <button class="btn ghost" data-quick="send">📨 الإرسال</button>
-          <button class="btn ghost" data-quick="ratings">🛍️ المتجر</button>
+          <button class="btn ghost" data-quick="tickets">${ic('ticket')} التذاكر</button>
+          <button class="btn ghost" data-quick="welcome">${ic('users')} الترحيب</button>
+          <button class="btn ghost" data-quick="suggestions">${ic('bulb')} الاقتراحات</button>
+          <button class="btn ghost" data-quick="send">${ic('send')} الإرسال</button>
+          <button class="btn ghost" data-quick="ratings">${ic('cart')} المتجر</button>
         </div>
         <p style="color:var(--muted); font-size:12px; margin-top:14px;">الجسر: <b id="home-bridge"></b></p>
       </div>
     </div>
     <div class="stats-grid" id="stats-grid">
-      <div class="stat-box"><span class="stat-ico">🎫</span><b id="st-tickets">…</b><small>التذاكر المفتوحة</small></div>
-      <div class="stat-box"><span class="stat-ico">✅</span><b id="st-tickets-closed">…</b><small>التذاكر المغلقة</small></div>
-      <div class="stat-box"><span class="stat-ico">🚪</span><b id="st-joins">…</b><small>الدخول اليوم</small></div>
-      <div class="stat-box"><span class="stat-ico">💬</span><b id="st-msgs">…</b><small>الرسائل اليوم</small></div>
-      <div class="stat-box"><span class="stat-ico">⛔</span><b id="st-bans">…</b><small>المتبندين</small></div>
+      <div class="stat-box">${ic('ticket')}<b id="st-tickets">…</b><small>التذاكر المفتوحة</small></div>
+      <div class="stat-box">${ic('check')}<b id="st-tickets-closed">…</b><small>التذاكر المغلقة</small></div>
+      <div class="stat-box">${ic('users')}<b id="st-joins">…</b><small>الدخول اليوم</small></div>
+      <div class="stat-box">${ic('chat')}<b id="st-msgs">…</b><small>الرسائل اليوم</small></div>
+      <div class="stat-box">${ic('shield')}<b id="st-bans">…</b><small>المتبندين</small></div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <h4>⛔ قائمة المتبندين <span style="font-size:11px;color:var(--muted);font-weight:400;">(السبب + من متبند)</span></h4>
+      <h4>${ic('shield')} قائمة المتبندين <span style="font-size:11px;color:var(--muted);font-weight:400;">(السبب + من متبند)</span></h4>
       <div id="bans-list" class="bans-list"><p style="color:var(--muted); font-size:12.5px;">جاري التحميل…</p></div>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-act="refresh"><span class="big-emoji">🔄</span> تحديث الإعدادات</button>
-      <button class="act-btn" data-act="stats"><span class="big-emoji">📊</span> تحديث الإحصائيات</button>
-      <button class="act-btn" data-act="servers"><span class="big-emoji">📡</span> تحديث قائمة السيرفرات</button>
+      <button class="act-btn" data-act="refresh"><span class="big-emoji">${ic('settings')}</span> تحديث الإعدادات</button>
+      <button class="act-btn" data-act="stats"><span class="big-emoji">${ic('list')}</span> تحديث الإحصائيات</button>
+      <button class="act-btn" data-act="servers"><span class="big-emoji">${ic('server')}</span> تحديث قائمة السيرفرات</button>
     </div>`;
   const bridgeState = $('.bridge-status .dot').className.includes('on');
-  $('#home-bridge').textContent = bridgeState ? 'متصل ✅' : 'غير متصل';
+  $('#home-bridge').textContent = bridgeState ? 'متصل' : 'غير متصل';
   main.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => goPage(b.dataset.quick)));
   main.querySelector('[data-act="refresh"]').addEventListener('click', refreshState);
   main.querySelector('[data-act="stats"]').addEventListener('click', () => loadHomeStats(main));
@@ -872,7 +944,7 @@ async function loadHomeStats(main) {
     set('st-bans', d.bansTotal);
     const listEl = main.querySelector('#bans-list');
     if (!d.bans.length) {
-      listEl.innerHTML = '<p style="color:var(--muted); font-size:12.5px;">لا يوجد متبندون في السيرفر 🎉</p>';
+      listEl.innerHTML = '<p style="color:var(--muted); font-size:12.5px;">لا يوجد متبندون في السيرفر</p>';
     } else {
       listEl.innerHTML = d.bans.map((b) => `
         <div class="ban-row">
@@ -894,7 +966,7 @@ function renderWelcome(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>👋 رسالة الترحيب</h4>
+        <h4>${ic('users')} رسالة الترحيب</h4>
         <label>الرسالة — {user} منشن العضو، {server} اسم السيرفر، {count} رقم العضو</label>
         <textarea id="welcome-msg">${esc(w.message || '')}</textarea>
         <label>روم الاستقبال</label>
@@ -906,21 +978,21 @@ function renderWelcome(main) {
         <input id="welcome-img" type="text" value="${esc(w.imageUrl || '')}" placeholder="https://...png" />
       </div>
       <div class="card">
-        <h4>⚙️ خيارات الاستقبال</h4>
-        <div class="toggle-row"><span>📩 إرسال على الخاص (DM) بدل الروم</span>
+        <h4>${ic('gear')} خيارات الاستقبال</h4>
+        <div class="toggle-row"><span>${ic('send')} إرسال على الخاص (DM) بدل الروم</span>
           <label class="switch"><input type="checkbox" id="w-mode" ${w.mode === 'dm' ? 'checked' : ''}/><span class="slider"></span></label></div>
-        <div class="toggle-row"><span>🖼️ مع الصورة</span>
+        <div class="toggle-row"><span>${ic('palette')} مع الصورة</span>
           <label class="switch"><input type="checkbox" id="w-img" ${w.withImage !== false ? 'checked' : ''}/><span class="slider"></span></label></div>
-        <div class="toggle-row"><span>🔢 إظهار رقم العضو ({count})</span>
+        <div class="toggle-row"><span>${ic('list')} إظهار رقم العضو ({count})</span>
           <label class="switch"><input type="checkbox" id="w-count" ${w.showCount !== false ? 'checked' : ''}/><span class="slider"></span></label></div>
       </div>
     </div>
     <div class="preview-card">
-      <h4>👁️ معاينة رسالة الترحيب (كما تصل في ديسكورد)</h4>
+      <h4>${ic('eye')} معاينة رسالة الترحيب (كما تصل في ديسكورد)</h4>
       <div id="welcome-preview"></div>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-save="welcome"><span class="big-emoji">💾</span> حفظ إعدادات الترحيب</button>
+      <button class="act-btn" data-save="welcome"><span class="big-emoji">${ic('check')}</span> حفظ إعدادات الترحيب</button>
     </div>`;
 
   const updatePreview = () => {
@@ -930,7 +1002,7 @@ function renderWelcome(main) {
     const imgUrl = main.querySelector('#welcome-img').value.trim();
     const q = state.guild.name;
     main.querySelector('#welcome-preview').innerHTML = previewEmbedHTML({
-      title: '👋 أهلاً بك',
+      title: 'أهلاً بك',
       desc: previewDesc(msg, { user: 'Naeem', server: q, count: withCount ? '1,234' : '' }),
       imageUrl: (withImg && imgUrl) ? imgUrl : '',
       logoUrl: state.logoUrl,
@@ -942,7 +1014,7 @@ function renderWelcome(main) {
 
   main.querySelector('[data-save="welcome"]').addEventListener('click', async () => {
     const msg = main.querySelector('#welcome-msg').value.trim();
-    if (!msg) { toast('❌ اكتب رسالة الترحيب أولاً', 'err'); return; }
+    if (!msg) { toast('اكتب رسالة الترحيب أولاً', 'err'); return; }
     const w2 = {
       message: msg,
       channelId: main.querySelector('#welcome-room').value || '',
@@ -955,8 +1027,8 @@ function renderWelcome(main) {
       const rep = await NSR.bridgeCommand({ type: 'setWelcome', userId: session.user.id, guildId: currentGuild.id, welcome: w2 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الحفظ');
       state.welcome = rep.data.welcome;
-      toast('✅ تم حفظ إعدادات الترحيب');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ إعدادات الترحيب');
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 }
 
@@ -967,43 +1039,43 @@ function renderTickets(main) {
   const types = t.ticketTypes || [];
   const typeList = types.map((tp) => `
     <div class="type-row">
-      <span class="emoji">${esc(tp.emoji || '🔹')}</span>
+      <span class="emoji">${esc(tp.emoji || '')}</span>
       <div class="info"><b>${esc(tp.label)}</b>${tp.id.startsWith('c') ? ' <small>(مخصص)</small>' : ' <small>(أساسي)</small>'}<small>${esc(tp.description || '')}</small></div>
       <label class="switch" title="${tp.enabled === false ? 'إظهار' : 'إخفاء'}"><input type="checkbox" data-type-id="${tp.id}" ${tp.enabled !== false ? 'checked' : ''}/><span class="slider"></span></label>
-      ${tp.id.startsWith('c') ? `<button class="del-btn" data-del-id="${tp.id}">🗑 حذف</button>` : ''}
+      ${tp.id.startsWith('c') ? `<button class="del-btn" data-del-id="${tp.id}">${ic('close')} حذف</button>` : ''}
     </div>`).join('') || '<p style="color:var(--muted)">لا توجد أنواع.</p>';
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🎫 لوحة التذاكر</h4>
+        <h4>${ic('ticket')} لوحة التذاكر</h4>
         <label>العنوان</label>
         <input id="tk-title" type="text" value="${esc(panel.title || '')}" />
         <label>الوصف</label>
         <textarea id="tk-desc">${esc(panel.description || '')}</textarea>
       </div>
       <div class="card">
-        <h4>🗂 أنواع التذاكر — فعّل/أطفئ أو أضف مخصصاً</h4>
+        <h4>${ic('list')} أنواع التذاكر — فعّل/أطفئ أو أضف مخصصاً</h4>
         <div>${typeList}</div>
         <div style="display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:14px;">
           <input id="tk-new-label" type="text" placeholder="اسم النوع الجديد" />
-          <button class="btn ghost" id="tk-add">➕ إضافة</button>
+          <button class="btn ghost" id="tk-add">${ic('plus')} إضافة</button>
         </div>
       </div>
     </div>
     <div class="preview-card">
-      <h4>👁️ معاينة لوحة التذاكر (كما تصل في ديسكورد)</h4>
+      <h4>${ic('eye')} معاينة لوحة التذاكر (كما تصل في ديسكورد)</h4>
       <div id="tickets-preview"></div>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-save="ticket"><span class="big-emoji">💾</span> حفظ اللوحة</button>
-      <button class="act-btn" data-send="ticket"><span class="big-emoji">📨</span> إرسال اللوحة لروم</button>
+      <button class="act-btn" data-save="ticket"><span class="big-emoji">${ic('check')}</span> حفظ اللوحة</button>
+      <button class="act-btn" data-send="ticket"><span class="big-emoji">${ic('send')}</span> إرسال اللوحة لروم</button>
     </div>`;
 
   const updateTicketPreview = () => {
-    const title = main.querySelector('#tk-title').value.trim() || '🎫 Support Tickets';
+    const title = main.querySelector('#tk-title').value.trim() || 'Support Tickets';
     const desc = main.querySelector('#tk-desc').value.trim();
     const enabled = (state.ticket.ticketTypes || []).filter((tp) => tp.enabled !== false);
-    const selOpt = enabled[0] ? `${enabled[0].emoji || '🔹'} ${esc(enabled[0].label)}` : 'لا توجد أنواع مفعلة';
+    const selOpt = enabled[0] ? `${enabled[0].emoji || ''} ${esc(enabled[0].label)}` : 'لا توجد أنواع مفعلة';
     let d = previewDesc(desc).replace(/\n\n/g, '\n');
     main.querySelector('#tickets-preview').innerHTML = previewEmbedHTML({
       color: 0x0099FF,
@@ -1021,8 +1093,8 @@ function renderTickets(main) {
       try {
         const rep = await NSR.bridgeCommand({ type: 'setTicketTypeEnabled', userId: session.user.id, guildId: currentGuild.id, typeId: sw.dataset.typeId, enabled: sw.checked });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast(sw.checked ? '✅ النوع ظاهر الآن' : '🙈 النوع مخفي الآن');
-      } catch (e) { sw.checked = !sw.checked; toast('❌ ' + e.message, 'err'); }
+        toast(sw.checked ? 'النوع ظاهر الآن' : 'النوع مخفي الآن');
+      } catch (e) { sw.checked = !sw.checked; toast('' + e.message, 'err'); }
     });
   });
   main.querySelectorAll('[data-del-id]').forEach((b) => {
@@ -1031,41 +1103,41 @@ function renderTickets(main) {
       try {
         const rep = await NSR.bridgeCommand({ type: 'delTicketType', userId: session.user.id, guildId: currentGuild.id, typeId: b.dataset.delId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('🗑 تم حذف النوع المخصص');
+        toast('تم حذف النوع المخصص');
         refreshState();
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+      } catch (e) { toast('' + e.message, 'err'); }
     });
   });
   main.querySelector('#tk-add').addEventListener('click', async () => {
     const label = main.querySelector('#tk-new-label').value.trim();
-    if (!label) { toast('❌ اكتب اسم النوع', 'err'); return; }
+    if (!label) { toast('اكتب اسم النوع', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'addTicketType', userId: session.user.id, guildId: currentGuild.id, label });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       main.querySelector('#tk-new-label').value = '';
-      toast('✅ تمت إضافة النوع');
+      toast('تمت إضافة النوع');
       refreshState();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast('' + e.message, 'err'); }
   });
   main.querySelector('[data-save="ticket"]').addEventListener('click', async () => {
     const p = {
-      title: main.querySelector('#tk-title').value.trim() || '🎫 Support Tickets',
+      title: main.querySelector('#tk-title').value.trim() || 'Support Tickets',
       description: main.querySelector('#tk-desc').value.trim(),
     };
     try {
       const rep = await NSR.bridgeCommand({ type: 'setTicketPanel', userId: session.user.id, guildId: currentGuild.id, panel: p });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.ticket.panel = rep.data.panel;
-      toast('✅ تم حفظ اللوحة');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ اللوحة');
+    } catch (e) { toast('' + e.message, 'err'); }
   });
   main.querySelector('[data-send="ticket"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
         const rep = await NSR.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
-        toast('✅ تم إرسال لوحة التذاكر');
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+        toast('تم إرسال لوحة التذاكر');
+      } catch (e) { toast('' + e.message, 'err'); }
     });
   });
 }
@@ -1076,7 +1148,7 @@ function renderSuggestions(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>💡 روم الاقتراحات</h4>
+        <h4>${ic('bulb')} روم الاقتراحات</h4>
         <label>الروم الذي تصل فيه الاقتراحات للأدمن</label>
         <select id="sugg-ch">
           <option value="">— اختر الروم —</option>
@@ -1084,46 +1156,46 @@ function renderSuggestions(main) {
         </select>
       </div>
       <div class="card">
-        <h4>📝 ملاحظة</h4>
+        <h4>${ic('list')} ملاحظة</h4>
         <p style="font-size:13px; color:var(--muted); line-height:1.9;">
-          زر <b>✏️ تقديم اقتراح</b> يعمل تلقائياً على لوحة الاقتراحات.<br/>
+          زر <b>${ic('plus')} تقديم اقتراح</b> يعمل تلقائياً على لوحة الاقتراحات.<br/>
           بعد الحفظ اضغط <b>إرسال اللوحة</b> لتنزيلها في أي روم.
         </p>
       </div>
     </div>
     <div class="preview-card">
-      <h4>👁️ معاينة لوحة الاقتراحات (كما تصل في ديسكورد)</h4>
+      <h4>${ic('eye')} معاينة لوحة الاقتراحات (كما تصل في ديسكورد)</h4>
       <div id="sugg-preview"></div>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-save="sugg"><span class="big-emoji">💾</span> حفظ الروم</button>
-      <button class="act-btn" data-send="sugg"><span class="big-emoji">📨</span> إرسال لوحة الاقتراحات</button>
+      <button class="act-btn" data-save="sugg"><span class="big-emoji">${ic('check')}</span> حفظ الروم</button>
+      <button class="act-btn" data-send="sugg"><span class="big-emoji">${ic('send')}</span> إرسال لوحة الاقتراحات</button>
     </div>`;
   $('#sugg-preview').innerHTML = previewEmbedHTML({
     color: state.color || 5793266,
-    title: '📬 Suggestion Box | صندوق الاقتراحات',
+    title: 'Suggestion Box | صندوق الاقتراحات',
     desc: '**English**\nHave an idea or feedback? Hit the button and share it!\n\n**العربية**\nهل لديك فكرة أو ملاحظات؟ اضغط على الزر وشاركها!',
     logoUrl: state.logoUrl,
     footer: 'NSR HUB - MoDy Dev',
-    select: '✏️ Submit a Suggestion | قدّم اقتراحاً',
+    select: 'Submit a Suggestion | قدّم اقتراحاً',
   });
   main.querySelector('[data-save="sugg"]').addEventListener('click', async () => {
     const channelId = main.querySelector('#sugg-ch').value;
-    if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
+    if (!channelId) { toast('اختر الروم أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'setSuggestionsChannel', userId: session.user.id, guildId: currentGuild.id, channelId });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.suggestions.channelId = channelId;
-      toast('✅ تم حفظ روم الاقتراحات');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ روم الاقتراحات');
+    } catch (e) { toast(e.message, 'err'); }
   });
   main.querySelector('[data-send="sugg"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
         const rep = await NSR.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
-        toast('✅ تم إرسال لوحة الاقتراحات');
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+        toast('تم إرسال لوحة الاقتراحات');
+      } catch (e) { toast(e.message, 'err'); }
     });
   });
 }
@@ -1132,18 +1204,18 @@ function renderSuggestions(main) {
 function renderSend(main) {
   main.innerHTML = `
     <div class="grid-actions">
-      <button class="act-btn" data-send="st"><span class="big-emoji">🎫</span> إرسال لوحة التذاكر</button>
-      <button class="act-btn" data-send="ss"><span class="big-emoji">💡</span> إرسال لوحة الاقتراحات</button>
-      <button class="act-btn" data-act="refresh"><span class="big-emoji">🔄</span> تحديث الإعدادات</button>
+      <button class="act-btn" data-send="st"><span class="big-emoji">${ic('ticket')}</span> إرسال لوحة التذاكر</button>
+      <button class="act-btn" data-send="ss"><span class="big-emoji">${ic('bulb')}</span> إرسال لوحة الاقتراحات</button>
+      <button class="act-btn" data-act="refresh"><span class="big-emoji">${ic('settings')}</span> تحديث الإعدادات</button>
     </div>
-    <p style="color:var(--muted); margin-top:22px; font-size:13px;">📌 اختر الروم ثم سيُرسل فوراً — اللوحة تبقى متزامنة مع لوحة تحكم ديسكورد.</p>`; 
+    <p style="color:var(--muted); margin-top:22px; font-size:13px;">اختر الروم ثم سيُرسل فوراً — اللوحة تبقى متزامنة مع لوحة تحكم ديسكورد.</p>`; 
   main.querySelector('[data-send="st"]').addEventListener('click', () => {
     openChannelPicker(async (channelId) => {
       try {
         const rep = await NSR.bridgeCommand({ type: 'sendTicketPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('✅ تم الإرسال!');
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+        toast('تم الإرسال!');
+      } catch (e) { toast('' + e.message, 'err'); }
     });
   });
   main.querySelector('[data-send="ss"]').addEventListener('click', () => {
@@ -1151,8 +1223,8 @@ function renderSend(main) {
       try {
         const rep = await NSR.bridgeCommand({ type: 'sendSuggestionsPanel', userId: session.user.id, guildId: currentGuild.id, channelId });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('✅ تم الإرسال!');
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+        toast('تم الإرسال!');
+      } catch (e) { toast('' + e.message, 'err'); }
     });
   });
   main.querySelector('[data-act="refresh"]').addEventListener('click', refreshState);
@@ -1163,19 +1235,19 @@ function openChannelPicker(cb) {
   const main = $('#dash-main');
   main.innerHTML = `
     <div class="card" style="max-width:520px; margin:0 auto;">
-      <h4>📌 اختر الروم للإرسال</h4>
+      <h4>${ic('send')} اختر الروم للإرسال</h4>
       <select id="picker-ch">
         <option value="">— اختر الروم —</option>
         ${(state.channels || []).map((c) => `<option value="${c.id}"># ${esc(c.name)}</option>`).join('')}
       </select>
       <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn primary" id="picker-go" style="flex:1;">🚀 إرسال</button>
-        <button class="btn ghost" id="picker-back">🔙 رجوع</button>
+        <button class="btn primary" id="picker-go" style="flex:1;">${ic('send')} إرسال</button>
+        <button class="btn ghost" id="picker-back">${ic('back')} رجوع</button>
       </div>
     </div>`;
   main.querySelector('#picker-go').addEventListener('click', () => {
     const ch = main.querySelector('#picker-ch').value;
-    if (!ch) { toast('❌ اختر الروم أولاً', 'err'); return; }
+    if (!ch) { toast('اختر الروم أولاً', 'err'); return; }
     cb(ch);
     goPage(currentPage === 'tickets' ? 'tickets' : currentPage);
   });
@@ -1193,7 +1265,7 @@ function rolePickerHTML(uid, selectedIds, accent) {
       </div>
       <button type="button" class="rp-toggle" data-rp-toggle>+ إضافة رتبة</button>
       <div class="rp-dropdown hidden" data-rp-drop>
-        <input type="text" class="rp-search" data-rp-search placeholder="🔍 ابحث عن رتبة..." />
+        <input type="text" class="rp-search" data-rp-search placeholder="ابحث عن رتبة..." />
         <div class="rp-list" data-rp-list></div>
       </div>
     </div>`;
@@ -1215,7 +1287,7 @@ function setupRolePicker(root, uid, opts) {
     const items = allRoles.filter((r) => selected.has(String(r.id)));
     selEl.innerHTML = items.map((r) => `
       <span class="member-chip rp-chip" style="border-color:${accent}; color:${accent};">
-        ${esc(r.name)} <b data-rp-remove="${r.id}" style="cursor:pointer; margin-inline-start:6px;">✕</b>
+        ${esc(r.name)} <b data-rp-remove="${r.id}" style="cursor:pointer; margin-inline-start:6px;">${ic('close')}</b>
       </span>`).join('') || '<span class="rp-empty">لم تُختر رتب بعد</span>';
     selEl.querySelectorAll('[data-rp-remove]').forEach((x) => x.addEventListener('click', () => {
       playSound('click');
@@ -1231,7 +1303,7 @@ function setupRolePicker(root, uid, opts) {
     listEl.innerHTML = filtered.slice(0, 60).map((r) => `
       <div class="rp-item" data-rp-pick="${r.id}" style="${selected.has(String(r.id)) ? 'border-color:' + accent + ';' : ''}">
         <span>${esc(r.name)}</span>
-        <span class="rp-tick">${selected.has(String(r.id)) ? '✓' : ''}</span>
+        <span class="rp-tick">${selected.has(String(r.id)) ? ic('check') : ''}</span>
       </div>`).join('');
     listEl.querySelectorAll('[data-rp-pick]').forEach((it) => it.addEventListener('click', () => {
       playSound('click');
@@ -1261,13 +1333,13 @@ function renderAuth(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>👔 رتب الإدارة</h4>
+        <h4>${ic('users')} رتب الإدارة</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اختر الرتب المراد منحها صلاحية لوحة التحكم.</p>
         ${rolePickerHTML('staff', staffIds, 'var(--green)')}
-        <button class="btn ghost" id="save-staff" style="margin-top:14px;">💾 حفظ رتب الإدارة</button>
+        <button class="btn ghost" id="save-staff" style="margin-top:14px;">${ic('check')} حفظ رتب الإدارة</button>
       </div>
       <div class="card">
-        <h4>🤖 الرولات التلقائية</h4>
+        <h4>${ic('gear')} الرولات التلقائية</h4>
         <label>رتبة العضو الجديد</label>
         <select id="ar-member">
           <option value="">— بدون —</option>
@@ -1278,7 +1350,7 @@ function renderAuth(main) {
           <option value="">— بدون —</option>
           ${(state.roles || []).map((r) => `<option value="${r.id}" ${String(ar.botRoleId) === String(r.id) ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
         </select>
-        <button class="btn ghost" id="save-aro" style="margin-top:14px;">💾 حفظ الرولات التلقائية</button>
+        <button class="btn ghost" id="save-aro" style="margin-top:14px;">${ic('check')} حفظ الرولات التلقائية</button>
       </div>
     </div>`;
   const getPicked = setupRolePicker(main, 'staff', { selected: staffIds, accent: 'var(--green)' });
@@ -1288,8 +1360,8 @@ function renderAuth(main) {
       const rep = await NSR.bridgeCommand({ type: 'setStaffRoles', userId: session.user.id, guildId: currentGuild.id, roleIds: ids });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.staffRoles = rep.data.staffRoles;
-      toast('✅ تم حفظ رتب الإدارة');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ رتب الإدارة');
+    } catch (e) { toast(e.message, 'err'); }
   });
   main.querySelector('#save-aro').addEventListener('click', async () => {
     const ar2 = {
@@ -1300,8 +1372,8 @@ function renderAuth(main) {
       const rep = await NSR.bridgeCommand({ type: 'setAutoRoles', userId: session.user.id, guildId: currentGuild.id, autoRoles: ar2 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.autoRoles = rep.data.autoRoles;
-      toast('✅ تم حفظ الرولات التلقائية');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ الرولات التلقائية');
+    } catch (e) { toast(e.message, 'err'); }
   });
 }
 
@@ -1311,26 +1383,26 @@ function renderBrand(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🎨 لون الإمبد</h4>
+        <h4>${ic('palette')} لون الإمبد</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اللون المستخدم في رسائل البوت ولوحات التذاكر</p>
         <input type="color" id="brand-color" value="${colorToHex(state.color || 5793266)}" style="width:100%; height:46px; border:none; border-radius:10px; background:transparent; cursor:pointer;" />
-        <button class="btn ghost" id="save-color" style="margin-top:14px;">💾 حفظ اللون</button>
+        <button class="btn ghost" id="save-color" style="margin-top:14px;">${ic('check')} حفظ اللون</button>
       </div>
       <div class="card">
-        <h4>🖼️ شعار البوت</h4>
+        <h4>${ic('image')} شعار البوت</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اللوقو الذي يظهر في الزاوية العلوية لكل الإمبدات</p>
         ${logoUrl ? `<img src="${esc(logoUrl)}" alt="logo" style="width:72px; height:72px; border-radius:16px; margin-bottom:12px; border:1px solid var(--border);" />` : '<p style="color:var(--muted)">لا يوجد شعار محفوظ — البوت يولّده تلقائياً من أول رفع</p>'}
         <label>تغيير الشعار (رابط صورة)</label>
         <input id="brand-logo-url" type="text" placeholder="https://...png" />
-        <button class="btn ghost" id="save-logo" style="margin-top:10px;">💾 حفظ الشعار الجديد</button>
-        <p style="font-size:11.5px; color:var(--muted); margin-top:8px;">⚠️ الصورة تُرفع إلى ديسكورد CDN وتُعرض لكل الإمبدات فوراً (PNG/JPG).</p>
+        <button class="btn ghost" id="save-logo" style="margin-top:10px;">${ic('check')} حفظ الشعار الجديد</button>
+        <p style="font-size:11.5px; color:var(--muted); margin-top:8px;">${ic('warn')} الصورة تُرفع إلى ديسكورد CDN وتُعرض لكل الإمبدات فوراً (PNG/JPG).</p>
       </div>
     </div>
     <div class="preview-card">
-      <h4>👁️ معاينة الإمبد (اللون والشعار كما يظهران في ديسكورد)</h4>
+      <h4>${ic('eye')} معاينة الإمبد (اللون والشعار كما يظهران في ديسكورد)</h4>
       <div id="brand-preview"></div>
     </div>
-    <p style="color:var(--muted); font-size:12px; margin-top:14px;">💡 شعار البوت يُدار أيضاً من لوحة ديسكورد (زر تغيير الشعار في صفحة النظام).</p>`;
+    <p style="color:var(--muted); font-size:12px; margin-top:14px;">${ic('bulb')} شعار البوت يُدار أيضاً من لوحة ديسكورد (زر تغيير الشعار في صفحة النظام).</p>`;
   const renderBrandPreview = () => {
     const color = main.querySelector('#brand-color').value.replace('#', '');
     main.querySelector('#brand-preview').innerHTML = previewEmbedHTML({
@@ -1350,20 +1422,20 @@ function renderBrand(main) {
       const rep = await NSR.bridgeCommand({ type: 'setColor', userId: session.user.id, guildId: currentGuild.id, color });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.color = rep.data.color;
-      toast('✅ تم حفظ اللون');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ اللون');
+    } catch (e) { toast('' + e.message, 'err'); }
   });
   main.querySelector('#save-logo').addEventListener('click', async () => {
     const url = main.querySelector('#brand-logo-url').value.trim();
-    if (!url) { toast('❌ اكتب رابط الصورة أولاً', 'err'); return; }
+    if (!url) { toast('اكتب رابط الصورة أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'setLogo', userId: session.user.id, guildId: currentGuild.id, logoUrl: url });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.logoUrl = rep.data.logoUrl;
       main.querySelector('#brand-logo-url').value = '';
-      toast('✅ تم حفظ الشعار الجديد');
+      toast('تم حفظ الشعار الجديد');
       refreshState();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 }
 
@@ -1405,7 +1477,6 @@ function renderLogs(main) {
   const lc = state.logChannels || {};
   const rows = LOG_EVENTS.map((ev) => `
     <div class="log-row">
-      <span>${ev.emoji}</span>
       <b style="flex:1; font-size:13px;">${ev.name}</b>
       <select data-log="${ev.id}">
         <option value="">— بدون —</option>
@@ -1415,13 +1486,13 @@ function renderLogs(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>📋 رومات اللوقات — كل حدث برومه</h4>
+        <h4>${ic('list')} رومات اللوقات — كل حدث برومه</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">سيُرصد كل حدث ويرسل للروم الذي تختاره. اتركه «بدون» لإيقاف رصده.</p>
         <div>${rows}</div>
       </div>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-save="logs"><span class="big-emoji">💾</span> حفظ رومات اللوقات</button>
+      <button class="act-btn" data-save="logs"><span class="big-emoji">${ic('check')}</span> حفظ رومات اللوقات</button>
     </div>`;
   main.querySelector('[data-save="logs"]').addEventListener('click', async () => {
     const events = {};
@@ -1430,8 +1501,8 @@ function renderLogs(main) {
       const rep = await NSR.bridgeCommand({ type: 'setLogChannels', userId: session.user.id, guildId: currentGuild.id, events });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.logChannels = rep.data.logChannels;
-      toast('✅ تم حفظ رومات اللوقات');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ رومات اللوقات');
+    } catch (e) { toast(e.message, 'err'); }
   });
 }
 
@@ -1471,70 +1542,70 @@ function renderSecurity(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🛡️ الرتب المحمية</h4>
+        <h4>${ic('shield')} الرتب المحمية</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">من يعطي/يحذف/يعدل هذه الرتب يُعاقب تلقائياً.</p>
         ${rolePickerHTML('prot', protectedIds, 'var(--red)')}
         <p style="font-size:12px; color:var(--muted); margin-top:10px;">الحالي: <b style="color:var(--red)">${pick(protectedIds)}</b></p>
       </div>
       <div class="card">
-        <h4>🧑‍💼 رتب التجاوز (مستثناة من الحماية)</h4>
+        <h4>${ic('users')} رتب التجاوز (مستثناة من الحماية)</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">أصحاب هذه الرتب لا تطالهم الحماية التلقائية.</p>
         ${rolePickerHTML('bypass', bypassIds, 'var(--green)')}
         <p style="font-size:12px; color:var(--muted); margin-top:10px;">الحالي: <b style="color:var(--green)">${pick(bypassIds)}</b></p>
         <label style="margin-top:12px; display:block;">العقوبة الافتراضية للمخالف</label>
         <select id="sec-action">
-          <option value="kick" ${pr.action !== 'ban' ? 'selected' : ''}>👢 طرد (Kick)</option>
-          <option value="ban" ${pr.action === 'ban' ? 'selected' : ''}>⛔ باند (Ban)</option>
+          <option value="kick" ${pr.action !== 'ban' ? 'selected' : ''}>طرد (Kick)</option>
+          <option value="ban" ${pr.action === 'ban' ? 'selected' : ''}>باند (Ban)</option>
         </select>
       </div>
     </div>
 
     <div class="card" style="margin-top:16px;">
-      <h4>🛡️ حمايات السيرفر (التفعيل والإعدادات)</h4>
+      <h4>${ic('shield')} حمايات السيرفر (التفعيل والإعدادات)</h4>
       <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">فعّل الحماية التي تريدها واضبط الحدود — "الحد" = عدد العمليات المسموحة قبل العقوبة، "خلال" = الإطار الزمني بالثواني.</p>
-      ${secCard('cd', '🧹', 'حماية حذف الرومات', 'يمنع حذف عدة رومات دفعة واحدة (هجوم).', `
+      ${secCard('cd', ic('close'), 'حماية حذف الرومات', 'يمنع حذف عدة رومات دفعة واحدة (هجوم).', `
         ${numInp('cd-thr', 'الحد (رومات)', cd.threshold ?? 3, 1, 20)}
         ${numInp('cd-win', 'خلال (ثانية)', cd.window ?? 10, 5, 120)}
         ${selInp('cd-action', 'العقوبة', cd.action || 'kick', `<option value="kick" ${cd.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${cd.action === 'ban' ? 'selected' : ''}>باند</option>`)}
         ${selInp('cd-role', 'رتبة إلزامية للحذف (اختياري)', cd.requiredRole || '', '<option value="">بدون رتبة إلزامية</option>' + roleOpts(cd.requiredRole))}
       `, cd.enabled !== false, true)}
-      ${secCard('nk', '☢️', 'حماية التدمير الشامل (Nuke)', 'أي عمليات حذف/إنشاء كثيرة خلال ثوانٍ = هجوم تدمير.', `
+      ${secCard('nk', ic('warn'), 'حماية التدمير الشامل (Nuke)', 'أي عمليات حذف/إنشاء كثيرة خلال ثوانٍ = هجوم تدمير.', `
         ${numInp('nk-thr', 'الحد (عمليات)', nk.threshold ?? 8, 3, 50)}
         ${numInp('nk-win', 'خلال (ثانية)', nk.window ?? 20, 5, 120)}
         ${selInp('nk-action', 'العقوبة', nk.action || 'kick', `<option value="kick" ${nk.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${nk.action === 'ban' ? 'selected' : ''}>باند</option>`)}
       `, nk.enabled !== false, true)}
-      ${secCard('bn', '⛔', 'حماية الباند الجماعي', 'يمنع باند أعضاء كثر دفعة واحدة.', `
+      ${secCard('bn', ic('shield'), 'حماية الباند الجماعي', 'يمنع باند أعضاء كثر دفعة واحدة.', `
         ${numInp('bn-thr', 'الحد (باند)', bn.threshold ?? 3, 1, 20)}
         ${numInp('bn-win', 'خلال (ثانية)', bn.window ?? 10, 5, 120)}
         ${selInp('bn-action', 'العقوبة', bn.action || 'kick', `<option value="kick" ${bn.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${bn.action === 'ban' ? 'selected' : ''}>باند</option>`)}
       `, bn.enabled !== false, true)}
-      ${secCard('kk', '👢', 'حماية الطرد الجماعي', 'يمنع طرد أعضاء كثر دفعة واحدة.', `
+      ${secCard('kk', ic('send'), 'حماية الطرد الجماعي', 'يمنع طرد أعضاء كثر دفعة واحدة.', `
         ${numInp('kk-thr', 'الحد (طرد)', kk.threshold ?? 3, 1, 20)}
         ${numInp('kk-win', 'خلال (ثانية)', kk.window ?? 10, 5, 120)}
         ${selInp('kk-action', 'العقوبة', kk.action || 'kick', `<option value="kick" ${kk.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${kk.action === 'ban' ? 'selected' : ''}>باند</option>`)}
       `, kk.enabled !== false, true)}
-      ${secCard('rd', '🎭', 'حماية حذف الرتب', 'يمنع حذف رتب كثر دفعة واحدة.', `
+      ${secCard('rd', ic('warn'), 'حماية حذف الرتب', 'يمنع حذف رتب كثر دفعة واحدة.', `
         ${numInp('rd-thr', 'الحد (رتب)', rd.threshold ?? 3, 1, 20)}
         ${numInp('rd-win', 'خلال (ثانية)', rd.window ?? 10, 5, 120)}
         ${selInp('rd-action', 'العقوبة', rd.action || 'kick', `<option value="kick" ${rd.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${rd.action === 'ban' ? 'selected' : ''}>باند</option>`)}
       `, rd.enabled !== false, true)}
-      ${secCard('wh', '🪝', 'حماية الويبهوك', 'يمنع إنشاء ويبهوك خبيث.', `
+      ${secCard('wh', ic('link'), 'حماية الويبهوك', 'يمنع إنشاء ويبهوك خبيث.', `
         ${selInp('wh-action', 'العقوبة', wh.action || 'kick', `<option value="kick" ${wh.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${wh.action === 'ban' ? 'selected' : ''}>باند</option>`)}
       `, wh.enabled !== false, true)}
-      ${secCard('bt', '🤖', 'حماية البوتات', 'يرفض دخول البوتات غير المصرح بها ويطردها.', ``, bt.enabled !== false, true)}
+      ${secCard('bt', ic('brain'), 'حماية البوتات', 'يرفض دخول البوتات غير المصرح بها ويطردها.', ``, bt.enabled !== false, true)}
     </div>
 
     <div class="card" style="margin-top:16px;">
-      <h4>🚦 حماية الرسائل (Automod)</h4>
+      <h4>${ic('chat')} حماية الرسائل (Automod)</h4>
       <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">تُفحص الرسائل تلقائياً وتحذف المخالفة — تحمي السيرفر والبوت من الحظر.</p>
-      ${secCard('am', '🔗', 'حماية الروابط', 'يحذف الرسائل التي تحتوي روابط (ماعدا الإدارة).', ``, am.enabled !== false && am.links !== false, true)}
-      ${secCard('amspam', '📈', 'حماية السبام', 'يكتم من يرسل رسائل كثيرة بسرعة.', ``, am.enabled !== false && am.spam !== false, true)}
-      ${secCard('amev', '📢', 'حماية @everyone / @here', 'يحذف رسائل الإشارة الجماعية غير المصرح بها.', ``, am.enabled !== false && am.everyone !== false, true)}
-      ${secCard('sw', '💢', 'حماية السب (كلمات بذيئة)', 'يحذف أي رسالة فيها سب/قدف — حتى من الإدارة — لحماية البوت من الحظر، ويُبلَّغ المالك.', ``, sw.enabled !== false, true)}
+      ${secCard('am', ic('link'), 'حماية الروابط', 'يحذف الرسائل التي تحتوي روابط (ماعدا الإدارة).', ``, am.enabled !== false && am.links !== false, true)}
+      ${secCard('amspam', ic('chat'), 'حماية السبام', 'يكتم من يرسل رسائل كثيرة بسرعة.', ``, am.enabled !== false && am.spam !== false, true)}
+      ${secCard('amev', ic('users'), 'حماية @everyone / @here', 'يحذف رسائل الإشارة الجماعية غير المصرح بها.', ``, am.enabled !== false && am.everyone !== false, true)}
+      ${secCard('sw', ic('warn'), 'حماية السب (كلمات بذيئة)', 'يحذف أي رسالة فيها سب/قدف — حتى من الإدارة — لحماية البوت من الحظر، ويُبلَّغ المالك.', ``, sw.enabled !== false, true)}
     </div>
 
     <div class="grid-actions">
-      <button class="act-btn" data-save="sec"><span class="big-emoji">💾</span> حفظ إعدادات الحماية</button>
+      <button class="act-btn" data-save="sec"><span class="big-emoji">${ic('check')}</span> حفظ إعدادات الحماية</button>
     </div>`;
   const getProt = setupRolePicker(main, 'prot', { selected: protectedIds, accent: 'var(--red)' });
   const getBypass = setupRolePicker(main, 'bypass', { selected: bypassIds, accent: 'var(--green)' });
@@ -1590,8 +1661,8 @@ function renderSecurity(main) {
       const rep = await NSR.bridgeCommand({ type: 'setProtection', userId: session.user.id, guildId: currentGuild.id, protectedRoles, bypassRoles, action, config });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.protection = rep.data;
-      toast('✅ تم حفظ إعدادات الحماية');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ إعدادات الحماية');
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 }
 
@@ -1599,17 +1670,17 @@ function renderSecurity(main) {
 function renderAi(main) {
   const ai = state.ai || {};
   const features = [
-    { icon: '🧠', name: 'الرد الذكي على المشاكل', desc: 'يكتشف مشكلة العميل ويقدم له خطوات الحل تلقائياً في الروم المحدد.' },
-    { icon: '❓', name: 'الرد على الاستفسارات', desc: 'يجيب على الأسئلة العامة (باند، تكت، شرح، أماكن) دون سوالف.' },
-    { icon: '🛡️', name: 'فلترة ذكية (كشف التحايل)', desc: 'يكشف السب حتى لو كُتب بطريقة ملتوية (f-u-c-k / fuuuck) ويتصرف حسب الشدة.' },
-    { icon: '🧠', name: 'التعلم من المودرز', desc: 'المود يضع 🚫 على رسالة → يتعلم البوت الكلمات الجديدة تلقائياً.' },
+    { icon: ICONS.brain, name: 'الرد الذكي على المشاكل', desc: 'يكتشف مشكلة العميل ويقدم له خطوات الحل تلقائياً في الروم المحدد.' },
+    { icon: ICONS.chat, name: 'الرد على الاستفسارات', desc: 'يجيب على الأسئلة العامة (باند، تكت، شرح، أماكن) دون سوالف.' },
+    { icon: ICONS.shield, name: 'فلترة ذكية (كشف التحايل)', desc: 'يكشف السب حتى لو كُتب بطريقة ملتوية (f-u-c-k / fuuuck) ويتصرف حسب الشدة.' },
+    { icon: ICONS.brain, name: 'التعلم من المودرز', desc: 'المود يضع رد فعل ممنوع على رسالة → يتعلم البوت الكلمات الجديدة تلقائياً.' },
   ];
 
   if (!isCustomer) {
     main.innerHTML = `
       <div class="card" style="max-width:620px; margin:0 auto; text-align:center; padding:30px;">
         <img src="logo.png" alt="AI" style="width:84px; height:84px; border-radius:20px; margin-bottom:14px; border:1px solid var(--border);" />
-        <h4>🧠 معالج AI — ميزة مدفوعة</h4>
+        <h4>${ic('brain')} معالج AI — ميزة مدفوعة</h4>
         <p style="color:var(--muted); font-size:13px; line-height:1.9; margin-top:8px;">
           هذه الميزة <b style="color:var(--text)">مقفلة</b> — تحتاج شراء باقة <b style="color:var(--text)">كوستمر</b> لفتحها.<br/>
           اضغط على أي ميزة بالأسفل لمعرفة محتواها، وعند الضغط على زر الفتح سيوصلك لسيرفر NSR HUB للشراء.
@@ -1617,18 +1688,18 @@ function renderAi(main) {
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:18px; text-align:right;">
           ${features.map((f, idx) => `
             <div class="ai-locked" data-ai-i="${idx}" style="cursor:pointer;">
-              <span style="font-size:22px;">${f.icon}</span>
+              <span class="ic">${f.icon}</span>
               <div style="flex:1;"><b>${f.name}</b><div class="sec-desc">${f.desc}</div></div>
-              <span class="lock-badge">🔒</span>
+              <span class="lock-badge">${ic('lock')}</span>
             </div>`).join('')}
         </div>
-        <button class="btn primary big" id="ai-unlock-btn" style="margin-top:20px; width:100%;">🔓 فتح المعالج (شراء من NSR HUB)</button>
+        <button class="btn primary big" id="ai-unlock-btn" style="margin-top:20px; width:100%;">${ic('lock')} فتح المعالج (شراء من NSR HUB)</button>
         <p id="ai-unlock-msg" style="font-size:12px; color:var(--muted); margin-top:10px;"></p>
       </div>`;
     main.querySelectorAll('[data-ai-i]').forEach((el) => {
       el.addEventListener('click', () => {
         playSound('click');
-        toast('🔒 هذه الميزة مقفلة — تشتري باقة كوستمر لفتحها');
+        toast('هذه الميزة مقفلة — تشتري باقة كوستمر لفتحها');
         openPurchaseModal(features[el.dataset.aiI]);
       });
     });
@@ -1643,9 +1714,9 @@ function renderAi(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🧠 معالج AI</h4>
+        <h4>${ic('brain')} معالج AI</h4>
         <div class="toggle-row" style="margin-bottom:6px;">
-          <span>🔘 تفعيل المعالج</span>
+          <span>${ic('settings')} تفعيل المعالج</span>
           <label class="switch"><input type="checkbox" id="ai-enabled" ${ai.enabled ? 'checked' : ''}/><span class="slider"></span></label>
         </div>
         <p style="font-size:12px; color:var(--muted);">يعمل فقط في الروم الذي تختاره أدناه.</p>
@@ -1656,27 +1727,27 @@ function renderAi(main) {
         </select>
         <label>نمط الرد</label>
         <select id="ai-mode">
-          <option value="solve" ${mode === 'solve' ? 'selected' : ''}>🛠 حل مشاكل — يرد على المشاكل فقط</option>
-          <option value="inquiry" ${mode === 'inquiry' ? 'selected' : ''}>❓ استفسارات — يجيب على الأسئلة العامة</option>
+          <option value="solve" ${mode === 'solve' ? 'selected' : ''}>${ic('gear')} حل مشاكل — يرد على المشاكل فقط</option>
+          <option value="inquiry" ${mode === 'inquiry' ? 'selected' : ''}>${ic('chat')} استفسارات — يجيب على الأسئلة العامة</option>
         </select>
         <label>شدة التعامل مع السب</label>
         <select id="ai-severity">
-          <option value="delete" ${(ai.severity || 'delete') === 'delete' ? 'selected' : ''}>🗑 حذف فقط</option>
-          <option value="warn" ${ai.severity === 'warn' ? 'selected' : ''}>⚠ حذف + تحذير خاص</option>
-          <option value="mute" ${ai.severity === 'mute' ? 'selected' : ''}>🔇 حذف + كتم دقيقة</option>
+          <option value="delete" ${(ai.severity || 'delete') === 'delete' ? 'selected' : ''}>${ic('close')} حذف فقط</option>
+          <option value="warn" ${ai.severity === 'warn' ? 'selected' : ''}>${ic('warn')} حذف + تحذير خاص</option>
+          <option value="mute" ${ai.severity === 'mute' ? 'selected' : ''}>${ic('lock')} حذف + كتم دقيقة</option>
         </select>
       </div>
       <div class="card">
-        <h4>✍️ جرب الرد الذكي</h4>
+        <h4>${ic('plus')} جرب الرد الذكي</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اكتب مشكلة أو سؤالاً وشاهد كيف سيرد البوت.</p>
         <textarea id="ai-test" placeholder="مثال: وين ألقى معرض السيارات في فايف ام؟"></textarea>
-        <button class="btn primary" id="ai-test-btn" style="margin-top:10px; width:100%;">🧠 اختبر الرد</button>
+        <button class="btn primary" id="ai-test-btn" style="margin-top:10px; width:100%;">${ic('brain')} اختبر الرد</button>
         <div id="ai-test-result" class="ai-test-result" style="margin-top:12px;"></div>
       </div>
     </div>
     ${isOwner ? `
     <div class="card" style="margin-top:16px;">
-      <h4>🎖️ رتبة فتح المعالج (كوستمر)</h4>
+      <h4>${ic('crown')} رتبة فتح المعالج (كوستمر)</h4>
       <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">
         حدد رتبة <b style="color:var(--text)">كوستمر</b> من سيرفر <b style="color:var(--text)">NSR HUB</b> الرئيسي —
         أي شخص يحمل هذه الرتبة يفتح له زر المعالج AI تلقائياً.<br/>
@@ -1687,31 +1758,31 @@ function renderAi(main) {
           <label>رتبة الكوستمر (من سيرفر NSR HUB)</label>
           <select id="ai-cust-role"></select>
         </div>
-        <button class="btn primary" id="ai-cust-role-btn">💾 حفظ رتبة الفتح</button>
+        <button class="btn primary" id="ai-cust-role-btn">${ic('check')} حفظ رتبة الفتح</button>
       </div>
     </div>` : ''}
     <div class="card" style="margin-top:16px;">
-      <h4>🛡️ الفلترة الذكية (كشف التحايل + التعلم)</h4>
+      <h4>${ic('shield')} الفلترة الذكية (كشف التحايل + التعلم)</h4>
       <p style="font-size:12.5px; color:var(--muted); line-height:1.9;">
-        • يكشف الكلمات المحظورة حتى لو كُتبت ملتوية: <code>f-u-c-k</code>، <code>fuuuck</code>، <code>f0ck</code>، <code>ك-س</code>.<br/>
-        • المودرز يضعون تفاعل 🚫 على أي رسالة مخالفة فاتت الفلتر → يتعلم البوت كلماتها تلقائياً.<br/>
-        • يرد فقط على الرسائل التي فيها مشكلة أو سؤال واضح — ما يسولف ولا يرد على الإعلانات.
+        ${ic('check')} يكشف الكلمات المحظورة حتى لو كُتبت ملتوية: <code>f-u-c-k</code>، <code>fuuuck</code>، <code>f0ck</code>، <code>ك-س</code>.<br/>
+        ${ic('brain')} المودرز يضعون تفاعل ممنوع على أي رسالة مخالفة فاتت الفلتر → يتعلم البوت كلماتها تلقائياً.<br/>
+        ${ic('chat')} يرد فقط على الرسائل التي فيها مشكلة أو سؤال واضح — ما يسولف ولا يرد على الإعلانات.
       </p>
     </div>
     <div class="grid-actions">
-      <button class="act-btn" data-save="ai"><span class="big-emoji">💾</span> حفظ إعدادات معالج AI</button>
+      <button class="act-btn" data-save="ai"><span class="big-emoji">${ic('check')}</span> حفظ إعدادات معالج AI</button>
     </div>`;
   main.querySelector('#ai-test-btn').addEventListener('click', async () => {
     const text = main.querySelector('#ai-test').value.trim();
     const resEl = main.querySelector('#ai-test-result');
-    if (!text) { toast('❌ اكتب سؤالاً أو مشكلة أولاً', 'err'); return; }
-    resEl.innerHTML = '<span style="color:var(--muted);">⏳ جاري التفكير...</span>';
+    if (!text) { toast('اكتب سؤالاً أو مشكلة أولاً', 'err'); return; }
+    resEl.innerHTML = '<span style="color:var(--muted);">جاري التفكير...</span>';
     try {
       const rep = await NSR.bridgeCommand({ type: 'testAi', userId: session.user.id, guildId: currentGuild.id, text });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      resEl.innerHTML = `<b style="color:var(--green);">${rep.data.matched ? '✓ سيُرد على هذه الرسالة' : '— لن يرد (كلام عادي)'}</b><br/><span style="font-size:13px; line-height:1.8;">${esc(rep.data.reply)}</span>`;
+      resEl.innerHTML = `<b style="color:var(--green);">${rep.data.matched ? `${ic('check')} سيُرد على هذه الرسالة` : '— لن يرد (كلام عادي)'}</b><br/><span style="font-size:13px; line-height:1.8;">${esc(rep.data.reply)}</span>`;
     } catch (e) {
-      resEl.innerHTML = '<span style="color:var(--red);">❌ ' + esc(e.message) + '</span>';
+      resEl.innerHTML = '<span style="color:var(--red);">' + esc(e.message) + '</span>';
     }
   });
   main.querySelector('[data-save="ai"]').addEventListener('click', async () => {
@@ -1725,8 +1796,8 @@ function renderAi(main) {
       const rep = await NSR.bridgeCommand({ type: 'setAiConfig', userId: session.user.id, guildId: currentGuild.id, ...payload });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.ai = rep.data.ai;
-      toast('✅ تم حفظ إعدادات معالج AI');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ إعدادات معالج AI');
+    } catch (e) { toast('' + e.message, 'err'); }
   });
 
   if (isOwner) {
@@ -1745,15 +1816,15 @@ function renderAi(main) {
         custSel.disabled = false;
         custBtn.disabled = false;
       } catch (e) {
-        custStatus.textContent = '❌ فشل تحميل الرتب: ' + e.message;
+        custStatus.textContent = 'فشل تحميل الرتب: ' + e.message;
       }
     })();
     custBtn.addEventListener('click', async () => {
       try {
         const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: currentGuild.id, roleId: custSel.value });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('✅ تم حفظ رتبة فتح المعالج');
-      } catch (e) { toast('❌ ' + e.message, 'err'); }
+        toast('تم حفظ رتبة فتح المعالج');
+      } catch (e) { toast('' + e.message, 'err'); }
     });
   }
 }
@@ -1763,19 +1834,19 @@ function openPurchaseModal(feature) {
   const main = $('#dash-main');
   main.innerHTML = `
     <div class="card" style="max-width:520px; margin:0 auto; text-align:center; padding:28px;">
-      ${feature ? `<div style="font-size:40px; margin-bottom:8px;">${feature.icon}</div>` : '<img src="logo.png" alt="" style="width:76px; height:76px; border-radius:18px; margin-bottom:8px;" />'}
-      <h4>🔒 ${feature ? esc(feature.name) : 'معالج AI — ميزة مدفوعة'}</h4>
+      ${feature ? `<div class="locked-ico">${feature.icon}</div>` : '<img src="logo.png" alt="" style="width:76px; height:76px; border-radius:18px; margin-bottom:8px;" />'}
+      <h4>${ic('lock')} ${feature ? esc(feature.name) : 'معالج AI — ميزة مدفوعة'}</h4>
       <p style="color:var(--muted); font-size:13px; line-height:1.9; margin-top:8px;">
         ${feature ? esc(feature.desc) : 'باقة كوستمر تفتح لك معالج AI كاملاً: الرد الذكي على المشاكل والاستفسارات والفلترة الذكية.'}<br/>
         <b style="color:var(--text);">اشترك من سيرفر NSR HUB الرسمي للشراء والتفعيل.</b>
       </p>
-      <button class="btn primary big" id="buy-now-btn" style="margin-top:18px; width:100%;">🛒 الشراء من سيرفر NSR HUB</button>
-      <button class="btn ghost" id="buy-back" style="margin-top:8px; width:100%;">🔙 رجوع</button>
+      <button class="btn primary big" id="buy-now-btn" style="margin-top:18px; width:100%;">${ic('cart')} الشراء من سيرفر NSR HUB</button>
+      <button class="btn ghost" id="buy-back" style="margin-top:8px; width:100%;">${ic('back')} رجوع</button>
     </div>`;
   main.querySelector('#buy-now-btn').addEventListener('click', () => {
     playSound('click');
     NSR.openExternal(NSR_DISCORD_SERVER);
-    toast('🔗 تم فتح سيرفر NSR HUB');
+    toast('تم فتح سيرفر NSR HUB');
   });
   main.querySelector('#buy-back').addEventListener('click', () => { playSound('click'); renderAi(main); });
   wireFx(main);
@@ -1788,18 +1859,18 @@ function renderRatings(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🛍️ المنتجات</h4>
+        <h4>${ic('cart')} المنتجات</h4>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">المستخدم يقيّم المنتج بعد الشراء عبر سلوك /rate.</p>
         <div>${products.length
-          ? products.map((p) => `<div class="prod-row"><span>🛒</span><div style="flex:1;"><b>${esc(p.name)}</b><br/><span>${esc(p.id)}</span></div><button class="del-btn" data-del="${p.id}">🗑 حذف</button></div>`).join('')
+          ? products.map((p) => `<div class="prod-row"><span class="ic">${ic('cart')}</span><div style="flex:1;"><b>${esc(p.name)}</b><br/><span>${esc(p.id)}</span></div><button class="del-btn" data-del="${p.id}">${ic('close')} حذف</button></div>`).join('')
           : '<p style="color:var(--muted)">لا توجد منتجات بعد.</p>'}</div>
         <div style="display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:14px;">
           <input id="prod-name" type="text" placeholder="اسم المنتج الجديد" />
-          <button class="btn ghost" id="prod-add">➕ إضافة</button>
+          <button class="btn ghost" id="prod-add">${ic('plus')} إضافة</button>
         </div>
       </div>
       <div class="card">
-        <h4>⭐ روم التقييمات</h4>
+        <h4>${ic('list')} روم التقييمات</h4>
         <label>الروم الذي تُنشر فيه التقييمات بعد استلامها</label>
         <select id="rating-ch">
           <option value="">— اختر الروم —</option>
@@ -1807,7 +1878,7 @@ function renderRatings(main) {
         </select>
         <label>إرسال تقييم لعميل (مثل /rate)</label>
         <div class="send-rate-row">
-          <input id="rate-member-search" type="text" placeholder="🔍 ابحث عن العميل..." />
+          <input id="rate-member-search" type="text" placeholder="ابحث عن العميل..." />
           <select id="rate-member" style="margin-top:8px;">
             <option value="">— اختر العميل —</option>
             ${(state.members || []).map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}
@@ -1818,41 +1889,41 @@ function renderRatings(main) {
           </select>
         </div>
         <div style="display:flex; gap:10px; margin-top:14px;">
-          <button class="btn ghost" id="save-rating" style="flex:1;">💾 حفظ الروم</button>
-          <button class="btn primary" id="send-rating" style="flex:1;">📨 إرسال التقييم</button>
+          <button class="btn ghost" id="save-rating" style="flex:1;">${ic('check')} حفظ الروم</button>
+          <button class="btn primary" id="send-rating" style="flex:1;">${ic('send')} إرسال التقييم</button>
         </div>
         <p id="send-rate-msg" style="font-size:11.5px; color:var(--muted); margin-top:8px;"></p>
       </div>
     </div>`;
   main.querySelector('#prod-add').addEventListener('click', async () => {
     const name = main.querySelector('#prod-name').value.trim();
-    if (!name) { toast('❌ اكتب اسم المنتج', 'err'); return; }
+    if (!name) { toast('اكتب اسم المنتج', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'addProduct', userId: session.user.id, guildId: currentGuild.id, name });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       main.querySelector('#prod-name').value = '';
-      toast('✅ تمت إضافة المنتج');
+      toast('تمت إضافة المنتج');
       refreshState();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast(e.message, 'err'); }
   });
   main.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
     playSound('click');
     try {
       const rep = await NSR.bridgeCommand({ type: 'delProduct', userId: session.user.id, guildId: currentGuild.id, productId: b.dataset.del });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('🗑 تم حذف المنتج');
+      toast('تم حذف المنتج');
       refreshState();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast(e.message, 'err'); }
   }));
   main.querySelector('#save-rating').addEventListener('click', async () => {
     const channelId = main.querySelector('#rating-ch').value;
-    if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
+    if (!channelId) { toast('اختر الروم أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'setRatingChannel', userId: session.user.id, guildId: currentGuild.id, channelId });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.rating.reviewsChannelId = channelId;
-      toast('✅ تم حفظ روم التقييمات');
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+      toast('تم حفظ روم التقييمات');
+    } catch (e) { toast(e.message, 'err'); }
   });
 
   // بحث فوري عن العملاء (أصحاب المتجر)
@@ -1877,17 +1948,17 @@ function renderRatings(main) {
     const targetId = memberSel.value;
     const productId = main.querySelector('#rate-product').value;
     const msgEl = main.querySelector('#send-rate-msg');
-    if (!targetId) { toast('❌ اختر العميل أولاً', 'err'); return; }
-    if (!productId) { toast('❌ اختر المنتج أولاً', 'err'); return; }
-    msgEl.textContent = '⏳ جاري الإرسال…';
+    if (!targetId) { toast('اختر العميل أولاً', 'err'); return; }
+    if (!productId) { toast('اختر المنتج أولاً', 'err'); return; }
+    msgEl.textContent = 'جاري الإرسال…';
     try {
       const rep = await NSR.bridgeCommand({ type: 'sendRating', userId: session.user.id, guildId: currentGuild.id, targetId, productId });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
-      msgEl.textContent = '✅ تم إرسال رسالة التقييم إلى العميل على الخاص';
-      toast('✅ تم إرسال التقييم');
+      msgEl.textContent = 'تم إرسال رسالة التقييم إلى العميل على الخاص';
+      toast('تم إرسال التقييم');
     } catch (e) {
-      msgEl.textContent = '❌ ' + e.message;
-      toast('❌ ' + e.message, 'err');
+      msgEl.textContent = e.message;
+      toast(e.message, 'err');
     }
   });
 }
@@ -1906,25 +1977,25 @@ function renderMessages(main) {
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>💬 إرسال رسالة خاصة</h4>
+        <h4>${ic('chat')} إرسال رسالة خاصة</h4>
         <div class="msg-type-tabs">
-          ${Object.entries(MSG_TYPES).map(([id, t]) => `<button class="msg-type-tab${id === msgType ? ' active' : ''}" data-type="${id}">${t.emoji} ${t.name}</button>`).join('')}
+          ${Object.entries(MSG_TYPES).map(([id, t]) => `<button class="msg-type-tab${id === msgType ? ' active' : ''}" data-type="${id}"><span class="ic">${t.emoji}</span> ${t.name}</button>`).join('')}
         </div>
         <label>معرف العضو (User ID)</label>
         <input id="msg-user" type="text" placeholder="كليك يمين على العضو ← نسخ معرف المستخدم" />
         <label>النص</label>
         <textarea id="msg-text" placeholder="اكتب نص الرسالة هنا..."></textarea>
-        <p id="msg-text-note" style="font-size:12px; color:var(--muted); display:none;">✋ هذا النوع من الرسائل ثابت النص — لا يمكنك كتابة محتوى مخصص. النص المخصص متاح فقط لنوع "رسالة".</p>
-        <button class="btn primary" id="msg-send" style="margin-top:14px; width:100%;">📨 إرسال</button>
+        <p id="msg-text-note" style="font-size:12px; color:var(--muted); display:none;">هذا النوع من الرسائل ثابت النص — لا يمكنك كتابة محتوى مخصص. النص المخصص متاح فقط لنوع "رسالة".</p>
+        <button class="btn primary" id="msg-send" style="margin-top:14px; width:100%;">${ic('send')} إرسال</button>
       </div>
       <div class="card">
-        <h4>👁️ معاينة رسالة الخاص (كما تصله في ديسكورد)</h4>
+        <h4>${ic('eye')} معاينة رسالة الخاص (كما تصله في ديسكورد)</h4>
         <div id="msg-preview"></div>
-        <p style="font-size:12px; color:var(--muted); margin-top:10px;">⏳ تهدئة دقيقة واحدة بين رسالتين لنفس الشخص.</p>
+        <p style="font-size:12px; color:var(--muted); margin-top:10px;">هدوء دقيقة واحدة بين رسالتين لنفس الشخص.</p>
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <h4>🎨 إرسال ثيم لروم</h4>
+      <h4>${ic('palette')} إرسال ثيم لروم</h4>
       <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">أرسل رسالة مُنسّقة (ثيم) إلى أي روم في السيرفر مباشرةً.</p>
       <div class="grid2">
         <div>
@@ -1934,7 +2005,7 @@ function renderMessages(main) {
             ${(state.channels || []).map((c) => `<option value="${c.id}"># ${esc(c.name)}</option>`).join('')}
           </select>
           <label>عنوان الثيم</label>
-          <input id="theme-title" type="text" placeholder="مثال: 🎉 حدث جديد" />
+          <input id="theme-title" type="text" placeholder="مثال: حدث جديد" />
           <label>اللون</label>
           <input id="theme-color" type="color" value="${themeColor}" style="width:100%; height:38px; padding:2px; cursor:pointer;" />
         </div>
@@ -1944,14 +2015,14 @@ function renderMessages(main) {
           <label>صورة الثيم (رابط — اختياري)</label>
           <input id="theme-img" type="text" placeholder="https://...png" />
           <div class="toggle-row" style="margin-top:8px;">
-            <span>📨 إرسال كرسالة نصية بدل الإمبد</span>
+            <span>${ic('send')} إرسال كرسالة نصية بدل الإمبد</span>
             <label class="switch"><input type="checkbox" id="theme-asmsg"/><span class="slider"></span></label>
           </div>
-          <button class="btn primary" id="theme-send" style="margin-top:14px; width:100%;">🚀 إرسال الثيم للروم</button>
+          <button class="btn primary" id="theme-send" style="margin-top:14px; width:100%;">${ic('send')} إرسال الثيم للروم</button>
         </div>
       </div>
       <div class="theme-preview-wrap" style="margin-top:16px;">
-        <h4 style="font-size:12.5px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:8px;">👁️ معاينة الثيم (كما تصل في ديسكورد)</h4>
+        <h4 style="font-size:12.5px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:8px;">${ic('eye')} معاينة الثيم (كما تصل في ديسكورد)</h4>
         <div id="theme-preview"></div>
       </div>
     </div>`;
@@ -2022,15 +2093,15 @@ function renderMessages(main) {
     const t = MSG_TYPES[msgType];
     const editable = t.canEditText !== false;
     const text = editable ? main.querySelector('#msg-text').value.trim() : '';
-    if (!targetId) { toast('❌ أدخل معرف العضو أولاً', 'err'); return; }
-    if (editable && !text) { toast('❌ اكتب النص أولاً', 'err'); return; }
+    if (!targetId) { toast('أدخل معرف العضو أولاً', 'err'); return; }
+    if (editable && !text) { toast('اكتب النص أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'sendDm', userId: session.user.id, guildId: currentGuild.id, type: msgType, targetId, text });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
-      toast('✅ تم إرسال ' + rep.data.type + ' للعضو');
+      toast('تم إرسال ' + rep.data.type + ' للعضو');
       main.querySelector('#msg-text').value = '';
       renderMsgPreview();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast(e.message, 'err'); }
   });
   main.querySelector('#theme-send').addEventListener('click', async () => {
     const channelId = main.querySelector('#theme-channel').value;
@@ -2040,17 +2111,17 @@ function renderMessages(main) {
     const rawColor = main.querySelector('#theme-color').value;
     const color = parseInt(rawColor.replace('#', ''), 16);
     const asMsg = main.querySelector('#theme-asmsg').checked;
-    if (!channelId) { toast('❌ اختر الروم أولاً', 'err'); return; }
-    if (!text) { toast('❌ اكتب نص الثيم أولاً', 'err'); return; }
+    if (!channelId) { toast('اختر الروم أولاً', 'err'); return; }
+    if (!text) { toast('اكتب نص الثيم أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'sendTheme', userId: session.user.id, guildId: currentGuild.id, channelId, title, text, imageUrl: img, color, asMessage: asMsg });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
-      toast('✅ تم إرسال الثيم للروم');
+      toast('تم إرسال الثيم للروم');
       main.querySelector('#theme-title').value = '';
       main.querySelector('#theme-text').value = '';
       main.querySelector('#theme-img').value = '';
       renderThemePreview();
-    } catch (e) { toast('❌ ' + e.message, 'err'); }
+    } catch (e) { toast(e.message, 'err'); }
   });
 }
 

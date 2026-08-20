@@ -74,12 +74,15 @@
           <img src="logo.png" alt="قائمة المالك" />
         </button>
         <div id="owner-menu" class="owner-menu hidden">
-          <button data-owner-opt="subs"><span>🎟️</span> الاشتراكات</button>
-          <button data-owner-opt="all"><span>🌐</span> كل السيرفرات</button>
+          <button data-owner-opt="subs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>الاشتراكات</button>
+          <button data-owner-opt="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>كل السيرفرات</button>
         </div>
       </div>
     </div>
-    <input id="servers-search" type="text" class="hidden" placeholder="🔍 ابحث في السيرفرات..." />
+    <div class="search-wrap hidden" id="servers-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="servers-search" type="text" placeholder="ابحث في السيرفرات..." />
+    </div>
     <div id="servers-grid" class="servers-grid"></div>
     <p id="servers-empty" class="empty hidden">لا توجد سيرفرات تملك فيها صلاحية أدمن مع وجود البوت فيها.</p>
   </section>
@@ -92,7 +95,7 @@
         السيرفرات
       </button>
       <div class="guild-chip">
-        <span>🎟️ الاشتراكات والرتب</span>
+        <span>الاشتراكات والرتب</span>
       </div>
       <div class="bridge-status">
         <span id="bridge-dot3" class="dot off"></span>
@@ -120,18 +123,18 @@
     </header>
 
     <nav id="dash-nav" class="dash-nav">
-      <button data-page="home" class="nav-btn active">الرئيسية</button>
-      <button data-page="welcome" class="nav-btn">الترحيب</button>
-      <button data-page="tickets" class="nav-btn">التذاكر</button>
-      <button data-page="suggestions" class="nav-btn">الاقتراحات</button>
-      <button data-page="ai" class="nav-btn">🧠 معالج AI</button>
-      <button data-page="ratings" class="nav-btn">المتجر</button>
-      <button data-page="logs" class="nav-btn">اللوقات</button>
-      <button data-page="security" class="nav-btn">الأمان</button>
-      <button data-page="messages" class="nav-btn">الرسائل</button>
-      <button data-page="send" class="nav-btn">إرسال اللوحات</button>
-      <button data-page="auth" class="nav-btn">الصلاحيات</button>
-      <button data-page="brand" class="nav-btn">المظهر</button>
+      <button data-page="home" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>الرئيسية</button>
+      <button data-page="welcome" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>الترحيب</button>
+      <button data-page="tickets" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>التذاكر</button>
+      <button data-page="suggestions" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z"/></svg>الاقتراحات</button>
+      <button data-page="ai" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44A2.5 2.5 0 0 1 4 17.5v-3a2.5 2.5 0 0 1-.5-4.92A2.5 2.5 0 0 1 5 5.5h3.5A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44A2.5 2.5 0 0 0 20 17.5v-3a2.5 2.5 0 0 0 .5-4.92A2.5 2.5 0 0 0 19 5.5h-3.5A2.5 2.5 0 0 0 14.5 2Z"/></svg>معالج AI</button>
+      <button data-page="ratings" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>المتجر</button>
+      <button data-page="logs" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>اللوقات</button>
+      <button data-page="security" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>الأمان</button>
+      <button data-page="messages" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.35 8.5 8.5 0 0 1-3.1-.59L3 21l1.74-5.9A8.5 8.5 0 0 1 3 11.5 8.38 8.38 0 0 1 12 3a8.38 8.38 0 0 1 9 8.5Z"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/></svg>الرسائل</button>
+      <button data-page="send" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>إرسال اللوحات</button>
+      <button data-page="auth" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>الصلاحيات</button>
+      <button data-page="brand" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.6 1.5-1.4 0-.35-.13-.66-.35-.9a1.4 1.4 0 0 1-.9-1.3c0-.8.65-1.4 1.45-1.4H17c3.3 0 5-2.2 5-4.8C22 6 17.5 2 12 2Z"/></svg>المظهر</button>
     </nav>
 
     <main id="dash-main" class="dash-main"></main>
