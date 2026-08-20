@@ -511,6 +511,7 @@ function createWindow() {
     backgroundColor: '#00000000',
     autoHideMenuBar: true,
     title: 'NSR HUB',
+    icon: path.join(__dirname, 'renderer', 'logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
