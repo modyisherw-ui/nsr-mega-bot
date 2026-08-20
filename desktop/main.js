@@ -253,7 +253,7 @@ function updateLog(msg) {
 }
 
 function verStr(v) {
-  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(String(v || '').trim());
+  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(String(v || '').trim().replace(/^\uFEFF/, ''));
   return m ? m[1] + '.' + m[2] + '.' + m[3] : null;
 }
 
@@ -283,7 +283,7 @@ async function checkForUpdate() {
   try {
     const rawRes = await fetch(UPDATE_RAW, { headers: { 'User-Agent': 'nsr-hub-updater' }, signal: AbortSignal.timeout(10000) });
     if (rawRes.ok) {
-      const text = await rawRes.text();
+      const text = String(await rawRes.text()).replace(/^\uFEFF/, '');
       const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const latest = verStr(lines[0] || '');
       if (latest && verLt(app.getVersion(), latest)) {
