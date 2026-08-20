@@ -457,14 +457,24 @@ async function enterServers() {
       // وضع "كل السيرفرات": فقط السيرفرات التي البوت موجود فيها
       listed = botGuilds.filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     } else {
-      // السيرفرات الإدارية/المملوكة: البوت فيها فوق، والباقي موسوم
-      const botIds = new Set(botGuilds.map((g) => String(g.id)));
-      const all = (allGuilds && allGuilds.length ? allGuilds : adminGuilds || []);
-      const adminIds = new Set(all.map((g) => String(g.id)));
-      const merged = all.map((g) => ({ ...g, isAdminMine: true }));
-      const extras = (known ? botGuilds.filter((g) => !adminIds.has(String(g.id))) : []);
-      const bots = extras.map((g) => ({ ...g, isAdminMine: g.isAdmin === true }));
-      listed = [...bots, ...merged].filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
+      // السيرفرات المملوكة + الإدارية فقط: مصدر البوت هو الأساس، وOAuth يغطي الباقي
+      const byId = new Map();
+      for (const g of botGuilds) {
+        byId.set(String(g.id), { ...g, isAdminMine: g.isAdmin === true, isOwnerMine: false, inBot: true });
+      }
+      for (const g of (allGuilds && allGuilds.length ? allGuilds : adminGuilds || [])) {
+        const ex = byId.get(String(g.id));
+        if (ex) {
+          if (g.owner === true) ex.isOwnerMine = true;
+        } else {
+          byId.set(String(g.id), { ...g, isAdminMine: true, isOwnerMine: g.owner === true, inBot: false });
+        }
+      }
+      // فقط: سيرفرات يملكها المستخدم أو لديه فيها إدارة
+      listed = [...byId.values()]
+        .filter((g) => g.isOwnerMine === true || g.isAdminMine === true)
+        .sort((a, b) => Number(b.isAdminMine) - Number(a.isAdminMine))
+        .filter((g) => !q || String(g.name || '').toLowerCase().includes(q) || String(g.id || '').includes(q));
     }
 
     if (!listed.length) {
@@ -1668,46 +1678,6 @@ function renderSecurity(main) {
 // ---------- معالج AI ----------
 function renderAi(main) {
   const ai = state.ai || {};
-  const features = [
-    { icon: ICONS.brain, name: 'الرد الذكي على المشاكل', desc: 'يكتشف مشكلة العميل ويقدم له خطوات الحل تلقائياً في الروم المحدد.' },
-    { icon: ICONS.chat, name: 'الرد على الاستفسارات', desc: 'يجيب على الأسئلة العامة (باند، تكت، شرح، أماكن) دون سوالف.' },
-    { icon: ICONS.shield, name: 'فلترة ذكية (كشف التحايل)', desc: 'يكشف السب حتى لو كُتب بطريقة ملتوية (f-u-c-k / fuuuck) ويتصرف حسب الشدة.' },
-    { icon: ICONS.brain, name: 'التعلم من المودرز', desc: 'المود يضع رد فعل ممنوع على رسالة → يتعلم البوت الكلمات الجديدة تلقائياً.' },
-  ];
-
-  if (!isCustomer) {
-    main.innerHTML = `
-      <div class="card" style="max-width:620px; margin:0 auto; text-align:center; padding:30px;">
-        <img src="logo.png" alt="AI" style="width:84px; height:84px; border-radius:20px; margin-bottom:14px; border:1px solid var(--border);" />
-        <h4>${ic('brain')} معالج AI — ميزة مدفوعة</h4>
-        <p style="color:var(--muted); font-size:13px; line-height:1.9; margin-top:8px;">
-          هذه الميزة <b style="color:var(--text)">مقفلة</b> — تحتاج شراء باقة <b style="color:var(--text)">كوستمر</b> لفتحها.<br/>
-          اضغط على أي ميزة بالأسفل لمعرفة محتواها، وعند الضغط على زر الفتح سيوصلك لسيرفر NSR HUB للشراء.
-        </p>
-        <div style="display:flex; flex-direction:column; gap:10px; margin-top:18px; text-align:right;">
-          ${features.map((f, idx) => `
-            <div class="ai-locked" data-ai-i="${idx}" style="cursor:pointer;">
-              <span class="ic">${f.icon}</span>
-              <div style="flex:1;"><b>${f.name}</b><div class="sec-desc">${f.desc}</div></div>
-              <span class="lock-badge">${ic('lock')}</span>
-            </div>`).join('')}
-        </div>
-        <button class="btn primary big" id="ai-unlock-btn" style="margin-top:20px; width:100%;">${ic('lock')} فتح المعالج (شراء من NSR HUB)</button>
-        <p id="ai-unlock-msg" style="font-size:12px; color:var(--muted); margin-top:10px;"></p>
-      </div>`;
-    main.querySelectorAll('[data-ai-i]').forEach((el) => {
-      el.addEventListener('click', () => {
-        playSound('click');
-        toast('هذه الميزة مقفلة — تشتري باقة كوستمر لفتحها');
-        openPurchaseModal(features[el.dataset.aiI]);
-      });
-    });
-    main.querySelector('#ai-unlock-btn').addEventListener('click', () => {
-      playSound('click');
-      openPurchaseModal();
-    });
-    return;
-  }
 
   const mode = ai.mode === 'inquiry' ? 'inquiry' : 'solve';
   main.innerHTML = `

@@ -146,15 +146,28 @@ async function handleMessage(msg, key) {
     return;
   }
 
+  // أوامر المالك العامة (لا تحتاج guildId) تُعالَج قبل تحقق الصلاحيات
+  const OWNER_ONLY = ['getSubscriptions', 'setFeatureRoles', 'setCustomerRole', 'createRole', 'searchMainServerMembers', 'assignRoleToUser', 'getMainServerRoles'];
+  if (OWNER_ONLY.includes(msg.type)) {
+    const { isOwner: isBotOwner } = require('../config');
+    if (!isBotOwner(String(msg.userId || ''))) {
+      reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+      return;
+    }
+    return handleMessageSwitch(msg, key, null, null);
+  }
+
   const ctx = await verifyAdminInGuild(discordClient, msg.guildId, msg.userId);
   if (!ctx.ok) {
     reply(key, msg, null, ctx.error);
     return;
   }
 
-  const guild = ctx.guild;
-  const guildSettings = guildCfg.get(guild.id);
-  const tcfg = guildSettings.ticket || {};
+  return handleMessageSwitch(msg, key, ctx.guild, guildCfg.get(ctx.guild.id));
+}
+
+async function handleMessageSwitch(msg, key, guild, guildSettings) {
+  const tcfg = (guildSettings && guildSettings.ticket) || {};
 
   switch (msg.type) {
     case 'state': {
