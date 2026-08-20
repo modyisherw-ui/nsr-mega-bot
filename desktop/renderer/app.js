@@ -17,9 +17,9 @@ const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
 const APP_LOGO_URL = 'https://cdn.discordapp.com/emojis/1537843770911891466.png?size=128'; // icon2
 const MSG_TYPES = {
-  send: { emoji: '💬', name: 'رسالة', color: '#5865F2', title: '💬 رسالة خاصة' },
-  summon: { emoji: '📣', name: 'استدعاء', color: '#F1C40F', title: '📣 استدعاء لك' },
-  thanks: { emoji: '🙏', name: 'شكر', color: '#57F287', title: '🙏 شكراً لك' },
+  send: { emoji: '💬', name: 'رسالة', color: '#5865F2', title: '💬 رسالة خاصة', description: '{{TEXT}}\n\n**{{GUILD}}**', canEditText: true },
+  summon: { emoji: '📣', name: 'استدعاء', color: '#F1C40F', title: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', canEditText: false },
+  thanks: { emoji: '🙏', name: 'شكر', color: '#57F287', title: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', canEditText: false },
 };
 
 function esc(s) {
@@ -993,34 +993,101 @@ function renderSecurity(main) {
   const pr = state.protection || {};
   const protectedIds = (pr.protectedRoles || []).map(String);
   const bypassIds = (pr.bypassRoles || []).map(String);
+  const cfg = pr.config || {};
   const pick = (ids) => (ids.length ? ids.map((id) => { const r = (state.roles || []).find((x) => String(x.id) === String(id)); return r ? esc(r.name) : id; }).join(', ') : '—');
+  const roleOpts = (sel) => (state.roles || []).map((r) => `<option value="${r.id}" ${String(sel) === String(r.id) ? 'selected' : ''}>${esc(r.name)}</option>`).join('') || '<option value="">لا رتب</option>';
+  const secCard = (id, icon, title, desc, body, enabled, onToggle) => `
+    <div class="sec-card card" data-sec="${id}">
+      <div class="sec-head">
+        <div><b>${icon} ${title}</b><br/><span class="sec-desc">${desc}</span></div>
+        <label class="switch"><input type="checkbox" data-sw="${id}" ${enabled ? 'checked' : ''}/><span class="slider"></span></label>
+      </div>
+      <div class="sec-body" ${enabled ? '' : 'style="opacity:.45; pointer-events:none;"'}>
+        ${body}
+      </div>
+    </div>`;
+  const numInp = (id, label, val, min, max) => `
+    <div class="sec-field"><label>${label}</label><input id="${id}" type="number" min="${min}" max="${max}" value="${val}" /></div>`;
+  const selInp = (id, label, val, opts) => `
+    <div class="sec-field"><label>${label}</label><select id="${id}">${opts}</select></div>`;
+
+  const cd = cfg.channelDelete || {};
+  const nk = cfg.nuke || {};
+  const bn = cfg.ban || {};
+  const kk = cfg.kick || {};
+  const rd = cfg.roleDelete || {};
+  const wh = cfg.webhook || {};
+  const bt = cfg.bot || {};
+  const am = cfg.automod || {};
+  const sw = cfg.swearWords || {};
+
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>🛡️ رتب محمية</h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">من يحاول تعديل/حذف هذه الرتب يُعاقب فوراً. اضغط على الرتب لاختيارها.</p>
+        <h4>🛡️ الرتب المحمية</h4>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">من يعطي/يحذف/يعدل هذه الرتب يُعاقب تلقائياً.</p>
         <div class="selected-list">${(state.roles || []).map((r) => `<span class="member-chip" data-prot="${r.id}" data-picked="${protectedIds.includes(String(r.id)) ? '1' : '0'}" style="cursor:pointer;${protectedIds.includes(String(r.id)) ? 'border-color:var(--red); color:var(--red);' : ''}">${esc(r.name)}</span>`).join('') || '<p style="color:var(--muted)">لا توجد رتب.</p>'}</div>
         <p style="font-size:12px; color:var(--muted);">الحالي: <b style="color:var(--red)">${pick(protectedIds)}</b></p>
       </div>
       <div class="card">
-        <h4>🧑‍💼 رتب التجاوز</h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">رتب لا تنطبق عليها الحماية (يسمح لها بالتعديل).</p>
+        <h4>🧑‍💼 رتب التجاوز (مستثناة من الحماية)</h4>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">أصحاب هذه الرتب لا تطالهم الحماية التلقائية.</p>
         <div class="selected-list">${(state.roles || []).map((r) => `<span class="member-chip" data-bypass="${r.id}" data-picked="${bypassIds.includes(String(r.id)) ? '1' : '0'}" style="cursor:pointer;${bypassIds.includes(String(r.id)) ? 'border-color:var(--green); color:var(--green);' : ''}">${esc(r.name)}</span>`).join('') || '<p style="color:var(--muted)">لا توجد رتب.</p>'}</div>
         <p style="font-size:12px; color:var(--muted);">الحالي: <b style="color:var(--green)">${pick(bypassIds)}</b></p>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="card">
-        <h4>⚖️ عقوبة المخالف</h4>
+        <label style="margin-top:12px; display:block;">العقوبة الافتراضية للمخالف</label>
         <select id="sec-action">
           <option value="kick" ${pr.action !== 'ban' ? 'selected' : ''}>👢 طرد (Kick)</option>
           <option value="ban" ${pr.action === 'ban' ? 'selected' : ''}>⛔ باند (Ban)</option>
         </select>
-        <p style="font-size:12px; color:var(--muted); margin-top:8px;">تنفَّذ فوراً عند عبثه برتبة محمية.</p>
       </div>
     </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>🛡️ حمايات السيرفر (التفعيل والإعدادات)</h4>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">فعّل الحماية التي تريدها واضبط الحدود — "الحد" = عدد العمليات المسموحة قبل العقوبة، "خلال" = الإطار الزمني بالثواني.</p>
+      ${secCard('cd', '🧹', 'حماية حذف الرومات', 'يمنع حذف عدة رومات دفعة واحدة (هجوم).', `
+        ${numInp('cd-thr', 'الحد (رومات)', cd.threshold ?? 3, 1, 20)}
+        ${numInp('cd-win', 'خلال (ثانية)', cd.window ?? 10, 5, 120)}
+        ${selInp('cd-action', 'العقوبة', cd.action || 'kick', `<option value="kick" ${cd.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${cd.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+        ${selInp('cd-role', 'رتبة إلزامية للحذف (اختياري)', cd.requiredRole || '', '<option value="">بدون رتبة إلزامية</option>' + roleOpts(cd.requiredRole))}
+      `, cd.enabled !== false, true)}
+      ${secCard('nk', '☢️', 'حماية التدمير الشامل (Nuke)', 'أي عمليات حذف/إنشاء كثيرة خلال ثوانٍ = هجوم تدمير.', `
+        ${numInp('nk-thr', 'الحد (عمليات)', nk.threshold ?? 8, 3, 50)}
+        ${numInp('nk-win', 'خلال (ثانية)', nk.window ?? 20, 5, 120)}
+        ${selInp('nk-action', 'العقوبة', nk.action || 'kick', `<option value="kick" ${nk.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${nk.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+      `, nk.enabled !== false, true)}
+      ${secCard('bn', '⛔', 'حماية الباند الجماعي', 'يمنع باند أعضاء كثر دفعة واحدة.', `
+        ${numInp('bn-thr', 'الحد (باند)', bn.threshold ?? 3, 1, 20)}
+        ${numInp('bn-win', 'خلال (ثانية)', bn.window ?? 10, 5, 120)}
+        ${selInp('bn-action', 'العقوبة', bn.action || 'kick', `<option value="kick" ${bn.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${bn.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+      `, bn.enabled !== false, true)}
+      ${secCard('kk', '👢', 'حماية الطرد الجماعي', 'يمنع طرد أعضاء كثر دفعة واحدة.', `
+        ${numInp('kk-thr', 'الحد (طرد)', kk.threshold ?? 3, 1, 20)}
+        ${numInp('kk-win', 'خلال (ثانية)', kk.window ?? 10, 5, 120)}
+        ${selInp('kk-action', 'العقوبة', kk.action || 'kick', `<option value="kick" ${kk.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${kk.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+      `, kk.enabled !== false, true)}
+      ${secCard('rd', '🎭', 'حماية حذف الرتب', 'يمنع حذف رتب كثر دفعة واحدة.', `
+        ${numInp('rd-thr', 'الحد (رتب)', rd.threshold ?? 3, 1, 20)}
+        ${numInp('rd-win', 'خلال (ثانية)', rd.window ?? 10, 5, 120)}
+        ${selInp('rd-action', 'العقوبة', rd.action || 'kick', `<option value="kick" ${rd.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${rd.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+      `, rd.enabled !== false, true)}
+      ${secCard('wh', '🪝', 'حماية الويبهوك', 'يمنع إنشاء ويبهوك خبيث.', `
+        ${selInp('wh-action', 'العقوبة', wh.action || 'kick', `<option value="kick" ${wh.action !== 'ban' ? 'selected' : ''}>طرد</option><option value="ban" ${wh.action === 'ban' ? 'selected' : ''}>باند</option>`)}
+      `, wh.enabled !== false, true)}
+      ${secCard('bt', '🤖', 'حماية البوتات', 'يرفض دخول البوتات غير المصرح بها ويطردها.', ``, bt.enabled !== false, true)}
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>🚦 حماية الرسائل (Automod)</h4>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">تُفحص الرسائل تلقائياً وتحذف المخالفة — تحمي السيرفر والبوت من الحظر.</p>
+      ${secCard('am', '🔗', 'حماية الروابط', 'يحذف الرسائل التي تحتوي روابط (ماعدا الإدارة).', ``, am.enabled !== false && am.links !== false, true)}
+      ${secCard('amspam', '📈', 'حماية السبام', 'يكتم من يرسل رسائل كثيرة بسرعة.', ``, am.enabled !== false && am.spam !== false, true)}
+      ${secCard('amev', '📢', 'حماية @everyone / @here', 'يحذف رسائل الإشارة الجماعية غير المصرح بها.', ``, am.enabled !== false && am.everyone !== false, true)}
+      ${secCard('sw', '💢', 'حماية السب (كلمات بذيئة)', 'يحذف أي رسالة فيها سب/قدف — حتى من الإدارة — لحماية البوت من الحظر، ويُبلَّغ المالك.', ``, sw.enabled !== false, true)}
+    </div>
+
     <div class="grid-actions">
-      <button class="act-btn" data-save="sec"><span class="big-emoji">💾</span> حفظ إعدادات الأمان</button>
+      <button class="act-btn" data-save="sec"><span class="big-emoji">💾</span> حفظ إعدادات الحماية</button>
     </div>`;
   const toggle = (attr, colorVar) => {
     main.querySelectorAll(attr).forEach((chip) => chip.addEventListener('click', () => {
@@ -1033,15 +1100,59 @@ function renderSecurity(main) {
   };
   toggle('[data-prot]', '--red');
   toggle('[data-bypass]', '--green');
+  // تبديل إظهار/إخفاء جسم البطاقة
+  main.querySelectorAll('.sec-card').forEach((card) => {
+    const sw = card.querySelector('[data-sw]');
+    if (!sw) return;
+    sw.addEventListener('change', () => {
+      playSound('click');
+      card.querySelector('.sec-body').style.opacity = sw.checked ? '1' : '.45';
+      card.querySelector('.sec-body').style.pointerEvents = sw.checked ? '' : 'none';
+    });
+  });
   main.querySelector('[data-save="sec"]').addEventListener('click', async () => {
     const protectedRoles = Array.from(main.querySelectorAll('[data-prot][data-picked="1"]')).map((c) => c.dataset.prot);
     const bypassRoles = Array.from(main.querySelectorAll('[data-bypass][data-picked="1"]')).map((c) => c.dataset.bypass);
     const action = main.querySelector('#sec-action').value;
+    const num = (id, dflt) => { const v = parseInt(main.querySelector(id)?.value, 10); return isNaN(v) ? dflt : Math.max(1, v); };
+    const act = (id, dflt) => main.querySelector(id)?.value || dflt;
+    const config = {
+      channelDelete: {
+        enabled: main.querySelector('[data-sw="cd"]')?.checked ?? true,
+        threshold: num('#cd-thr', 3), window: num('#cd-win', 10),
+        action: act('#cd-action', 'kick'), requiredRole: main.querySelector('#cd-role')?.value || '',
+      },
+      nuke: {
+        enabled: main.querySelector('[data-sw="nk"]')?.checked ?? true,
+        threshold: num('#nk-thr', 8), window: num('#nk-win', 20), action: act('#nk-action', 'kick'),
+      },
+      ban: {
+        enabled: main.querySelector('[data-sw="bn"]')?.checked ?? true,
+        threshold: num('#bn-thr', 3), window: num('#bn-win', 10), action: act('#bn-action', 'kick'),
+      },
+      kick: {
+        enabled: main.querySelector('[data-sw="kk"]')?.checked ?? true,
+        threshold: num('#kk-thr', 3), window: num('#kk-win', 10), action: act('#kk-action', 'kick'),
+      },
+      roleDelete: {
+        enabled: main.querySelector('[data-sw="rd"]')?.checked ?? true,
+        threshold: num('#rd-thr', 3), window: num('#rd-win', 10), action: act('#rd-action', 'kick'),
+      },
+      webhook: { enabled: main.querySelector('[data-sw="wh"]')?.checked ?? true, action: act('#wh-action', 'kick') },
+      bot: { enabled: main.querySelector('[data-sw="bt"]')?.checked ?? true, action: 'kick' },
+      automod: {
+        enabled: main.querySelector('[data-sw="am"]')?.checked || main.querySelector('[data-sw="amspam"]')?.checked || main.querySelector('[data-sw="amev"]')?.checked || false,
+        links: main.querySelector('[data-sw="am"]')?.checked ?? false,
+        spam: main.querySelector('[data-sw="amspam"]')?.checked ?? false,
+        everyone: main.querySelector('[data-sw="amev"]')?.checked ?? false,
+      },
+      swearWords: { enabled: main.querySelector('[data-sw="sw"]')?.checked ?? true },
+    };
     try {
-      const rep = await NSR.bridgeCommand({ type: 'setProtection', userId: session.user.id, guildId: currentGuild.id, protectedRoles, bypassRoles, action });
+      const rep = await NSR.bridgeCommand({ type: 'setProtection', userId: session.user.id, guildId: currentGuild.id, protectedRoles, bypassRoles, action, config });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
       state.protection = rep.data;
-      toast('✅ تم حفظ إعدادات الأمان');
+      toast('✅ تم حفظ إعدادات الحماية');
     } catch (e) { toast('❌ ' + e.message, 'err'); }
   });
 }
@@ -1109,6 +1220,13 @@ function renderRatings(main) {
 function renderMessages(main) {
   let msgType = 'send';
   let themeColor = state.embedColor ? '#' + Number(state.embedColor).toString(16).padStart(6, '0') : '#5865F2';
+  const renderTextArea = () => {
+    const t = MSG_TYPES[msgType];
+    const editable = t.canEditText !== false;
+    main.querySelector('#msg-text').disabled = !editable;
+    main.querySelector('#msg-text').placeholder = editable ? 'اكتب نص الرسالة هنا...' : 'نص هذه الرسالة ثابت ولا يمكن تغييره';
+    main.querySelector('#msg-text-note').style.display = editable ? 'none' : 'block';
+  };
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
@@ -1120,6 +1238,7 @@ function renderMessages(main) {
         <input id="msg-user" type="text" placeholder="كليك يمين على العضو ← نسخ معرف المستخدم" />
         <label>النص</label>
         <textarea id="msg-text" placeholder="اكتب نص الرسالة هنا..."></textarea>
+        <p id="msg-text-note" style="font-size:12px; color:var(--muted); display:none;">✋ هذا النوع من الرسائل ثابت النص — لا يمكنك كتابة محتوى مخصص. النص المخصص متاح فقط لنوع "رسالة".</p>
         <button class="btn primary" id="msg-send" style="margin-top:14px; width:100%;">📨 إرسال</button>
       </div>
       <div class="card">
@@ -1196,13 +1315,14 @@ function renderMessages(main) {
 
   const renderMsgPreview = () => {
     const t = MSG_TYPES[msgType];
-    const text = main.querySelector('#msg-text').value.trim() || 'اكتب نص الرسالة هنا...';
-    const isSummon = msgType === 'summon';
-    const desc = (isSummon ? 'نرجى منك فتح تكت في اسرع وقت.\n\n' : '') + text + '\n\n**' + currentGuild.name + '**';
+    const editable = t.canEditText !== false;
+    const text = editable ? (main.querySelector('#msg-text').value.trim() || 'اكتب نص الرسالة هنا...') : '';
+    let desc = t.description.replace('{{TEXT}}', text).replace('{{GUILD}}', currentGuild.name);
+    desc = previewDesc(desc).replace(/\*\*/g, '');
     main.querySelector('#msg-preview').innerHTML = previewEmbedHTML({
       color: t.color,
       title: t.title,
-      desc: previewDesc(desc).replace(/\*\*/g, ''),
+      desc,
       logoUrl: state.logoUrl,
       footer: currentGuild.name,
     });
@@ -1212,18 +1332,22 @@ function renderMessages(main) {
     main.querySelectorAll('.msg-type-tab').forEach((x) => x.classList.remove('active'));
     b.classList.add('active');
     msgType = b.dataset.type;
+    renderTextArea();
     renderMsgPreview();
   }));
   main.querySelector('#msg-text').addEventListener('input', renderMsgPreview);
+  renderTextArea();
   renderMsgPreview();
   ['#theme-title', '#theme-text', '#theme-img', '#theme-color'].forEach((sel) => main.querySelector(sel).addEventListener('input', renderThemePreview));
   main.querySelector('#theme-asmsg').addEventListener('change', renderThemePreview);
   renderThemePreview();
   main.querySelector('#msg-send').addEventListener('click', async () => {
     const targetId = main.querySelector('#msg-user').value.trim();
-    const text = main.querySelector('#msg-text').value.trim();
+    const t = MSG_TYPES[msgType];
+    const editable = t.canEditText !== false;
+    const text = editable ? main.querySelector('#msg-text').value.trim() : '';
     if (!targetId) { toast('❌ أدخل معرف العضو أولاً', 'err'); return; }
-    if (!text) { toast('❌ اكتب النص أولاً', 'err'); return; }
+    if (editable && !text) { toast('❌ اكتب النص أولاً', 'err'); return; }
     try {
       const rep = await NSR.bridgeCommand({ type: 'sendDm', userId: session.user.id, guildId: currentGuild.id, type: msgType, targetId, text });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');

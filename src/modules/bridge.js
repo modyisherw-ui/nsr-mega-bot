@@ -148,6 +148,7 @@ async function handleMessage(msg, key) {
           protectedRoles: guildSettings.protectedRoles || [],
           bypassRoles: guildSettings.protectionBypassRoles || [],
           action: guildSettings.protectionAction || 'kick',
+          config: guildSettings.protection || {},
         },
         channels: Array.from(guild.channels.cache.values())
           .filter(c => c.isTextBased && c.isTextBased())
@@ -321,16 +322,20 @@ async function handleMessage(msg, key) {
       const prot = (protectedRoles !== undefined) ? protectedRoles : (guildSettings.protectedRoles || []);
       const bypass = (bypassRoles !== undefined) ? bypassRoles : (guildSettings.protectionBypassRoles || []);
       const act = action !== undefined ? action : (guildSettings.protectionAction || 'kick');
+      const cfgPatch = (msg.config && typeof msg.config === 'object') ? msg.config : undefined;
+      const cfgMerged = cfgPatch ? { ...(guildSettings.protection || {}), ...cfgPatch } : undefined;
       guildCfg.set(guild.id, {
         protectedRoles: prot,
         protectionBypassRoles: bypass,
         protectionAction: act,
+        ...(cfgMerged ? { protection: cfgMerged } : {}),
       });
       const after = guildCfg.get(guild.id);
       reply(key, msg, {
         protectedRoles: after.protectedRoles || [],
         bypassRoles: after.protectionBypassRoles || [],
         action: after.protectionAction || 'kick',
+        config: after.protection || {},
       });
       break;
     }
@@ -368,6 +373,9 @@ async function handleMessage(msg, key) {
 
     case 'sendDm': {
       try {
+        const { checkSwearAndNotify } = require('./security');
+        const blocked = await checkSwearAndNotify(guild, String(msg.text || ''));
+        if (blocked) { reply(key, msg, null, '💢 الرسالة تحتوي على كلمات غير لائقة — تم منع الإرسال وإبلاغ المالك'); break; }
         const result = await sendMessageToUser(discordClient, guild, String(msg.type || ''), msg.targetId, String(msg.text || ''));
         reply(key, msg, result);
       } catch (err) {
@@ -402,6 +410,9 @@ async function handleMessage(msg, key) {
       }
       const rawColor = Number(msg.color);
       const color = (Number.isInteger(rawColor) && rawColor >= 0 && rawColor <= 0xFFFFFF) ? rawColor : (config.embedColor || 0x5865F2);
+      const { checkSwearAndNotify } = require('./security');
+      const blocked = await checkSwearAndNotify(guild, String(msg.text || ''));
+      if (blocked) { reply(key, msg, null, '💢 الثيم يحتوي على كلمات غير لائقة — تم منع الإرسال وإبلاغ المالك'); break; }
       if (msg.asMessage) {
         try {
           await channel.send({ content: String(msg.text || '').trim() });

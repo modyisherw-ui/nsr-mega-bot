@@ -6,9 +6,9 @@ const COOLDOWN_MS = 60000;
 const lastSent = new Map(); // "userId:guildId:targetId" -> timestamp
 
 const MSG_TYPES = {
-  send: { emoji: '💬', name: 'رسالة', title: '💬 رسالة خاصة', color: 0x5865F2, dmTitle: '💬 {{USER}} تواصل معك', description: '{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
-  summon: { emoji: '📣', name: 'استدعاء', title: '📣 استدعاء', color: 0xF1C40F, dmTitle: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
-  thanks: { emoji: '🙏', name: 'شكر', title: '🙏 رسالة شكر', color: 0x57F287, dmTitle: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'] },
+  send: { emoji: '💬', name: 'رسالة', title: '💬 رسالة خاصة', color: 0x5865F2, dmTitle: '💬 {{USER}} تواصل معك', description: '{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'], canEditText: true },
+  summon: { emoji: '📣', name: 'استدعاء', title: '📣 استدعاء', color: 0xF1C40F, dmTitle: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', placeholders: ['GUILD'], canEditText: false },
+  thanks: { emoji: '🙏', name: 'شكر', title: '🙏 رسالة شكر', color: 0x57F287, dmTitle: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', placeholders: ['GUILD'], canEditText: false },
 };
 
 function messagesEmbed(client, guild) {
@@ -50,10 +50,10 @@ async function handleMessagesButton(interaction) {
     .setRequired(true);
   const textInput = new TextInputBuilder()
     .setCustomId('msg_text')
-    .setLabel('النص')
-    .setPlaceholder('اكتب نص الرسالة هنا...')
+    .setLabel(t.canEditText === false ? 'النص (ثابت — لا يكتب)' : 'النص')
+    .setPlaceholder(t.canEditText === false ? 'نص هذه الرسالة ثابت ولا يمكن تغييره' : 'اكتب نص الرسالة هنا...')
     .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true)
+    .setRequired(t.canEditText !== false)
     .setMaxLength(2000);
   modal.addComponents(
     new ActionRowBuilder().addComponents(userInput),
@@ -83,6 +83,13 @@ async function handleMessagesModal(interaction) {
     return;
   }
 
+  const { checkSwearAndNotify } = require('./security');
+  const blocked = await checkSwearAndNotify(interaction.guild, text);
+  if (blocked) {
+    await interaction.reply({ content: '💢 الرسالة تحتوي على كلمات غير لائقة — تم منع الإرسال وإبلاغ المالك.', ephemeral: true });
+    return;
+  }
+
   const key = `${interaction.user.id}:${interaction.guild.id}:${targetId}`;
   const now = Date.now();
   const last = lastSent.get(key);
@@ -95,7 +102,7 @@ async function handleMessagesModal(interaction) {
   const dmEmbed = new EmbedBuilder()
     .setColor(t.color)
     .setTitle(t.dmTitle.replace('{{USER}}', interaction.guild.name))
-    .setDescription(t.description.replace('{{TEXT}}', text).replace('{{GUILD}}', interaction.guild.name))
+    .setDescription(t.description.replace('{{TEXT}}', t.canEditText === false ? '' : text).replace('{{GUILD}}', interaction.guild.name))
     .setFooter({ text: interaction.guild.name })
     .setTimestamp();
 
@@ -131,7 +138,7 @@ async function sendMessageToUser(client, guild, typeId, rawTarget, text) {
   const dmEmbed = new EmbedBuilder()
     .setColor(t.color)
     .setTitle(t.dmTitle.replace('{{USER}}', guild.name))
-    .setDescription(t.description.replace('{{TEXT}}', text).replace('{{GUILD}}', guild.name))
+    .setDescription(t.description.replace('{{TEXT}}', t.canEditText === false ? '' : text).replace('{{GUILD}}', guild.name))
     .setFooter({ text: guild.name })
     .setTimestamp();
 

@@ -65,6 +65,7 @@ client.once('ready', async () => {
 
   await ensureLogoUrl(client);
   registerLogs(client);
+  security.setClient(client);
   giveaway.setClient(client);
   bridge.start(client);
 
@@ -264,6 +265,50 @@ client.on('guildMemberAdd', async member => {
   await security.handleBotJoin(member);
   // رسالة الترحيب حسب إعدادات اللوحة (روم/خاص + {user} {count} {server} + صورة)
   require('./modules/welcome').sendWelcome(member).catch(() => {});
+});
+
+// ═══════════ نظام الحماية (حذف الرومات + التدمير + الباند + الطرد + الرتب + الويبهوك) ═══════════
+client.on('channelDelete', channel => {
+  if (!channel.guild) return;
+  security.handleChannelDelete(channel).catch(() => {});
+});
+
+client.on('channelCreate', channel => {
+  if (!channel.guild) return;
+  const { ChannelType } = require('discord.js');
+  if (channel.type === ChannelType.DM) return;
+  security.handleNukeEvent(channel.guild, null, 'إنشاء روم', 'CHANNEL_CREATE').catch(() => {});
+});
+
+client.on('roleDelete', role => {
+  security.handleRoleDelete(role).catch(() => {});
+});
+
+client.on('roleCreate', role => {
+  security.handleNukeEvent(role.guild, null, 'إنشاء رتبة', 'ROLE_CREATE').catch(() => {});
+});
+
+client.on('emojiDelete', emoji => {
+  if (!emoji.guild) return;
+  security.handleNukeEvent(emoji.guild, null, 'حذف إيموجي', 'EMOJI_DELETE').catch(() => {});
+});
+
+client.on('guildBanAdd', ban => {
+  security.handleBanAdd(ban.guild, ban.user).catch(() => {});
+});
+
+client.on('guildMemberRemove', member => {
+  if (!member.guild) return;
+  security.handleKick(member.guild, member.user).catch(() => {});
+});
+
+client.on('webhookUpdate', channel => {
+  if (!channel.guild) return;
+  security.handleWebhookCreate(channel).catch(() => {});
+});
+
+client.on('guildUpdate', (oldGuild, newGuild) => {
+  security.handleNukeEvent(newGuild, null, 'تغيير إعدادات السيرفر', 'GUILD_UPDATE').catch(() => {});
 });
 
 client.on('messageReactionAdd', async (reaction, user) => {
