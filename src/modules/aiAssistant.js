@@ -8,7 +8,7 @@ const { EmbedBuilder } = require('discord.js');
 const log = require('../utils/logger');
 
 const replied = new Map(); // "guildId:userId" -> timestamp (تهدئة)
-const COOLDOWN_MS = 20000;
+const COOLDOWN_MS = 8000;
 
 function aiCfg(guildId) {
   return require('../guildCfg').get(guildId).ai || {};
@@ -114,16 +114,14 @@ async function handleMessage(message) {
     const text = (message.content || '').trim();
     if (!text) return;
 
-    // تهدئة بين الردود لنفس الشخص (منع سبام المحادثة)
+    // كشف النية: مشكلة أم سؤال أم كلام عادي
+    if (!isProblemOrQuestion(text)) return;
+
+    // تهدئة بين الردود لنفس الشخص (تحدَّث فقط عند رد فعلي)
     const key = `${message.guild.id}:${message.author.id}`;
     const last = replied.get(key);
     const now = Date.now();
     if (last && now - last < COOLDOWN_MS) return;
-    replied.set(key, now);
-    if (replied.size > 500) replied.clear();
-
-    // كشف النية: مشكلة أم سؤال أم كلام عادي
-    if (!isProblemOrQuestion(text)) return;
 
     const hit = findReply(text);
     let content;
@@ -137,6 +135,8 @@ async function handleMessage(message) {
       return;
     }
 
+    replied.set(key, now);
+    if (replied.size > 500) replied.clear();
     await message.reply({ content: `${message.author.username}، ${content}` });
   } catch (err) {
     log.warn('معالج AI: ' + err.message);
