@@ -493,6 +493,30 @@ async function handleMessage(msg, key) {
       break;
     }
 
+    case 'getMainServerRoles': {
+      try {
+        const { isOwner: isBotOwner } = require('../config');
+        const isOwn = isBotOwner(String(msg.userId || ''));
+        const mainServerId = (config.mainServerId || '');
+        const roles = [];
+        let mainServerName = '';
+        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
+          const mainGuild = discordClient.guilds.cache.get(mainServerId);
+          mainServerName = mainGuild.name;
+          mainGuild.roles.cache.forEach((r) => {
+            if (r.name !== '@everyone') {
+              roles.push({ id: r.id, name: r.name, color: r.hexColor });
+            }
+          });
+          roles.sort((a, b) => (a.name < b.name ? -1 : 1));
+        }
+        reply(key, msg, { roles, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '', isOwner: isOwn });
+      } catch (err) {
+        reply(key, msg, null, 'فشل جلب الرتب: ' + err.message);
+      }
+      break;
+    }
+
     case 'setCustomerRole': {
       const { isOwner: isBotOwner } = require('../config');
       if (!isBotOwner(String(msg.userId || ''))) {

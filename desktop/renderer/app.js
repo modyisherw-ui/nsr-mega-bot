@@ -1402,6 +1402,22 @@ function renderAi(main) {
         <div id="ai-test-result" class="ai-test-result" style="margin-top:12px;"></div>
       </div>
     </div>
+    ${isOwner ? `
+    <div class="card" style="margin-top:16px;">
+      <h4>🎖️ رتبة فتح المعالج (كوستمر)</h4>
+      <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">
+        حدد رتبة <b style="color:var(--text)">كوستمر</b> من سيرفر <b style="color:var(--text)">NSR HUB</b> الرئيسي —
+        أي شخص يحمل هذه الرتبة يفتح له زر المعالج AI تلقائياً.<br/>
+        <span id="ai-cust-role-status">جاري تحميل الرتب...</span>
+      </p>
+      <div class="grid2" style="gap:10px; align-items:end;">
+        <div>
+          <label>رتبة الكوستمر (من سيرفر NSR HUB)</label>
+          <select id="ai-cust-role"></select>
+        </div>
+        <button class="btn primary" id="ai-cust-role-btn">💾 حفظ رتبة الفتح</button>
+      </div>
+    </div>` : ''}
     <div class="card" style="margin-top:16px;">
       <h4>🛡️ الفلترة الذكية (كشف التحايل + التعلم)</h4>
       <p style="font-size:12.5px; color:var(--muted); line-height:1.9;">
@@ -1440,6 +1456,34 @@ function renderAi(main) {
       toast('✅ تم حفظ إعدادات معالج AI');
     } catch (e) { toast('❌ ' + e.message, 'err'); }
   });
+
+  if (isOwner) {
+    const custSel = main.querySelector('#ai-cust-role');
+    const custStatus = main.querySelector('#ai-cust-role-status');
+    const custBtn = main.querySelector('#ai-cust-role-btn');
+    (async () => {
+      try {
+        const rep = await NSR.bridgeCommand({ type: 'getMainServerRoles', userId: session.user.id, guildId: currentGuild.id });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+        const roles = rep.data.roles || [];
+        const current = String(rep.data.customerRoleId || '');
+        custStatus.textContent = `السيرفر: ${esc(rep.data.mainServerName || '—')} (${roles.length} رتبة)`;
+        custSel.innerHTML = '<option value="">— بدون رتبة (الكل يفتح) —</option>' +
+          roles.map((r) => `<option value="${r.id}" ${String(r.id) === current ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
+        custSel.disabled = false;
+        custBtn.disabled = false;
+      } catch (e) {
+        custStatus.textContent = '❌ فشل تحميل الرتب: ' + e.message;
+      }
+    })();
+    custBtn.addEventListener('click', async () => {
+      try {
+        const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: currentGuild.id, roleId: custSel.value });
+        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+        toast('✅ تم حفظ رتبة فتح المعالج');
+      } catch (e) { toast('❌ ' + e.message, 'err'); }
+    });
+  }
 }
 
 // نافذة الشراء (ميزة مقفلة)
