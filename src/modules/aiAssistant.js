@@ -114,9 +114,6 @@ async function handleMessage(message) {
     const text = (message.content || '').trim();
     if (!text) return;
 
-    // كشف النية: مشكلة أم سؤال أم كلام عادي
-    if (!isProblemOrQuestion(text)) return;
-
     // تهدئة بين الردود لنفس الشخص (تحدَّث فقط عند رد فعلي)
     const key = `${message.guild.id}:${message.author.id}`;
     const last = replied.get(key);
@@ -127,12 +124,18 @@ async function handleMessage(message) {
     let content;
     if (hit) {
       content = hit.reply;
-    } else if (cfg.mode === 'solve' && PROBLEM_HINTS.test(text)) {
-      content = GENERIC_PROBLEM;
-    } else if (cfg.mode === 'inquiry') {
-      content = 'وصلني سؤالك 👍\n• جرّب توجيه السؤال بشكل أدق (مثال: «وين ألقى معرض السيارات؟» أو «كيف أفتح تكت؟»).\n• أو افتح تكت 🎫 لسؤال خاص بالإدارة.';
+    } else if (isProblemOrQuestion(text)) {
+      // رسالة فيها مشكلة أو سؤال واضح
+      if (cfg.mode === 'solve' && PROBLEM_HINTS.test(text)) {
+        content = GENERIC_PROBLEM;
+      } else if (cfg.mode === 'inquiry') {
+        content = 'وصلني سؤالك 👍\n• جرّب توجيه السؤال بشكل أدق (مثال: «وين ألقى معرض السيارات؟» أو «كيف أفتح تكت؟»).\n• أو افتح تكت 🎫 لسؤال خاص بالإدارة.';
+      } else {
+        return;
+      }
     } else {
-      return;
+      // رسالة عادية بدون مشكلة أو سؤال — لا يحتاج رد
+      content = 'لا يحتاج رد - رسالة عادية بدون مشكلة أو سؤال.';
     }
 
     replied.set(key, now);

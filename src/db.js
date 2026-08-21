@@ -139,6 +139,20 @@ db.exec(`
     joins_total INTEGER DEFAULT 0, joins_today INTEGER DEFAULT 0, joins_date TEXT DEFAULT '',
     msgs_total INTEGER DEFAULT 0, msgs_today INTEGER DEFAULT 0, msgs_date TEXT DEFAULT ''
   );
+
+  -- 🎟️ رتب التطبيق (الاشتراكات داخل التطبيق — غير مرتبطة بالديسكورد)
+  CREATE TABLE IF NOT EXISTS app_roles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    features TEXT DEFAULT '[]',
+    created_at INTEGER DEFAULT (strftime('%s','now'))
+  );
+  CREATE TABLE IF NOT EXISTS app_user_roles (
+    user_id TEXT NOT NULL,
+    role_id TEXT NOT NULL,
+    created_at INTEGER DEFAULT (strftime('%s','now')),
+    PRIMARY KEY (user_id, role_id)
+  );
 `);
 
 // ═══════════════ Ratings ═══════════════
@@ -390,5 +404,50 @@ const guildStats = {
   },
 };
 
-module.exports = { db, ratings, productReviews, tickets, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe, guildStats };
+// ═══════════════ اشتراكات التطبيق (رتب داخل التطبيق — بدون ديسكورد) ═══════════════
+const subsRoles = {
+  list() {
+    return db.prepare(`SELECT * FROM app_roles ORDER BY created_at ASC`).all()
+      .map((r) => ({ ...r, features: JSON.parse(r.features || '[]') }));
+  },
+  get(id) {
+    const r = db.prepare(`SELECT * FROM app_roles WHERE id=?`).get(String(id));
+    return r ? { ...r, features: JSON.parse(r.features || '[]') } : null;
+  },
+  create(name) {
+    const id = 'role_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    db.prepare(`INSERT INTO app_roles (id, name, features) VALUES (?,?,?)`).run(id, name, '[]');
+    return subsRoles.get(id);
+  },
+  update(id, patch) {
+    const role = subsRoles.get(id);
+    if (!role) return null;
+    if (typeof patch.name === 'string') role.name = patch.name;
+    if (Array.isArray(patch.features)) role.features = patch.features;
+    db.prepare(`UPDATE app_roles SET name=?, features=? WHERE id=?`).run(role.name, JSON.stringify(role.features), role.id);
+    return role;
+  },
+  remove(id) {
+    db.prepare(`DELETE FROM app_user_roles WHERE role_id=?`).run(String(id));
+    db.prepare(`DELETE FROM app_roles WHERE id=?`).run(String(id));
+  },
+  userRoleIds(userId) {
+    return db.prepare(`SELECT role_id FROM app_user_roles WHERE user_id=?`).all(String(userId)).map((r) => r.role_id);
+  },
+  userRoles(userId) {
+    const ids = subsRoles.userRoleIds(userId);
+    return subsRoles.list().filter((r) => ids.includes(r.id));
+  },
+  assign(userId, roleId) {
+    db.prepare(`INSERT OR REPLACE INTO app_user_roles (user_id, role_id) VALUES (?,?)`).run(String(userId), String(roleId));
+  },
+  unassign(userId, roleId) {
+    db.prepare(`DELETE FROM app_user_roles WHERE user_id=? AND role_id=?`).run(String(userId), String(roleId));
+  },
+  count() {
+    return db.prepare(`SELECT COUNT(*) c FROM app_roles`).get().c;
+  },
+};
+
+module.exports = { db, ratings, productReviews, tickets, warnings, giveaways, jails, streak, vacations, security, games, lines, guildSettings, securityCfg, rolesCfg, snipe, guildStats, subsRoles };
 

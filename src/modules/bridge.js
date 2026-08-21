@@ -32,19 +32,21 @@ const FEATURES = {
   brand: { icon: '🎨', name: 'المظهر' },
 };
 
-function getMemberFeatureAccess(member) {
+function getMemberFeatureAccess(userId) {
   // المالك يملك كل الميزات
-  if (member && member.user && isOwner(member.user.id)) {
+  if (isOwner(String(userId))) {
     return Object.keys(FEATURES).reduce((acc, f) => { acc[f] = true; return acc; }, {});
   }
-  const roleIds = new Set();
-  if (member && member.roles) member.roles.cache.forEach((r) => roleIds.add(r.id));
+  // رتب التطبيق: كل رتبة تحدد الميزات المسموح بها
   const fr = config.featureRoles || {};
+  const roleIds = new Set(db.subsRoles.userRoleIds(String(userId)));
   const out = {};
   for (const f of Object.keys(FEATURES)) {
     const allowed = fr[f] || [];
-    // إذا لم يُحدد ميزة رتب معينة → مفتوحة للجميع
-    out[f] = allowed.length === 0 || allowed.some((rid) => roleIds.has(String(rid)));
+    // رتب التطبيق التي تفعل هذه الميزة
+    const appRoleAllows = db.subsRoles.list().some((r) => roleIds.has(r.id) && r.features.includes(f));
+    // إذا لم يُحدد أي رتبة → مفتوحة للجميع
+    out[f] = allowed.length === 0 || appRoleAllows || allowed.some((rid) => roleIds.has(String(rid)));
   }
   return out;
 }
@@ -147,7 +149,7 @@ async function handleMessage(msg, key) {
   }
 
   // أوامر المالك العامة (لا تحتاج guildId) تُعالَج قبل تحقق الصلاحيات
-  const OWNER_ONLY = ['getSubscriptions', 'setFeatureRoles', 'setCustomerRole', 'createRole', 'searchMainServerMembers', 'assignRoleToUser', 'getMainServerRoles'];
+  const OWNER_ONLY = ['getSubscriptions', 'setFeatureRoles', 'setCustomerRole', 'createRole', 'searchMainServerMembers', 'assignRoleToUser', 'getMainServerRoles', 'renameRole', 'deleteRole'];
   if (OWNER_ONLY.includes(msg.type)) {
     const { isOwner: isBotOwner } = require('../config');
     if (!isBotOwner(String(msg.userId || ''))) {
@@ -518,23 +520,11 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
 
     case 'getCustomerStatus': {
       try {
-        const mainServerId = (config.mainServerId || '');
-        let isCustomer = false;
-        let mainServerName = '';
-        let member = null;
-        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
-          const mainGuild = discordClient.guilds.cache.get(mainServerId);
-          mainServerName = mainGuild.name;
-          try {
-            member = await mainGuild.members.fetch(String(msg.userId || '')).catch(() => null);
-            if (member) {
-              const roleId = config.customerRoleId || '';
-              isCustomer = roleId ? member.roles.cache.has(roleId) : true;
-            }
-          } catch (_) {}
-        }
-        const features = getMemberFeatureAccess(member);
-        reply(key, msg, { isCustomer, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '', features });
+        const userId = String(msg.userId || '');
+        const roles = db.subsRoles.userRoles(userId);
+        const isCustomer = isOwner(userId) || roles.length > 0;
+        const features = getMemberFeatureAccess(userId);
+        reply(key, msg, { isCustomer, roles: roles.map((r) => ({ id: r.id, name: r.name })), features });
       } catch (err) {
         reply(key, msg, null, 'فشل التحقق: ' + err.message);
       }
@@ -545,20 +535,8 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
       try {
         const { isOwner: isBotOwner } = require('../config');
         const isOwn = isBotOwner(String(msg.userId || ''));
-        const mainServerId = (config.mainServerId || '');
-        const roles = [];
-        let mainServerName = '';
-        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
-          const mainGuild = discordClient.guilds.cache.get(mainServerId);
-          mainServerName = mainGuild.name;
-          mainGuild.roles.cache.forEach((r) => {
-            if (r.name !== '@everyone') {
-              roles.push({ id: r.id, name: r.name, color: r.hexColor });
-            }
-          });
-          roles.sort((a, b) => (a.name < b.name ? -1 : 1));
-        }
-        reply(key, msg, { roles, mainServerId, mainServerName, customerRoleId: config.customerRoleId || '', isOwner: isOwn });
+        const roles = db.subsRoles.list().map((r) => ({ id: r.id, name: r.name, color: '#ffffff', features: r.features }));
+        reply(key, msg, { roles, customerRoleId: config.customerRoleId || '', isOwner: isOwn });
       } catch (err) {
         reply(key, msg, null, 'فشل جلب الرتب: ' + err.message);
       }
@@ -572,22 +550,11 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
           reply(key, msg, null, 'هذا الإعداد للمالك فقط');
           break;
         }
-        const mainServerId = (config.mainServerId || '');
-        const roles = [];
-        let mainServerName = '';
-        if (mainServerId && discordClient.guilds.cache.has(mainServerId)) {
-          const mainGuild = discordClient.guilds.cache.get(mainServerId);
-          mainServerName = mainGuild.name;
-          mainGuild.roles.cache.forEach((r) => {
-            if (r.name !== '@everyone') roles.push({ id: r.id, name: r.name, color: r.hexColor });
-          });
-          roles.sort((a, b) => (a.name < b.name ? -1 : 1));
-        }
+        const roles = db.subsRoles.list().map((r) => ({ id: r.id, name: r.name, color: '#ffffff', features: r.features }));
+        const users = db.prepare(`SELECT user_id, role_id FROM app_user_roles ORDER BY created_at ASC`).all();
         reply(key, msg, {
           roles,
-          mainServerId,
-          mainServerName,
-          customerRoleId: config.customerRoleId || '',
+          userRoles: users,
           featureRoles: config.featureRoles || {},
           features: FEATURES,
         });
@@ -606,12 +573,21 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
       const feature = String(msg.feature || '');
       const roleIds = Array.isArray(msg.roles) ? msg.roles.map(String).filter(Boolean) : [];
       try {
-        const cfgPath = path.join(__dirname, '..', '..', 'config.json');
-        const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-        raw.featureRoles = raw.featureRoles || {};
-        raw.featureRoles[feature] = roleIds;
-        fs.writeFileSync(cfgPath, JSON.stringify(raw, null, 2));
-        config.featureRoles = raw.featureRoles;
+        // نحدّث ميزات رتب التطبيق مباشرة بدل featureRoles العام
+        for (const rid of roleIds) {
+          const role = db.subsRoles.get(rid);
+          if (role && !role.features.includes(feature)) {
+            role.features.push(feature);
+            db.subsRoles.update(rid, { features: role.features });
+          }
+        }
+        // إزالة الميزة من الرتب التي لم تعد محددة
+        for (const role of db.subsRoles.list()) {
+          if (!roleIds.includes(role.id) && role.features.includes(feature)) {
+            role.features = role.features.filter((f) => f !== feature);
+            db.subsRoles.update(role.id, { features: role.features });
+          }
+        }
         reply(key, msg, { feature, roles: roleIds });
       } catch (err) {
         reply(key, msg, null, 'فشل الحفظ: ' + err.message);
@@ -625,10 +601,8 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
         reply(key, msg, null, 'هذا الإعداد للمالك فقط');
         break;
       }
+      // تبقى للتوافق: رتبة الكوستمر تُخزن في config لكن الحكم الفعلي من رتب التطبيق
       const roleId = String(msg.roleId || '');
-      // تحديث config.json
-      const fs = require('fs');
-      const path = require('path');
       try {
         const cfgPath = path.join(__dirname, '..', '..', 'config.json');
         const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
@@ -661,27 +635,18 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
         reply(key, msg, null, 'هذا الإعداد للمالك فقط');
         break;
       }
-      const mainServerId = (config.mainServerId || '');
-      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
-        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
-        break;
-      }
-      const mainGuild = discordClient.guilds.cache.get(mainServerId);
-      const targetId = String(msg.targetId || '');
-      const roleId = String(msg.roleId || '');
-      if (!targetId || !roleId) { reply(key, msg, null, 'العضو والرتبة مطلوبان'); break; }
+      const targetId = String(msg.targetId || '').trim();
+      const roleId = String(msg.roleId || '').trim();
+      if (!targetId || !roleId) { reply(key, msg, null, 'معرف المستخدم والرتبة مطلوبان'); break; }
       try {
-        const role = mainGuild.roles.cache.get(roleId);
-        if (!role) { reply(key, msg, null, 'الرتبة غير موجودة في السيرفر الرئيسي'); break; }
-        const target = await mainGuild.members.fetch(targetId).catch(() => null);
-        if (!target) { reply(key, msg, null, 'العضو غير موجود في سيرفر NSR HUB'); break; }
-        const has = target.roles.cache.has(roleId);
+        const role = db.subsRoles.get(roleId);
+        if (!role) { reply(key, msg, null, 'الرتبة غير موجودة في التطبيق'); break; }
         if (msg.remove) {
-          if (has) await target.roles.remove(role, 'NSR HUB dashboard (owner)');
+          db.subsRoles.unassign(targetId, roleId);
         } else {
-          if (!has) await target.roles.add(role, 'NSR HUB dashboard (owner)');
+          db.subsRoles.assign(targetId, roleId);
         }
-        reply(key, msg, { targetId, roleId, assigned: !msg.remove, removed: !!msg.remove, name: target.user.username });
+        reply(key, msg, { targetId, roleId, assigned: !msg.remove, removed: !!msg.remove, name: role.name });
       } catch (err) {
         reply(key, msg, null, 'فشل تعديل الرتبة: ' + err.message);
       }
@@ -694,19 +659,49 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
         reply(key, msg, null, 'هذا الإعداد للمالك فقط');
         break;
       }
-      const mainServerId = (config.mainServerId || '');
-      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
-        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
-        break;
-      }
-      const mainGuild = discordClient.guilds.cache.get(mainServerId);
       const name = String(msg.name || '').trim();
       if (!name) { reply(key, msg, null, 'اسم الرتبة مطلوب'); break; }
       try {
-        const role = await mainGuild.roles.create({ name, reason: 'NSR HUB dashboard (owner)' });
+        const role = db.subsRoles.create(name);
         reply(key, msg, { id: role.id, name: role.name });
       } catch (err) {
         reply(key, msg, null, 'فشل إنشاء الرتبة: ' + err.message);
+      }
+      break;
+    }
+
+    case 'renameRole': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const roleId = String(msg.roleId || '').trim();
+      const name = String(msg.name || '').trim();
+      if (!roleId || !name) { reply(key, msg, null, 'الرتبة والاسم الجديد مطلوبان'); break; }
+      try {
+        const role = db.subsRoles.update(roleId, { name });
+        if (!role) { reply(key, msg, null, 'الرتبة غير موجودة'); break; }
+        reply(key, msg, { id: role.id, name: role.name });
+      } catch (err) {
+        reply(key, msg, null, 'فشل إعادة التسمية: ' + err.message);
+      }
+      break;
+    }
+
+    case 'deleteRole': {
+      const { isOwner: isBotOwner } = require('../config');
+      if (!isBotOwner(String(msg.userId || ''))) {
+        reply(key, msg, null, 'هذا الإعداد للمالك فقط');
+        break;
+      }
+      const roleId = String(msg.roleId || '').trim();
+      if (!roleId) { reply(key, msg, null, 'الرتبة مطلوبة'); break; }
+      try {
+        db.subsRoles.remove(roleId);
+        reply(key, msg, { deleted: true });
+      } catch (err) {
+        reply(key, msg, null, 'فشل حذف الرتبة: ' + err.message);
       }
       break;
     }
@@ -717,30 +712,15 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
         reply(key, msg, null, 'هذا الإعداد للمالك فقط');
         break;
       }
-      const mainServerId = (config.mainServerId || '');
-      if (!mainServerId || !discordClient.guilds.cache.has(mainServerId)) {
-        reply(key, msg, null, 'سيرفر NSR HUB الرئيسي غير متاح');
-        break;
-      }
-      const mainGuild = discordClient.guilds.cache.get(mainServerId);
       const q = String(msg.query || '').trim().toLowerCase();
       try {
-        if (mainGuild.members.cache.size < 150) {
-          try { await mainGuild.members.fetch(); } catch (_) {}
-        }
-        let members = Array.from(mainGuild.members.cache.values())
-          .filter((m) => !m.user.bot)
-          .filter((m) => !q || m.user.username.toLowerCase().includes(q) || (m.nickname || '').toLowerCase().includes(q) || m.id.includes(q))
-          .map((m) => ({
-            id: m.id,
-            name: m.user.username,
-            nick: m.nickname || null,
-            roles: m.roles.cache.map((r) => r.id),
-          }))
-          .slice(0, 40);
-        reply(key, msg, { members });
+        // رتب التطبيق فقط — بحث بالاسم
+        const roles = db.subsRoles.list()
+          .filter((r) => !q || r.name.toLowerCase().includes(q) || r.id.includes(q))
+          .map((r) => ({ id: r.id, name: r.name }));
+        reply(key, msg, { members: roles });
       } catch (err) {
-        reply(key, msg, null, 'فشل البحث عن الأعضاء: ' + err.message);
+        reply(key, msg, null, 'فشل البحث: ' + err.message);
       }
       break;
     }

@@ -17,6 +17,16 @@ let isCustomer = false;
 let featureAccess = {};
 let ownerMode = false;
 
+// ═══════════ حماية الخروج بدون حفظ ═══════════
+let pageDirty = false;
+function markDirty() { pageDirty = true; }
+function markSaved() { pageDirty = false; }
+function guardNav() {
+  if (!pageDirty) return true;
+  toast('⚠️ لديك تغييرات غير محفوظة — احفظ التعديلات أولاً ثم اخرج', 'err');
+  return false;
+}
+
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
 const APP_LOGO_URL = 'https://cdn.discordapp.com/emojis/1537843770911891466.png?size=128'; // icon2
@@ -575,28 +585,30 @@ async function openSubscriptions() {
 
 function renderSubscriptions(main, data) {
   const roles = data.roles || [];
-  const customerRoleId = String(data.customerRoleId || '');
   const featureRoles = data.featureRoles || {};
   const features = data.features || {};
+  const userRoles = data.userRoles || [];
 
   main.innerHTML = `
     <div class="grid2">
       <div class="card">
-        <h4>${ic('crown')} رتبة الكوستمر (تفتح كل الميزات)</h4>
-        <p style="font-size:12px; color:var(--muted); line-height:1.9;">الرتبة الأساسية التي تحملها تفتح لك كل الأزرار والميزات في اللوحة.</p>
-        <label>رتبة الكوستمر (من سيرفر ${esc(data.mainServerName || 'NSR HUB')})</label>
-        <select id="subs-customer-role">
-          <option value="">— بدون رتبة (الكل يعتبر كوستمر) —</option>
-          ${roles.map((r) => `<option value="${r.id}" ${String(r.id) === customerRoleId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
-        </select>
-        <button class="btn primary" id="subs-customer-save" style="margin-top:10px;">${ic('check')} حفظ رتبة الكوستمر</button>
-      </div>
-      <div class="card">
-        <h4>${ic('plus')} إنشاء رتبة جديدة</h4>
-        <p style="font-size:12px; color:var(--muted); line-height:1.9;">أنشئ رتبة في سيرفر NSR HUB ثم اربطها بأي زر/ميزة تريد.</p>
+        <h4>${ic('plus')} إنشاء رتبة جديدة (داخل التطبيق)</h4>
+        <p style="font-size:12px; color:var(--muted); line-height:1.9;">أنشئ رتبة داخل التطبيق ثم اربطها بأي زر/ميزة تريد. لا علاقة لها بالديسكورد.</p>
         <label>اسم الرتبة الجديدة</label>
         <input id="subs-new-role-name" type="text" placeholder="مثال: باقة VIP" />
         <button class="btn primary" id="subs-create-role" style="margin-top:10px;">${ic('plus')} إنشاء الرتبة</button>
+      </div>
+      <div class="card">
+        <h4>${ic('users')} إعطاء/سحب رتبة لعضو</h4>
+        <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">اكتب <b style="color:var(--text)">معرف المستخدم (User ID)</b> واختر الرتبة — يظهر له الدور في التطبيق وتنفتح الأزرار المربوطة بالرتبة.</p>
+        <label>معرف المستخدم (User ID)</label>
+        <input id="subs-user-id" type="text" placeholder="مثال: 123456789012345678" />
+        <label>الرتبة</label>
+        <select id="subs-member-role">
+          ${roles.map((r) => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}
+        </select>
+        <button class="btn primary" id="subs-member-give" style="margin-top:10px;">${ic('plus')} إعطاء الرتبة</button>
+        <button class="btn ghost" id="subs-member-remove" style="margin-top:8px;">${ic('close')} سحب الرتبة</button>
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
@@ -613,7 +625,7 @@ function renderSubscriptions(main, data) {
             </div>
             <div class="subs-feature-roles">
               ${roles.map((r) => {
-                const on = (featureRoles[f] || []).some((rid) => String(rid) === String(r.id));
+                const on = r.features && r.features.includes(f);
                 return `<label class="subs-role-check ${on ? 'on' : ''}" data-role="${r.id}">
                   <input type="checkbox" ${on ? 'checked' : ''} /> ${esc(r.name)}
                 </label>`;
@@ -624,35 +636,20 @@ function renderSubscriptions(main, data) {
       <button class="btn primary" id="subs-features-save" style="margin-top:14px;">${ic('check')} حفظ ربط الميزات</button>
     </div>
     <div class="card" style="margin-top:16px;">
-      <h4>${ic('users')} إعطاء/سحب رتبة لعضو</h4>
-      <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">ابحث عن عضو في سيرفر NSR HUB وامنحه أو اسحب منه رتبة.</p>
-      <div class="grid2" style="gap:10px; align-items:end;">
-        <div>
-          <label>ابحث عن عضو</label>
-          <input id="subs-member-search" type="text" placeholder="الاسم أو ID..." />
-          <div id="subs-member-results" class="subs-member-results"></div>
-        </div>
-        <div>
-          <label>الرتبة</label>
-          <select id="subs-member-role">
-            ${roles.map((r) => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}
-          </select>
-          <button class="btn primary" id="subs-member-give" style="margin-top:10px;">${ic('plus')} إعطاء الرتبة</button>
-          <button class="btn ghost" id="subs-member-remove" style="margin-top:8px;">${ic('close')} سحب الرتبة</button>
-        </div>
+      <h4>${ic('list')} الرتب الموجودة</h4>
+      <div id="subs-roles-list">
+        ${roles.length ? roles.map((r) => `
+          <div class="subs-member-item" style="display:flex; align-items:center; gap:10px; justify-content:space-between;" data-rid="${r.id}">
+            <b>${esc(r.name)}</b>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <small style="color:var(--muted);">${(r.features || []).length} ميزة</small>
+              <button class="btn ghost sm" data-rename="${r.id}">${ic('palette')} إعادة تسمية</button>
+              <button class="btn ghost sm danger" data-del-role="${r.id}">${ic('close')} حذف</button>
+            </div>
+          </div>`).join('') : '<p style="color:var(--muted); font-size:12.5px;">لا توجد رتب بعد — أنشئ أول رتبة من الأعلى.</p>'}
       </div>
     </div>`;
   wireFx(main);
-
-  // رتبة الكوستمر
-  main.querySelector('#subs-customer-save').addEventListener('click', async () => {
-    try {
-      const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: '', roleId: main.querySelector('#subs-customer-role').value });
-      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('تم حفظ رتبة الكوستمر');
-      await refreshCustomerStatus();
-    } catch (e) { toast(e.message, 'err'); }
-  });
 
   // إنشاء رتبة
   main.querySelector('#subs-create-role').addEventListener('click', async () => {
@@ -688,46 +685,44 @@ function renderSubscriptions(main, data) {
     } catch (e) { toast('' + e.message, 'err'); }
   });
 
-  // البحث عن عضو
-  let memberSearchTimer = null;
-  const searchInput = main.querySelector('#subs-member-search');
-  const resultsEl = main.querySelector('#subs-member-results');
-  let selectedMember = null;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(memberSearchTimer);
-    memberSearchTimer = setTimeout(async () => {
-      const q = searchInput.value.trim();
-      if (q.length < 2) { resultsEl.innerHTML = ''; return; }
-      try {
-        const rep = await NSR.bridgeCommand({ type: 'searchMainServerMembers', userId: session.user.id, guildId: '', query: q });
-        if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        resultsEl.innerHTML = (rep.data.members || []).map((m) => `
-          <div class="subs-member-item" data-mid="${m.id}" data-mname="${esc(m.nick || m.name)}">
-            <b>${esc(m.nick || m.name)}</b> <small>${m.id}</small>
-          </div>`).join('') || '<div class="rp-none">لا يوجد نتائج</div>';
-        resultsEl.querySelectorAll('.subs-member-item').forEach((it) => it.addEventListener('click', () => {
-          selectedMember = { id: it.dataset.mid, name: it.dataset.mname };
-          searchInput.value = it.dataset.mname;
-          resultsEl.innerHTML = '';
-        }));
-      } catch (e) { resultsEl.innerHTML = '<div class="rp-none">' + esc(e.message) + '</div>'; }
-    }, 350);
-  });
-
-  const giveBtn = main.querySelector('#subs-member-give');
-  const removeBtn = main.querySelector('#subs-member-remove');
+  // إعطاء/سحب رتبة عبر User ID
   const doAssign = async (remove) => {
-    if (!selectedMember) { toast('ابحث واختر عضواً أولاً', 'err'); return; }
+    const targetId = main.querySelector('#subs-user-id').value.trim();
     const roleId = main.querySelector('#subs-member-role').value;
+    if (!targetId) { toast('اكتب معرف المستخدم (User ID) أولاً', 'err'); return; }
+    if (!/^\d{10,20}$/.test(targetId)) { toast('معرف المستخدم غير صالح — يجب أن يكون أرقاماً فقط', 'err'); return; }
     if (!roleId) { toast('اختر رتبة', 'err'); return; }
     try {
-      const rep = await NSR.bridgeCommand({ type: 'assignRoleToUser', userId: session.user.id, guildId: '', targetId: selectedMember.id, roleId, remove });
+      const rep = await NSR.bridgeCommand({ type: 'assignRoleToUser', userId: session.user.id, guildId: '', targetId, roleId, remove });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-      toast('' + (remove ? 'تم سحب' : 'تم إعطاء') + ' رتبة من/لـ ' + selectedMember.name);
+      toast('' + (remove ? 'تم سحب' : 'تم إعطاء') + ' الرتبة للمستخدم ' + targetId);
     } catch (e) { toast('' + e.message, 'err'); }
   };
-  giveBtn.addEventListener('click', () => doAssign(false));
-  removeBtn.addEventListener('click', () => doAssign(true));
+  main.querySelector('#subs-member-give').addEventListener('click', () => doAssign(false));
+  main.querySelector('#subs-member-remove').addEventListener('click', () => doAssign(true));
+
+  // إعادة تسمية / حذف رتبة
+  main.querySelectorAll('[data-rename]').forEach((b) => b.addEventListener('click', async () => {
+    const roleId = b.dataset.rename;
+    const newName = prompt('الاسم الجديد للرتبة:');
+    if (!newName || !newName.trim()) return;
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'renameRole', userId: session.user.id, guildId: '', roleId, name: newName.trim() });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      toast('تمت إعادة تسمية الرتبة');
+      openSubscriptions();
+    } catch (e) { toast('' + e.message, 'err'); }
+  }));
+  main.querySelectorAll('[data-del-role]').forEach((b) => b.addEventListener('click', async () => {
+    const roleId = b.dataset.delRole;
+    if (!confirm('متأكد من حذف هذه الرتبة؟ سيُسحب من كل من يملكها.')) return;
+    try {
+      const rep = await NSR.bridgeCommand({ type: 'deleteRole', userId: session.user.id, guildId: '', roleId });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
+      toast('تم حذف الرتبة');
+      openSubscriptions();
+    } catch (e) { toast('' + e.message, 'err'); }
+  }));
 }
 
 // ---------- فتح اللوحة ----------
@@ -768,8 +763,10 @@ async function openGuild(g) {
 }
 
 function goPage(page) {
+  if (!guardNav()) return;
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.page === page));
   currentPage = page;
+  pageDirty = false;
   renderPage(page);
 }
 
@@ -1716,18 +1713,18 @@ function renderAi(main) {
     </div>
     ${isOwner ? `
     <div class="card" style="margin-top:16px;">
-      <h4>${ic('crown')} رتبة فتح المعالج (كوستمر)</h4>
+      <h4>${ic('crown')} الرتب المسموح لها بالتحدث الى ai</h4>
       <p style="font-size:12px; color:var(--muted); line-height:1.9; margin-bottom:10px;">
-        حدد رتبة <b style="color:var(--text)">كوستمر</b> من سيرفر <b style="color:var(--text)">NSR HUB</b> الرئيسي —
-        أي شخص يحمل هذه الرتبة يفتح له زر المعالج AI تلقائياً.<br/>
+        حدد رتب <b style="color:var(--text)">التطبيق</b> التي يُسمح لحامليها بالتحدث مع معالج AI —<br/>
+        أي شخص يملك رتبة مسموحة يفتح له زر المعالج AI تلقائياً.<br/>
         <span id="ai-cust-role-status">جاري تحميل الرتب...</span>
       </p>
       <div class="grid2" style="gap:10px; align-items:end;">
         <div>
-          <label>رتبة الكوستمر (من سيرفر NSR HUB)</label>
-          <select id="ai-cust-role"></select>
+          <label>الرتب المسموح لها بالتحدث الى ai</label>
+          <select id="ai-cust-role" multiple></select>
         </div>
-        <button class="btn primary" id="ai-cust-role-btn">${ic('check')} حفظ رتبة الفتح</button>
+        <button class="btn primary" id="ai-cust-role-btn">${ic('check')} حفظ الرتب المسموحة</button>
       </div>
     </div>` : ''}
     <div class="card" style="margin-top:16px;">
@@ -1775,13 +1772,13 @@ function renderAi(main) {
     const custBtn = main.querySelector('#ai-cust-role-btn');
     (async () => {
       try {
-        const rep = await NSR.bridgeCommand({ type: 'getMainServerRoles', userId: session.user.id, guildId: currentGuild.id });
+        const rep = await NSR.bridgeCommand({ type: 'getSubscriptions', userId: session.user.id, guildId: '' });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
         const roles = rep.data.roles || [];
-        const current = String(rep.data.customerRoleId || '');
-        custStatus.textContent = `السيرفر: ${esc(rep.data.mainServerName || '—')} (${roles.length} رتبة)`;
-        custSel.innerHTML = '<option value="">— بدون رتبة (الكل يفتح) —</option>' +
-          roles.map((r) => `<option value="${r.id}" ${String(r.id) === current ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
+        const allowed = (rep.data.featureRoles && rep.data.featureRoles.ai) || [];
+        custStatus.textContent = `عدد رتب التطبيق: ${roles.length}`;
+        custSel.innerHTML = roles.map((r) =>
+          `<option value="${r.id}" ${allowed.includes(String(r.id)) ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
         custSel.disabled = false;
         custBtn.disabled = false;
       } catch (e) {
@@ -1790,9 +1787,10 @@ function renderAi(main) {
     })();
     custBtn.addEventListener('click', async () => {
       try {
-        const rep = await NSR.bridgeCommand({ type: 'setCustomerRole', userId: session.user.id, guildId: currentGuild.id, roleId: custSel.value });
+        const sel = Array.from(custSel.selectedOptions).map((o) => o.value);
+        const rep = await NSR.bridgeCommand({ type: 'setFeatureRoles', userId: session.user.id, guildId: '', feature: 'ai', roles: sel });
         if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل');
-        toast('تم حفظ رتبة فتح المعالج');
+        toast('تم حفظ الرتب المسموح لها بالتحدث الى AI');
       } catch (e) { toast('' + e.message, 'err'); }
     });
   }
@@ -2096,3 +2094,20 @@ function renderMessages(main) {
 
 // ---------- كل السيرفرات (المالك فقط) ----------
 init();
+
+// ═══════════ حماية الخروج بدون حفظ: تتبع التغييرات ═══════════
+document.addEventListener('input', (e) => {
+  if (e.target.closest('#dash-main') && e.target.matches('input,select,textarea')) markDirty();
+});
+document.addEventListener('change', (e) => {
+  if (e.target.closest('#dash-main') && e.target.matches('input,select,textarea')) markDirty();
+});
+
+// حماية أزرار الرجوع والتنقل以外 goPage
+$('#btn-back').addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
+$('#btn-subs-back').addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
+
+// حماية عامة لأزرار الـ nav (تستهلك goPage بالفعل)
+document.querySelectorAll('.nav-btn').forEach((b) => {
+  b.addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
+});
