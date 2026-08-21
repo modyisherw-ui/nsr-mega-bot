@@ -26,15 +26,16 @@ let _pendingNav = null;
 let _navBlocked = false;
 function guardNav() {
   if (!pageDirty || _navBlocked) return true;
-  // افتح نافذة تأكيد الحفظ
   const overlay = $('#unsaved-overlay');
   overlay.style.display = 'flex';
   overlay.classList.remove('hidden');
+  overlay.classList.add('visible');
   return false;
 }
 function closeUnsaved() {
   const overlay = $('#unsaved-overlay');
   overlay.style.display = 'none';
+  overlay.classList.remove('visible');
   overlay.classList.add('hidden');
   _pendingNav = null;
 }
@@ -101,7 +102,6 @@ const ICONS = {
 const MSG_TYPES = {
   send: { emoji: ICONS.chat, name: 'رسالة', color: '#5865F2', title: 'رسالة خاصة', description: '{{TEXT}}\n\n**{{GUILD}}**', canEditText: true },
   summon: { emoji: ICONS.send, name: 'استدعاء', color: '#F1C40F', title: 'استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', canEditText: false },
-  thanks: { emoji: ICONS.check, name: 'شكر', color: '#57F287', title: 'شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', canEditText: false },
 };
 
 function esc(s) {
@@ -1981,9 +1981,21 @@ function renderMessages(main) {
   const renderTextArea = () => {
     const t = MSG_TYPES[msgType];
     const editable = t.canEditText !== false;
-    main.querySelector('#msg-text').disabled = !editable;
-    main.querySelector('#msg-text').placeholder = editable ? 'اكتب نص الرسالة هنا...' : 'نص هذه الرسالة ثابت ولا يمكن تغييره';
-    main.querySelector('#msg-text-note').style.display = editable ? 'none' : 'block';
+    const textarea = main.querySelector('#msg-text');
+    const label = textarea ? textarea.previousElementSibling : null;
+    const note = main.querySelector('#msg-text-note');
+    if (editable) {
+      textarea.style.display = '';
+      if (label && label.tagName === 'LABEL') label.style.display = '';
+      textarea.disabled = false;
+      textarea.placeholder = 'اكتب نص الرسالة هنا...';
+      if (note) note.style.display = 'none';
+    } else {
+      textarea.style.display = 'none';
+      if (label && label.tagName === 'LABEL') label.style.display = 'none';
+      textarea.disabled = true;
+      if (note) note.style.display = 'block';
+    }
   };
   main.innerHTML = `
     <div class="grid2">
@@ -2107,7 +2119,7 @@ function renderMessages(main) {
     if (!targetId) { toast('أدخل معرف العضو أولاً', 'err'); return; }
     if (editable && !text) { toast('اكتب النص أولاً', 'err'); return; }
     try {
-      const rep = await NSR.bridgeCommand({ type: 'sendDm', userId: session.user.id, guildId: currentGuild.id, type: msgType, targetId, text });
+      const rep = await NSR.bridgeCommand({ type: 'sendDm', userId: session.user.id, guildId: currentGuild.id, dmType: msgType, targetId, text });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل الإرسال');
       toast('تم إرسال ' + rep.data.type + ' للعضو');
       main.querySelector('#msg-text').value = '';

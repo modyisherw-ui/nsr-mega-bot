@@ -8,7 +8,6 @@ const lastSent = new Map(); // "userId:guildId:targetId" -> timestamp
 const MSG_TYPES = {
   send: { emoji: '💬', name: 'رسالة', title: '💬 رسالة خاصة', color: 0x5865F2, dmTitle: '💬 {{USER}} تواصل معك', description: '{{TEXT}}\n\n**{{GUILD}}**', placeholders: ['TEXT', 'GUILD'], canEditText: true },
   summon: { emoji: '📣', name: 'استدعاء', title: '📣 استدعاء', color: 0xF1C40F, dmTitle: '📣 استدعاء لك', description: 'نرجى منك فتح تكت في اسرع وقت.\n\n**{{GUILD}}**', placeholders: ['GUILD'], canEditText: false },
-  thanks: { emoji: '🙏', name: 'شكر', title: '🙏 رسالة شكر', color: 0x57F287, dmTitle: '🙏 شكراً لك', description: 'نشكرك على تعاونك ووقتك.\n\n**{{GUILD}}**', placeholders: ['GUILD'], canEditText: false },
 };
 
 function messagesEmbed(client, guild) {
@@ -16,7 +15,7 @@ function messagesEmbed(client, guild) {
     .setColor(0x5865F2)
     .setTitle('💬 نظام الرسائل')
     .setDescription([
-      'أرسل رسالة خاصة لأي شخص في السيرفر، أو استدعاء، أو شكر.',
+      'أرسل رسالة خاصة لأي شخص في السيرفر، أو استدعاء.',
       '',
       `> **تنبيه:** هناك تهدئة بمقدار دقيقة بين كل رسالة لنفس الشخص.`,
       '',

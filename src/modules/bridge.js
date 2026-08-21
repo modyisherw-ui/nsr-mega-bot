@@ -621,7 +621,7 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
         const { checkSwearAndNotify } = require('./security');
         const blocked = await checkSwearAndNotify(guild, String(msg.text || ''));
         if (blocked) { reply(key, msg, null, '💢 الرسالة تحتوي على كلمات غير لائقة — تم منع الإرسال وإبلاغ المالك'); break; }
-        const result = await sendMessageToUser(discordClient, guild, String(msg.type || ''), msg.targetId, String(msg.text || ''));
+        const result = await sendMessageToUser(discordClient, guild, String(msg.dmType || msg.type || ''), msg.targetId, String(msg.text || ''));
         reply(key, msg, result);
       } catch (err) {
         reply(key, msg, null, err.message || 'فشل الإرسال');
