@@ -506,15 +506,19 @@ async function enterServers() {
     } else {
       // السيرفرات المملوكة + الإدارية فقط: مصدر البوت هو الأساس، وOAuth يغطي الباقي
       const byId = new Map();
+      // أضف سيرفرات البوت فقط إذا المستخدم عضو فيها أيضاً (موجودة في OAuth)
+      const userGuildIds = new Set((allGuilds && allGuilds.length ? allGuilds : adminGuilds || []).map((g) => String(g.id)));
       for (const g of botGuilds) {
-        byId.set(String(g.id), { ...g, isAdminMine: g.isAdmin === true, isOwnerMine: false, inBot: true });
+        if (userGuildIds.has(String(g.id))) {
+          byId.set(String(g.id), { ...g, isAdminMine: g.isAdmin === true, isOwnerMine: false, inBot: true });
+        }
       }
       for (const g of (allGuilds && allGuilds.length ? allGuilds : adminGuilds || [])) {
         const ex = byId.get(String(g.id));
         if (ex) {
           if (g.owner === true) ex.isOwnerMine = true;
         } else {
-          byId.set(String(g.id), { ...g, isAdminMine: true, isOwnerMine: g.owner === true, inBot: false });
+          // سيرفرات المستخدم التي البوت غير فيها — لا تظهر
         }
       }
       // فقط: سيرفرات يملكها المستخدم أو لديه فيها إدارة
