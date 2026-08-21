@@ -704,12 +704,13 @@ function renderSubscriptions(main, data) {
     } catch (e) { toast('' + e.message, 'err'); }
   });
 
-  // تفعيل/تعطيل رتبة في ميزة
-  main.querySelectorAll('.subs-role-check').forEach((c) => c.addEventListener('click', () => {
-    c.classList.toggle('on');
+  // تفعيل/تعطيل رتبة في ميزة — الـ label ي togggle الـ checkbox تلقائياً (input مخفي)، نعمل sync للـ class فقط
+  main.querySelectorAll('.subs-role-check').forEach((c) => {
     const input = c.querySelector('input');
-    input.checked = !input.checked;
-  }));
+    const sync = () => c.classList.toggle('on', input.checked);
+    sync();
+    input.addEventListener('change', sync);
+  });
 
   // حفظ الميزات
   main.querySelector('#subs-features-save').addEventListener('click', async () => {
