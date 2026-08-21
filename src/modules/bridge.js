@@ -551,7 +551,8 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
           break;
         }
         const roles = db.subsRoles.list().map((r) => ({ id: r.id, name: r.name, color: '#ffffff', features: r.features }));
-        const users = db.prepare(`SELECT user_id, role_id FROM app_user_roles ORDER BY created_at ASC`).all();
+        const rawDb = require('../db').db;
+        const users = rawDb.prepare(`SELECT user_id, role_id FROM app_user_roles ORDER BY created_at ASC`).all();
         reply(key, msg, {
           roles,
           userRoles: users,

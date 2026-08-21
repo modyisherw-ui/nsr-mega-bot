@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const DOWNLOAD_URL = 'https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-HUB-Setup-1.0.19.exe';
+const DOWNLOAD_URL = 'https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-HUB-Setup-1.0.31.exe';
 
 module.exports = {
   data: new SlashCommandBuilder()

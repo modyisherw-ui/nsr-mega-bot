@@ -239,7 +239,7 @@ body.maximized {
   transition: transform .18s ease, box-shadow .2s, border-color .2s, background .2s;
 }
 .server-card::before {
-  content: ""; position: absolute; inset: 0;
+  content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(600px 160px at 50% -30%, rgba(255,255,255,.12), transparent 60%);
   opacity: 0; transition: opacity .2s;
 }
