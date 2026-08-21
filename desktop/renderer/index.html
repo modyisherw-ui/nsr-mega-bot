@@ -157,6 +157,21 @@
     </div>
   </div>
 
+  <!-- نافذة تأكيد الحفظ عند الخروج -->
+  <div id="unsaved-overlay" class="update-overlay hidden" style="display:none;">
+    <div class="update-card" style="max-width:380px;">
+      <h2 style="font-size:16px; margin-bottom:8px;">⚠️ تغييرات غير محفوظة</h2>
+      <p style="font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:18px;">
+        لديك تعديلات لم تُحفظ بعد.<br/>هل تريد حفظها قبل الخروج؟
+      </p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="unsaved-save" class="btn primary">${ic('check')} حفظ التعديلات</button>
+        <button id="unsaved-discard" class="btn ghost" style="border-color:rgba(255,80,80,.5); color:#ff6b6b;">عدم الحفظ</button>
+        <button id="unsaved-cancel" class="btn ghost">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

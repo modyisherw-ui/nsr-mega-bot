@@ -21,11 +21,48 @@ let ownerMode = false;
 let pageDirty = false;
 function markDirty() { pageDirty = true; }
 function markSaved() { pageDirty = false; }
+
+let _pendingNav = null;
+let _navBlocked = false;
 function guardNav() {
-  if (!pageDirty) return true;
-  toast('⚠️ لديك تغييرات غير محفوظة — احفظ التعديلات أولاً ثم اخرج', 'err');
+  if (!pageDirty || _navBlocked) return true;
+  // افتح نافذة تأكيد الحفظ
+  const overlay = $('#unsaved-overlay');
+  overlay.style.display = 'flex';
+  overlay.classList.remove('hidden');
   return false;
 }
+function closeUnsaved() {
+  const overlay = $('#unsaved-overlay');
+  overlay.style.display = 'none';
+  overlay.classList.add('hidden');
+  _pendingNav = null;
+}
+function setPendingNav(fn) { _pendingNav = fn; }
+
+// أزرار نافذة الحفظ
+try {
+  $('#unsaved-save').addEventListener('click', async () => {
+    _navBlocked = true;
+    // حاول الضغط على زر الحفظ في الصفحة الحالية
+    const saveBtn = $('#dash-main').querySelector('[data-save]') || $('#dash-main').querySelector('.btn.primary[data-save]');
+    if (saveBtn) {
+      saveBtn.click();
+      // انتظر قليلاً ثم انتقل
+      await new Promise((r) => setTimeout(r, 600));
+    }
+    pageDirty = false;
+    _navBlocked = false;
+    closeUnsaved();
+    if (_pendingNav) { _pendingNav(); _pendingNav = null; }
+  });
+  $('#unsaved-discard').addEventListener('click', () => {
+    pageDirty = false;
+    closeUnsaved();
+    if (_pendingNav) { _pendingNav(); _pendingNav = null; }
+  });
+  $('#unsaved-cancel').addEventListener('click', closeUnsaved);
+} catch (_) {}
 
 const NSR_DISCORD_SERVER = 'https://discord.gg/GGAXRUAQ6x';
 const BOT_CLIENT_ID = '1537394763328786572'; // آيدي تطبيق البوت (لرابط الدعوة)
@@ -763,7 +800,10 @@ async function openGuild(g) {
 }
 
 function goPage(page) {
-  if (!guardNav()) return;
+  if (pageDirty) {
+    setPendingNav(() => { document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.page === page)); currentPage = page; pageDirty = false; renderPage(page); });
+    if (!guardNav()) return;
+  }
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.page === page));
   currentPage = page;
   pageDirty = false;
@@ -2103,11 +2143,32 @@ document.addEventListener('change', (e) => {
   if (e.target.closest('#dash-main') && e.target.matches('input,select,textarea')) markDirty();
 });
 
-// حماية أزرار الرجوع والتنقل以外 goPage
-$('#btn-back').addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
-$('#btn-subs-back').addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
+// حماية أزرار الرجوع (capture phase)
+  $('#btn-back').addEventListener('click', (e) => {
+    if (pageDirty) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      setPendingNav(() => { playSound('click'); enterServers(); });
+      guardNav();
+    }
+  }, true);
+  $('#btn-subs-back').addEventListener('click', (e) => {
+    if (pageDirty) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      setPendingNav(() => { playSound('click'); enterServers(); });
+      guardNav();
+    }
+  }, true);
 
-// حماية عامة لأزرار الـ nav (تستهلك goPage بالفعل)
-document.querySelectorAll('.nav-btn').forEach((b) => {
-  b.addEventListener('click', (e) => { if (!guardNav()) e.stopImmediatePropagation(); }, true);
-});
+  // حماية عامة لأزرار الـ nav
+  document.querySelectorAll('.nav-btn').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      if (pageDirty) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        setPendingNav(() => { playSound('click'); goPage(b.dataset.page); });
+        guardNav();
+      }
+    }, true);
+  });

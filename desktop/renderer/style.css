@@ -787,3 +787,8 @@ body.maximized {
 .btn.sm .ic svg { width: 11px; height: 11px; }
 .btn.danger, .btn.sm.danger { border-color: rgba(255,80,80,.55); color: #ff6b6b; background: rgba(255,80,80,.08); }
 .btn.danger:hover, .btn.sm.danger:hover { background: rgba(255,80,80,.18); border-color: #ff6b6b; }
+
+/* نافذة تأكيد الحفظ */
+#unsaved-overlay { z-index: 10000; backdrop-filter: blur(6px); background: rgba(0,0,0,.65); }
+#unsaved-overlay .update-card { text-align: center; padding: 28px 24px; }
+#unsaved-overlay .btn { min-width: 110px; }
