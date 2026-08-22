@@ -8,9 +8,39 @@ let clientRef = null;
 const spamState = new Map();
 const eventCounters = new Map(); // "guildId:type" -> { count, firstAt }
 const bannedWords = [
-  'كس', 'عير', 'زب', 'طيز', 'شرموطة', 'قحبة', 'مقحبة', 'منيوك', 'نييك', 'متناك', 'عاهرة', 'لوطي', 'ابن الكلب',
-  'اخرع', 'غبي', 'حقير', 'تافه', 'خنزير', 'حمار', 'كلب', 'انسان قذر', 'وسخ', 'فاشل', 'اهبل', 'مخلف',
-  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'dick', 'pussy', 'cunt', 'whore', 'slut', 'nigga', 'nigger', 'faggot', 'retard', 'moron', 'idiot', 'stupid',
+  // ─── كلمات بذيئة عربية ───
+  'كس', 'عير', 'زب', 'طيز', 'شرموط', 'شرموطة', 'شرمёт', 'شرموته', 'شرموتي',
+  'قحب', 'قحبة', 'قحبه', 'مقحب', 'مقحبة', 'مقحبه',
+  'منيوك', 'منيوكه', 'منيك', 'نييك', 'نيك', 'متناك', 'متناكه', 'متنك',
+  'عاهر', 'عاهرة', 'عاهره', 'لوطي', 'ابن الكلب', 'ابن كلب',
+  ' cunt', ' twat',
+  // ─── إهانات وشتائم عربية ───
+  'اخرع', 'غبي', 'غبية', 'غبيه', 'حقير', 'حقيرة', 'تافه', 'تافهه',
+  'خنزير', 'خنازير', 'حمار', 'حماره', 'كلب', 'كلبه', 'كلاب',
+  'انسان قذر', 'انسان قذرة', 'وسخ', 'وسخه', 'فاشل', 'فاشله',
+  'اهبل', 'اهبل', 'مخلف', 'ابله', 'حشرة', 'حشرات',
+  'جحش', 'جحشه', 'بلعم', 'بلعيد', '.slut', '胆小鬼',
+  'زفت', 'تبن', 'دود', '蓥', 'خبل', 'خبله', 'مخبول', 'مخبوله',
+  'حثاله', 'حثالة', 'نذل', 'نذله', 'خسيس', 'خسيسه',
+  'wil', 'clown',
+  // ─── كلمات بذيئة إنجليزية ───
+  'fuck', 'fucker', 'fucking', 'fucked', 'motherfucker', 'mf',
+  'shit', 'shitty', 'bullshit',
+  'bitch', 'bitches', 'bitchy',
+  'asshole', 'assholes',
+  'bastard', 'bastards',
+  'dick', 'dickhead', 'dicks',
+  'pussy', 'pussies',
+  'cunt', 'cunts',
+  'whore', 'whores',
+  'slut', 'sluts',
+  'nigga', 'niggas', 'nigger', 'niggers',
+  'faggot', 'faggots', 'fag', 'fags',
+  'retard', 'retarded',
+  'moron', 'morons',
+  'idiot', 'idiots', 'stupid', 'dumbass', 'dumb',
+  'penis', 'vagina', 'cock', 'boobs', 'tit', 'tits',
+  'jerk', 'prick', 'douche', 'scum', 'wanker',
 ];
 
 function getProtection(guildId) {
@@ -29,6 +59,8 @@ function normalizeText(text) {
   t = t.replace(/[0134578@$!|]/g, (c) => LEET_MAP[c] || c);
   // إزالة التكرار (fuuuck → fuck)
   t = t.replace(/(\p{L})\1{2,}/gu, '$1$1');
+  // تطبيع عربي: ة/ه، ي/ى، أ/إ/آ/ا
+  t = t.replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[أإآ]/g, 'ا');
   // إزالة الفراغات بين حروف الكلمة (f u c k → fuck) — نزيل الفراغ بين الأحرف العربية/اللاتينية المتتالية
   t = t.replace(/ +/g, ' ');
   return t;
