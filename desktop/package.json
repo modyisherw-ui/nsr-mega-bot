@@ -23,6 +23,7 @@
   "build": {
     "appId": "com.nsr.hub",
     "productName": "NSR HUB",
+    "icon": "build/icon.ico",
     "files": [
       "main.js",
       "preload.js",
