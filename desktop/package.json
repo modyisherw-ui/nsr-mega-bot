@@ -23,7 +23,7 @@
   "build": {
     "appId": "com.nsr.hub",
     "productName": "NSR HUB",
-    "icon": "build/icon.ico",
+    "icon": "build/icon.png",
     "files": [
       "main.js",
       "preload.js",
@@ -31,7 +31,7 @@
     ],
     "win": {
       "target": ["nsis"],
-      "icon": "build/icon.ico",
+      "icon": "build/icon.png",
       "publisherName": "NSR HUB",
       "signAndEditExecutable": true
     },
