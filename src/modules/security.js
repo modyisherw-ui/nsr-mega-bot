@@ -159,20 +159,29 @@ function getProtection(guildId) {
   return g.protection || {};
 }
 
-// ═══════════ تطبيع النص لكشف التحايل (f-u-c-k / fuuuck / f0ck / ك-س) ═══════════
-const LEET_MAP = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b', '@': 'a', '$': 's', '!': 'i', '|': 'l', '0': 'o' };
+// ═══════════ تطبيع النص لكشف التحايل (f-u-c-k / fuuuck / sh!t / كـــس) ═══════════
+const LEET_MAP = { '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b', '@': 'a', '$': 's', '!': 'i', '|': 'l' };
+const ARABIC_GAP = /([\u0600-\u06FF])\s+([\u0600-\u06FF])/g;
+const LATIN_GAP = /([a-z])\s+([a-z])/g;
 function normalizeText(text) {
   if (!text) return '';
   let t = String(text).toLowerCase().trim();
-  // إزالة كل الرموز غير الحروف/الأرقام (فواصل، شرط، نقاط، إيموجي...)
+  // 1) إزالة التاتويل/الكشيدة (ـ) وعلامات التشكيل
+  t = t.replace(/[\u0640\u064B-\u065F\u0670]/g, '');
+  // 2) استبدال LEET speak (قبل إزالة الرموز عشان يمشي)
+  t = t.replace(/[134578@$!|]/g, (c) => LEET_MAP[c] || c);
+  // 3) إزالة كل الرموز غير الحروف/الأرقام (فواصل، شرط، نقاط، إيموجي...)
   t = t.replace(/[^\p{L}\p{N}\s]/gu, ' ');
-  // استبدال الأرقام المشابهة للحروف (l33t)
-  t = t.replace(/[0134578@$!|]/g, (c) => LEET_MAP[c] || c);
-  // إزالة التكرار (fuuuck → fuck)
+  // 4) إزالة التكرار (fuuuck → fuck، كـــس → كس)
   t = t.replace(/(\p{L})\1{2,}/gu, '$1$1');
-  // تطبيع عربي: ة/ه، ي/ى، أ/إ/آ/ا
+  // 5) تطبيع عربي: ة/ه، ي/ى، أ/إ/آ/ا
   t = t.replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[أإآ]/g, 'ا');
-  // إزالة الفراغات بين حروف الكلمة (f u c k → fuck) — نزيل الفراغ بين الأحرف العربية/اللاتينية المتتالية
+  // 6) إزالة الفراغات بين حروف الكلمة: "ك س" → "كس" و "f u c k" → "fuck"
+  let prev = '';
+  while (prev !== t) { prev = t; t = t.replace(ARABIC_GAP, '$1$2'); }
+  prev = '';
+  while (prev !== t) { prev = t; t = t.replace(LATIN_GAP, '$1$2'); }
+  // 7) دمج الفراغات المتعددة
   t = t.replace(/ +/g, ' ');
   return t;
 }
