@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const DOWNLOAD_URL = 'https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-HUB-Setup-1.0.33.exe';
+const DOWNLOAD_URL = 'https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-HUB-Setup-1.0.34.exe';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -22,7 +22,7 @@ module.exports = {
         '3️⃣ افتح البرنامج وسجّل الدخول بحساب البوت\n\n' +
         `📥 رابط مباشر: [اضغط هنا للتحميل](${DOWNLOAD_URL})`
       )
-      .setFooter({ text: 'الإصدار 1.0.33' });
+      .setFooter({ text: 'الإصدار 1.0.34' });
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setStyle(ButtonStyle.Link)
