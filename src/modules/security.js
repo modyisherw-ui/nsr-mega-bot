@@ -83,7 +83,7 @@ const bannedWords = [
   'klb', 'klba', 'klb4',
   '7mar', '7mara',
   't5on', 't5ona',
-  'zbeni', 'zab', 'zbi', 'zabi', 'zaby',
+  'zbeni', 'zab', 'zbi', 'zbe', 'zabi', 'zaby', 'zbk', 'zby',
   'tiz', 'tizk', 'tizkk', 'tizkm',
   'sharmouta', 'sharmuta', 'shrmouta', 'shrmwta',
   'jahish', 'jahsha',
