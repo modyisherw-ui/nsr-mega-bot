@@ -1346,3 +1346,8 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 [2026-08-25T17:08:35.356Z] جارٍ الاتصال بالجسر MQTT...
 [2026-08-25T17:08:35.905Z] ✅ تم تسجيل 38 أوامر عامة في 2 سيرفر
 [2026-08-25T17:08:36.422Z] الجسر متصل — نستمع للأوامر على nsrbot/cdb56f759d076b3257db98097a1634e7/cmd
+[2026-08-25T17:29:49.034Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-08-25T17:29:49.062Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-08-25T17:29:49.614Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.17916199199581162; waiting 7390ms
