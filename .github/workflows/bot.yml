@@ -9,7 +9,6 @@ on:
 
 concurrency:
   group: bot-run
-  cancel-in-progress: true
 
 permissions:
   contents: write
