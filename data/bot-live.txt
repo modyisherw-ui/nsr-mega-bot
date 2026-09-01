@@ -143795,3 +143795,931 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 [2026-09-01T03:13:46.708Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
 	Needs closing: false
 	Ready state: 3
+[2026-09-01T03:13:47.234Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:47.234Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:47.758Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:47.759Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:48.283Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:48.283Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:48.804Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:48.804Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:49.328Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:49.329Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:49.853Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:49.853Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:50.383Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:50.383Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:50.905Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:50.906Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:51.433Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:51.434Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:51.956Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:51.956Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:52.479Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:52.479Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:53.003Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:53.004Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:53.530Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:53.530Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:54.053Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:54.054Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:54.575Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:54.575Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:55.102Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:55.102Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:55.624Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:55.625Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:56.152Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:56.153Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:56.673Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:56.673Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:57.196Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:57.196Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:57.721Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:57.721Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:58.242Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:58.242Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:58.774Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:58.775Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:59.304Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:59.304Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:13:59.840Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:13:59.840Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:00.363Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:00.364Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:00.891Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:00.892Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:01.416Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:01.416Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:01.938Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:01.939Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:02.464Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:02.465Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:02.996Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:02.997Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:03.517Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:03.518Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:04.042Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:04.042Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:04.565Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:04.566Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:05.089Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:05.089Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:05.613Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:05.613Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:06.135Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:06.135Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:06.663Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:06.663Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:07.189Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:07.190Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:07.715Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:07.715Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:08.235Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:08.236Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:08.761Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:08.761Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:09.295Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:09.296Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:09.817Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:09.817Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:10.337Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:10.338Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:10.875Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:10.876Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:11.400Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:11.401Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:11.924Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:11.925Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:12.456Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:12.457Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:12.979Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:12.980Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:13.503Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:13.503Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:14.029Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:14.029Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:14.555Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:14.555Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:15.080Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:15.081Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:15.603Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:15.603Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:16.132Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:16.132Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:16.659Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:16.660Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:17.186Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:17.186Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:17.710Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:17.711Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:18.234Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:18.234Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:18.762Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:18.762Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:19.284Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:19.285Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:19.806Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:19.807Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:20.330Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:20.330Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:20.853Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:20.853Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:21.377Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:21.377Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:21.897Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:21.898Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:22.425Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:22.425Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:22.954Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:22.954Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:23.478Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:23.479Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:24.006Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:24.006Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:24.533Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:24.533Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:25.065Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:25.065Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:25.592Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:25.592Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:26.120Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:26.120Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:26.649Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:26.649Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:27.175Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:27.175Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:27.706Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:27.706Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:28.229Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:28.230Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:28.752Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:28.752Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:29.273Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:29.273Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:29.796Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:29.796Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:30.318Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:30.318Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:30.840Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:30.840Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:31.363Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:31.363Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:31.882Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:31.882Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:32.405Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:32.406Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:32.934Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:32.934Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:33.464Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:33.464Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:34.000Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:34.001Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:34.525Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:34.526Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:35.051Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:35.051Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:35.576Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:35.576Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:36.100Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:36.100Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:36.622Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:36.622Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:37.147Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:37.148Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:37.670Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:37.670Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:38.191Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:38.192Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:38.713Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:38.714Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:39.232Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:39.233Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:39.761Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:39.762Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:40.285Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:40.285Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:40.809Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:40.810Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:41.334Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:41.334Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:41.857Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:41.858Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:42.382Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:42.382Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:42.909Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:42.910Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:43.459Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:43.459Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:43.980Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:43.980Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:44.509Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:44.509Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:45.031Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:45.031Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:45.554Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:45.554Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:46.083Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:46.083Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:46.627Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:46.627Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:47.151Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:47.151Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:47.676Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:47.676Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:48.200Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:48.200Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:48.730Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:48.730Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:49.255Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:49.255Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:49.799Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:49.799Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:50.324Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:50.324Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:50.849Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:50.849Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:51.374Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:51.374Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:51.898Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:51.898Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:52.422Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:52.422Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:52.949Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:52.950Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:53.473Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:53.474Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:53.998Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:53.998Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:54.521Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:54.521Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:55.048Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:55.048Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:55.570Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:55.570Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:56.096Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:56.096Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:56.628Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:56.628Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:57.147Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:57.147Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:57.671Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:57.671Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:58.190Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:58.191Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:58.723Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:58.723Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:59.251Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:59.251Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:14:59.780Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:14:59.780Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:00.300Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:00.301Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:00.823Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:00.823Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:01.348Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:01.348Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:01.880Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:01.881Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:02.405Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:02.405Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:02.927Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:02.927Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:03.452Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:03.452Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:03.982Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:03.982Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:04.503Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:04.503Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:05.032Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:05.033Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:05.557Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:05.557Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:06.098Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:06.099Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:06.624Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:06.624Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:07.145Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:07.146Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:07.684Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:07.685Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:08.208Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:08.208Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:08.732Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:08.732Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:09.255Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:09.255Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:09.782Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:09.782Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:10.310Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:10.311Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:10.833Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:10.834Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:11.355Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:11.356Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:11.885Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:11.885Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:12.414Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:12.414Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:12.938Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:12.938Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:13.470Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:13.470Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:13.995Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:13.995Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:14.523Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:14.523Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:15.047Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:15.048Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:15.591Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:15.591Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:16.127Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:16.128Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:16.656Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:16.657Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:17.183Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:17.184Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:17.707Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:17.707Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:18.233Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:18.234Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:18.757Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:18.757Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:19.285Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:19.285Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:19.807Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:19.807Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:20.332Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:20.333Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:20.855Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:20.856Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:21.377Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:21.377Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:21.901Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:21.902Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:22.428Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:22.428Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:22.953Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:22.953Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:23.484Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:23.484Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:24.007Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:24.007Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:24.532Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:24.533Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:25.065Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:25.065Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:25.590Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:25.591Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:26.117Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:26.118Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:26.642Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:26.642Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:27.167Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:27.168Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:27.697Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:27.698Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:28.230Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:28.230Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:28.762Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:28.763Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:29.282Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:29.283Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:29.809Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:29.809Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:30.335Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:30.336Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:30.856Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:30.857Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:31.380Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:31.380Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:31.904Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:31.904Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:32.426Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:32.427Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:32.949Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:32.949Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:33.471Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:33.471Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:33.992Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:33.992Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:34.513Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:34.514Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:35.035Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:35.036Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:35.557Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:35.557Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:36.085Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:36.085Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:36.623Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:36.623Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:37.149Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:37.149Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:37.670Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:37.671Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:38.193Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:38.194Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:38.720Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:38.720Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:39.244Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:39.244Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:39.776Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:39.776Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:40.301Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:40.302Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:40.827Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:40.827Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:41.361Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:41.361Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:41.888Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:41.889Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:42.420Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:42.421Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:42.950Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:42.950Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:43.476Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:43.476Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:44.000Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:44.000Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:44.526Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:44.526Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:45.063Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:45.063Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:45.585Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:45.585Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:46.106Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:46.106Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:46.628Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:46.629Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:47.159Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:47.160Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:47.682Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:47.682Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:48.207Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:48.207Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-01T03:15:48.742Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-01T03:15:48.742Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
