@@ -164280,3 +164280,10 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 	Ready state: 1
 [2026-09-02T02:27:19.336Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
 [2026-09-02T02:27:19.980Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.7198065514110429; waiting 29692ms
+[2026-09-02T04:03:20.538Z] 🚀 جاري تشغيل Mega Bot...
+[2026-09-02T04:03:21.552Z] ✅ تم تسجيل الدخول باسم NSR HUB#6652
+[2026-09-02T04:03:21.552Z] 📡 متصل في 2 سيرفر
+[2026-09-02T04:03:21.753Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
+[2026-09-02T04:03:21.754Z] جارٍ الاتصال بالجسر MQTT...
+[2026-09-02T04:03:22.159Z] الجسر متصل — نستمع للأوامر على nsrbot/cdb56f759d076b3257db98097a1634e7/cmd
+[2026-09-02T04:03:22.328Z] ✅ تم تسجيل 38 أوامر عامة في 2 سيرفر
