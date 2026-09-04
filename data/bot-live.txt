@@ -164492,3 +164492,8 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 	Ready state: 1
 [2026-09-04T19:05:22.479Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
 [2026-09-04T19:05:23.171Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.00488336115077026; waiting 201ms
+[2026-09-04T22:02:06.833Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-04T22:02:06.880Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-04T22:02:07.526Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.834808538871421; waiting 34435ms
