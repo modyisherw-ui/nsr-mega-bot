@@ -72,6 +72,7 @@ function connectBridge(key, win) {
     clean: true,
     reconnectPeriod: 5000,
     connectTimeout: 10000,
+    maxPacketSize: 50 * 1024 * 1024,
   });
   mqttClient.on('connect', () => {
     const topic = `nsrbot/${mqttKey}/state`;
@@ -96,7 +97,8 @@ function connectBridge(key, win) {
   });
 }
 
-function sendCommand(data, timeoutMs = 15000) {
+function sendCommand(data, timeoutMs) {
+  const timeout = timeoutMs || data._timeout || 15000;
   return new Promise((resolve, reject) => {
     if (!mqttClient || !mqttClient.connected) {
       return reject(new Error('الجسر غير متصل — تأكد من مفتاح الجسر الصحيح وافتح التطبيق مع تشغيل البوت'));
@@ -106,7 +108,7 @@ function sendCommand(data, timeoutMs = 15000) {
     const timer = setTimeout(() => {
       pendingReplies.delete(requestId);
       reject(new Error('انتهت مهلة الانتظار — البوت لم يجب (هل الجسر مفعّل في البوت?)'));
-    }, timeoutMs);
+    }, timeout);
     pendingReplies.set(requestId, (msg) => { clearTimeout(timer); resolve(msg); });
     mqttClient.publish(`nsrbot/${mqttKey}/cmd`, JSON.stringify(payload), { qos: 1 }, (err) => {
       if (err) { clearTimeout(timer); pendingReplies.delete(requestId); reject(new Error('فشل إرسال الأمر: ' + err.message)); }

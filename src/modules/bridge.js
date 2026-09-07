@@ -79,6 +79,7 @@ function connect() {
     clean: true,
     reconnectPeriod: 5000,
     connectTimeout: 10000,
+    maxPacketSize: 50 * 1024 * 1024,
   });
 
   client.on('connect', () => {

@@ -2139,7 +2139,7 @@ function renderMessages(main) {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext });
+      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext, _timeout: 60000 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل رفع الصورة');
       themeImgInput.value = rep.data.url;
       themeImgStatus.textContent = '✅ تم الرفع — الرابط جاهز';
