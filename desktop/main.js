@@ -383,13 +383,13 @@ $exeName = '${exeName.replace(/'/g, "''")}'
 $iPath = '${iPath.replace(/'/g, "''")}'
 $aPath = '${aPath.replace(/'/g, "''")}'
 
-# 1) انتظر حتى يخرج التطبيق الحالي نهائياً (حتى 20 ثانية) ثم اقتل الباقي
-$deadline = (Get-Date).AddSeconds(20)
+# 1) انتظر حتى يخرج التطبيق الحالي نهائياً (حتى 30 ثانية) ثم اقتل الباقي
+$deadline = (Get-Date).AddSeconds(30)
 while ((Get-Process -Name ([System.IO.Path]::GetFileNameWithoutExtension($exeName)) -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
   Start-Sleep -Milliseconds 500
 }
 Get-Process -Name ([System.IO.Path]::GetFileNameWithoutExtension($exeName)) -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 1
 L "old app stopped"
 
 # 2) قم بتثبيت النسخة الجديدة بصمت
@@ -421,6 +421,8 @@ if (Test-Path $aPath) {
     fs.writeFileSync(scriptFile, ps, 'utf8');
     spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-File', scriptFile], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     updateLog('launched updater script: ' + installerPath + ' (log: ' + logFile + ')');
+    // إغلاق التطبيق فوراً حتى يقدر السكربت يتثبيت ويفرج المساحة
+    setTimeout(() => { try { app.quit(); } catch (_) {} }, 500);
   } catch (e) {
     updateLog('launch updater failed: ' + (e && e.message));
   }
