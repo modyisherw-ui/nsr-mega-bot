@@ -2037,7 +2037,12 @@ function renderMessages(main) {
           <label>نص الثيم</label>
           <textarea id="theme-text" placeholder="اكتب محتوى الثيم هنا..." style="min-height:72px;"></textarea>
           <label>صورة الثيم (رابط — اختياري)</label>
-          <input id="theme-img" type="text" placeholder="https://...png" />
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input id="theme-img" type="text" placeholder="https://...png" style="flex:1;" />
+            <input id="theme-img-file" type="file" accept="image/*" style="display:none;" />
+            <button class="btn secondary" id="theme-img-pick" title="رفع صورة من الجهاز" style="white-space:nowrap; padding:8px 12px; height:38px;">${ic('image')} من الجهاز</button>
+          </div>
+          <p id="theme-img-status" style="font-size:11px; color:var(--muted); margin-top:4px; display:none;"></p>
           <div class="toggle-row" style="margin-top:8px;">
             <span>${ic('send')} إرسال كرسالة نصية بدل الإمبد</span>
             <label class="switch"><input type="checkbox" id="theme-asmsg"/><span class="slider"></span></label>
@@ -2112,6 +2117,42 @@ function renderMessages(main) {
   ['#theme-title', '#theme-text', '#theme-img', '#theme-color'].forEach((sel) => main.querySelector(sel).addEventListener('input', renderThemePreview));
   main.querySelector('#theme-asmsg').addEventListener('change', renderThemePreview);
   renderThemePreview();
+  const themeFileInput = main.querySelector('#theme-img-file');
+  const themePickBtn = main.querySelector('#theme-img-pick');
+  const themeImgInput = main.querySelector('#theme-img');
+  const themeImgStatus = main.querySelector('#theme-img-status');
+  themePickBtn.addEventListener('click', () => themeFileInput.click());
+  themeFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('الملف يجب أن يكون صورة', 'err'); return; }
+    if (file.size > 8 * 1024 * 1024) { toast('حجم الصورة يتجاوز 8MB', 'err'); return; }
+    themeImgStatus.style.display = 'block';
+    themeImgStatus.textContent = '⏳ جاري رفع الصورة...';
+    themeImgStatus.style.color = 'var(--muted)';
+    themePickBtn.disabled = true;
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const b64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext });
+      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل رفع الصورة');
+      themeImgInput.value = rep.data.url;
+      themeImgStatus.textContent = '✅ تم الرفع — الرابط جاهز';
+      themeImgStatus.style.color = '#2ecc71';
+      renderThemePreview();
+    } catch (err) {
+      themeImgStatus.textContent = '❌ ' + err.message;
+      themeImgStatus.style.color = '#e74c3c';
+    } finally {
+      themePickBtn.disabled = false;
+      themeFileInput.value = '';
+    }
+  });
   main.querySelector('#msg-send').addEventListener('click', async () => {
     const targetId = main.querySelector('#msg-user').value.trim();
     const t = MSG_TYPES[msgType];

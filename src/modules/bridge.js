@@ -780,6 +780,35 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
       break;
     }
 
+    case 'uploadThemeImage': {
+      try {
+        const b64 = String(msg.imageBase64 || '');
+        const ext = String(msg.ext || 'png').replace(/[^a-z0-9]/gi, '');
+        if (!b64) { reply(key, msg, null, 'الصورة فارغة'); break; }
+        const buf = Buffer.from(b64, 'base64');
+        if (!buf || buf.length === 0) { reply(key, msg, null, 'الصورة فارغة'); break; }
+        const maxSize = 8 * 1024 * 1024;
+        if (buf.length > maxSize) { reply(key, msg, null, 'حجم الصورة يتجاوز 8MB'); break; }
+        const fileName = `theme_${Date.now()}.${ext}`;
+        const { PermissionsBitField } = require('discord.js');
+        const need = PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles;
+        const canAttach = (c) => c && c.type === 0 && c.permissionsFor(guild.members.me)?.has(need);
+        const memberJoinChannel = require('../guildCfg').get(guild.id).logChannels?.memberJoin;
+        let channel = canAttach(guild.channels.cache.get(memberJoinChannel))
+          ? guild.channels.cache.get(memberJoinChannel) : null;
+        if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
+        if (!channel) channel = guild.channels.cache.find(canAttach);
+        if (!channel) { reply(key, msg, null, 'لا يوجد روم يمكن رفع الصورة فيه'); break; }
+        const sent = await channel.send({ files: [{ attachment: buf, name: fileName }] });
+        const attachment = sent.attachments.first();
+        if (!attachment) { reply(key, msg, null, 'تعذر الحصول على رابط الصورة'); break; }
+        reply(key, msg, { url: attachment.url, fileName });
+      } catch (err) {
+        reply(key, msg, null, 'تعذر رفع الصورة: ' + err.message);
+      }
+      break;
+    }
+
     case 'setLogo': {
       const url = String(msg.logoUrl || '').trim();
       if (!url) { reply(key, msg, null, 'رابط الصورة مطلوب'); break; }
