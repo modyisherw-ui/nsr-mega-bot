@@ -2126,20 +2126,35 @@ function renderMessages(main) {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast('الملف يجب أن يكون صورة', 'err'); return; }
-    if (file.size > 8 * 1024 * 1024) { toast('حجم الصورة يتجاوز 8MB', 'err'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast('حجم الصورة يتجاوز 20MB', 'err'); return; }
     themeImgStatus.style.display = 'block';
-    themeImgStatus.textContent = '⏳ جاري رفع الصورة...';
+    themeImgStatus.textContent = '⏳ جاري ضغط الصورة...';
     themeImgStatus.style.color = 'var(--muted)';
     themePickBtn.disabled = true;
     try {
-      const ext = file.name.split('.').pop() || 'png';
       const b64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          const MAX = 1024;
+          if (width > MAX || height > MAX) {
+            const ratio = Math.min(MAX / width, MAX / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+        img.src = URL.createObjectURL(file);
       });
-      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext, _timeout: 60000 });
+      themeImgStatus.textContent = '⏳ جاري الرفع...';
+      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext: 'jpg', _timeout: 90000 });
       if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل رفع الصورة');
       themeImgInput.value = rep.data.url;
       themeImgStatus.textContent = '✅ تم الرفع — الرابط جاهز';

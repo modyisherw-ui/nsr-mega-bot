@@ -104,13 +104,17 @@ function sendCommand(data, timeoutMs) {
       return reject(new Error('الجسر غير متصل — تأكد من مفتاح الجسر الصحيح وافتح التطبيق مع تشغيل البوت'));
     }
     const requestId = crypto.randomBytes(8).toString('hex');
-    const payload = { requestId, ...data };
+    const { _timeout, ...cmdData } = data;
+    const payload = { requestId, ...cmdData };
+    const jsonStr = JSON.stringify(payload);
+    const sizeKB = Math.round(jsonStr.length / 1024);
+    if (sizeKB > 500) updateLog(`⚠️ large MQTT payload: ${sizeKB}KB type=${data.type}`);
     const timer = setTimeout(() => {
       pendingReplies.delete(requestId);
       reject(new Error('انتهت مهلة الانتظار — البوت لم يجب (هل الجسر مفعّل في البوت?)'));
     }, timeout);
     pendingReplies.set(requestId, (msg) => { clearTimeout(timer); resolve(msg); });
-    mqttClient.publish(`nsrbot/${mqttKey}/cmd`, JSON.stringify(payload), { qos: 1 }, (err) => {
+    mqttClient.publish(`nsrbot/${mqttKey}/cmd`, jsonStr, { qos: 1 }, (err) => {
       if (err) { clearTimeout(timer); pendingReplies.delete(requestId); reject(new Error('فشل إرسال الأمر: ' + err.message)); }
     });
   });
