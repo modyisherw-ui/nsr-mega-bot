@@ -102,6 +102,8 @@ function connect() {
     let msg;
     try { msg = JSON.parse(payload.toString()); } catch (_) { return; }
     if (!msg || !msg.type) return;
+    const payloadKB = Math.round(payload.length / 1024);
+    if (payloadKB > 100) log.bot('bridge recv: type=' + msg.type + ' size=' + payloadKB + 'KB');
     handleMessage(msg, key).catch(err => log.warn('خطأ في معالجة أمر الجسر: ' + err.message));
   });
 }
@@ -785,9 +787,11 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
       try {
         const b64 = String(msg.imageBase64 || '');
         const ext = String(msg.ext || 'png').replace(/[^a-z0-9]/gi, '');
-        if (!b64) { reply(key, msg, null, 'الصورة فارغة'); break; }
+        log.bot('uploadThemeImage: ext=' + ext + ' b64_len=' + b64.length);
+        if (!b64) { reply(key, msg, null, 'الصورة فارغة — لم يُرسل أي بيانات'); break; }
         const buf = Buffer.from(b64, 'base64');
-        if (!buf || buf.length === 0) { reply(key, msg, null, 'الصورة فارغة'); break; }
+        if (!buf || buf.length === 0) { reply(key, msg, null, 'الصورة فارغة بعد التحويل'); break; }
+        log.bot('uploadThemeImage: buf_size=' + buf.length);
         const maxSize = 8 * 1024 * 1024;
         if (buf.length > maxSize) { reply(key, msg, null, 'حجم الصورة يتجاوز 8MB'); break; }
         const fileName = `theme_${Date.now()}.${ext}`;
@@ -799,12 +803,19 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
           ? guild.channels.cache.get(memberJoinChannel) : null;
         if (!channel && canAttach(guild.systemChannel)) channel = guild.systemChannel;
         if (!channel) channel = guild.channels.cache.find(canAttach);
-        if (!channel) { reply(key, msg, null, 'لا يوجد روم يمكن رفع الصورة فيه'); break; }
+        if (!channel) {
+          log.warn('uploadThemeImage: no channel found in guild ' + guild.name);
+          reply(key, msg, null, 'لا يوجد روم يمكن رفع الصورة فيه — تأكد من صلاحيات البوت');
+          break;
+        }
+        log.bot('uploadThemeImage: sending to #' + channel.name);
         const sent = await channel.send({ files: [{ attachment: buf, name: fileName }] });
         const attachment = sent.attachments.first();
         if (!attachment) { reply(key, msg, null, 'تعذر الحصول على رابط الصورة'); break; }
+        log.bot('uploadThemeImage: uploaded OK url=' + attachment.url.substring(0, 80));
         reply(key, msg, { url: attachment.url, fileName });
       } catch (err) {
+        log.warn('uploadThemeImage error: ' + err.message);
         reply(key, msg, null, 'تعذر رفع الصورة: ' + err.message);
       }
       break;
