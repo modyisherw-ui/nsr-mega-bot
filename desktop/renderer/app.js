@@ -2136,7 +2136,7 @@ function renderMessages(main) {
         const img = new Image();
         img.onload = () => {
           let { width, height } = img;
-          const MAX = 1024;
+          const MAX = 800;
           if (width > MAX || height > MAX) {
             const ratio = Math.min(MAX / width, MAX / height);
             width = Math.round(width * ratio);
@@ -2147,8 +2147,13 @@ function renderMessages(main) {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-          resolve(dataUrl.split(',')[1]);
+          let dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          let b64Part = dataUrl.split(',')[1];
+          if (b64Part.length > 180000) {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.35);
+            b64Part = dataUrl.split(',')[1];
+          }
+          resolve(b64Part);
         };
         img.onerror = () => reject(new Error('فشل تحميل الصورة'));
         img.src = URL.createObjectURL(file);

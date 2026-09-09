@@ -809,7 +809,20 @@ async function handleMessageSwitch(msg, key, guild, guildSettings) {
           break;
         }
         log.bot('uploadThemeImage: sending to #' + channel.name);
-        const sent = await channel.send({ files: [{ attachment: buf, name: fileName }] });
+        let sent;
+        try {
+          sent = await channel.send({ files: [{ attachment: buf, name: fileName }] });
+        } catch (sendErr) {
+          log.warn('uploadThemeImage first attempt failed: ' + sendErr.message);
+          if (buf.length > 200000) {
+            const smallB64 = b64.substring(0, Math.floor(b64.length * 0.5));
+            const smallBuf = Buffer.from(smallB64, 'base64');
+            log.bot('uploadThemeImage: retrying with truncated buffer size=' + smallBuf.length);
+            sent = await channel.send({ files: [{ attachment: smallBuf, name: fileName }] });
+          } else {
+            throw sendErr;
+          }
+        }
         const attachment = sent.attachments.first();
         if (!attachment) { reply(key, msg, null, 'تعذر الحصول على رابط الصورة'); break; }
         log.bot('uploadThemeImage: uploaded OK url=' + attachment.url.substring(0, 80));
