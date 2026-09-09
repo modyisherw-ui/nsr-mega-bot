@@ -2132,7 +2132,7 @@ function renderMessages(main) {
     themeImgStatus.style.color = 'var(--muted)';
     themePickBtn.disabled = true;
     try {
-      const b64 = await new Promise((resolve, reject) => {
+      const blob = await new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
           let { width, height } = img;
@@ -2147,21 +2147,22 @@ function renderMessages(main) {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          let dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-          let b64Part = dataUrl.split(',')[1];
-          if (b64Part.length > 180000) {
-            dataUrl = canvas.toDataURL('image/jpeg', 0.35);
-            b64Part = dataUrl.split(',')[1];
-          }
-          resolve(b64Part);
+          canvas.toBlob((b) => b ? resolve(b) : reject(new Error('فشل إنشاء الصورة')), 'image/jpeg', 0.7);
         };
         img.onerror = () => reject(new Error('فشل تحميل الصورة'));
         img.src = URL.createObjectURL(file);
       });
-      themeImgStatus.textContent = '⏳ جاري الرفع...';
-      const rep = await NSR.bridgeCommand({ type: 'uploadThemeImage', userId: session.user.id, guildId: currentGuild.id, imageBase64: b64, ext: 'jpg', _timeout: 90000 });
-      if (!rep || !rep.ok) throw new Error((rep && rep.error) || 'فشل رفع الصورة');
-      themeImgInput.value = rep.data.url;
+      themeImgStatus.textContent = '⏳ جاري الرفع لخادم الصور...';
+      const form = new FormData();
+      form.append('reqtype', 'fileupload');
+      form.append('fileToUpload', blob, 'theme.jpg');
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const resp = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: form, signal: ctrl.signal });
+      clearTimeout(timer);
+      const url = (await resp.text()).trim();
+      if (!url || !url.startsWith('https://')) throw new Error('فشل رفع الصورة — الرد: ' + url.substring(0, 120));
+      themeImgInput.value = url;
       themeImgStatus.textContent = '✅ تم الرفع — الرابط جاهز';
       themeImgStatus.style.color = '#2ecc71';
       renderThemePreview();
