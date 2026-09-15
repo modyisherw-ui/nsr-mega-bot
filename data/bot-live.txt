@@ -172355,3 +172355,190 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 [2026-09-15T14:16:21.503Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
 	Needs closing: false
 	Ready state: 3
+[2026-09-15T14:16:22.122Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:22.123Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:22.785Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:22.786Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:23.419Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:23.419Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:27.101Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:27.101Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:27.963Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.8562441350921449; waiting 35320ms
+[2026-09-15T14:16:32.488Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:16:32.489Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:16:35.908Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.5810390243368467; waiting 23967ms
+[2026-09-15T14:16:47.109Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:47.110Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:47.743Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:16:47.744Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:16:48.559Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.7413369353240568; waiting 30580ms
+[2026-09-15T14:16:54.422Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:16:54.423Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:16:55.539Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.08748653487993052; waiting 3608ms
+[2026-09-15T14:17:02.302Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:02.303Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:03.154Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:03.155Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:03.766Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:03.766Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:05.260Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.082433074115707; waiting 3400ms
+[2026-09-15T14:17:13.336Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:13.336Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:13.996Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:13.997Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:14.616Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:14.617Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:15.635Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:15.636Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:16.279Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:16.279Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:17.059Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:17.060Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:17.861Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:17.862Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:18.491Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:18.492Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:19.309Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.6959434381397631; waiting 28707ms
+[2026-09-15T14:17:34.323Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:34.422Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:35.298Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.8101245650742432; waiting 33417ms
+[2026-09-15T14:17:39.961Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:39.962Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:40.760Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:40.761Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:41.399Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:41.399Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:42.027Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:42.027Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:42.823Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:42.823Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:43.464Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:43.464Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:45.067Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.48229897312335734; waiting 19894ms
+[2026-09-15T14:17:55.652Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:17:55.653Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:17:56.306Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:56.307Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:57.139Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:57.140Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:57.782Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:57.782Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:58.405Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:58.406Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:59.030Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:59.030Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:17:59.656Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:17:59.656Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:18:00.476Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.6522023765815484; waiting 26903ms
+[2026-09-15T14:18:06.409Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:18:06.410Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:18:07.174Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.5597995905230163; waiting 23091ms
+[2026-09-15T14:18:10.214Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:18:10.215Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
+[2026-09-15T14:18:10.849Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-09-15T14:18:10.850Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 3
+[2026-09-15T14:18:12.387Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.8264342519262267; waiting 34090ms
+[2026-09-15T14:18:20.494Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-09-15T14:18:20.494Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: false
+	Ready state: 2
