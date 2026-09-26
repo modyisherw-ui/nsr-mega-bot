@@ -300,10 +300,14 @@ async function handleMessageSecurity(message) {
   const am = prot.automod || {};
   const member = message.member;
   const isMod = isAdminOrStaff(message.guild, member) || member?.permissions?.has('ManageMessages');
+  const includeAdmins = !!am.includeAdmins;
+  // إذا includeAdmins مفعّل → ما نتجاهل الأدمنين (نطبّق الحماية عليهم)
+  // إذا معطّل → نتجاهل الأدمنين (تخطيهم)
+  const skipMod = !includeAdmins && isMod;
   const content = (message.content || '').toLowerCase();
 
   // 🛡️ فلتر @everyone / @here
-  if (am.enabled && am.everyone && !isMod && /@everyone|@here/.test(content)) {
+  if (am.enabled && am.everyone && !skipMod && /@everyone|@here/.test(content)) {
     try { await message.delete().catch(() => {}); } catch {}
     await sendSecurityLog(message.guild, '🚫 تم حذف رسالة فيها @everyone', [
       { name: 'العضو', value: `${member?.user?.tag || '?'} (<@${message.author.id}>)` },
@@ -313,7 +317,7 @@ async function handleMessageSecurity(message) {
   }
 
   // 🔗 فلتر الروابط
-  if (am.enabled && am.links && !isMod && /(https?:\/\/|discord\.gg|invite\.gg)/i.test(content)) {
+  if (am.enabled && am.links && !skipMod && /(https?:\/\/|discord\.gg|invite\.gg)/i.test(content)) {
     try { await message.delete().catch(() => {}); } catch {}
     await sendSecurityLog(message.guild, '🔗 تم حذف رسالة فيها رابط', [
       { name: 'العضو', value: `${member?.user?.tag || '?'} (<@${message.author.id}>)` },
@@ -322,9 +326,9 @@ async function handleMessageSecurity(message) {
     return;
   }
 
-  // 💬 فلتر السب (كل الأعضاء حتى الإدارة — حماية البوت من الباند)
+  // 💬 فلتر السب
   const swearProt = prot.swearWords || {};
-  if (swearProt.enabled && containsBannedWord(content, bannedWords.concat(prot.customWords || []))) {
+  if (swearProt.enabled && !skipMod && containsBannedWord(content, bannedWords.concat(prot.customWords || []))) {
     const severity = prot.swearWords?.severity || 'delete';
     try { await message.delete().catch(() => {}); } catch {}
     if (severity === 'mute') {
@@ -342,7 +346,7 @@ async function handleMessageSecurity(message) {
 
   // 🚀 كشف السبام
   const spamOn = am.spam !== undefined ? am.spam : cfg.spam_enabled;
-  if (spamOn && !isMod) {
+  if (spamOn && !skipMod) {
     const key = `${message.guild.id}:${message.author.id}`;
     const now = Date.now();
     const state = spamState.get(key) || { count: 0, first: now };

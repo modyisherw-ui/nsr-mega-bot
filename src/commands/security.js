@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const db = require('../db');
 const emb = require('../utils/embeds');
+const guildCfg = require('../guildCfg');
 
 module.exports = {
   name: 'security-group',
@@ -9,21 +10,52 @@ module.exports = {
       data: new SlashCommandBuilder()
         .setName('security')
         .setDescription('نظام الأمان')
-        .addSubcommand(s => s.setName('status').setDescription('حالة الحماية')),
+        .addSubcommand(s => s.setName('status').setDescription('حالة الحماية'))
+        .addSubcommand(s => s
+          .setName('admins')
+          .setDescription('تحكم: هل الحماية تشمل الأدمنين؟')
+          .addBooleanOption(o => o.setName('enabled').setDescription('مفعّل = الحماية تشمل الأدمنين، معطّل = تتجاهلهم').setRequired(true))),
       async execute(interaction) {
+        const sub = interaction.options.getSubcommand();
         const cfg = db.securityCfg.get(interaction.guild.id);
-        const guildCfg = require('../guildCfg').get(interaction.guild.id);
-        const protectedRoles = cfg.protected_roles.length ? cfg.protected_roles : (guildCfg.protectedRoles || []);
+        const gCfg = guildCfg.get(interaction.guild.id);
+
+        if (sub === 'admins') {
+          if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            await interaction.reply({ content: '❌ هذه الميزة للإدارة فقط.', ephemeral: true });
+            return;
+          }
+          const enabled = interaction.options.getBoolean('enabled');
+          const prot = gCfg.protection || {};
+          const am = prot.automod || {};
+          guildCfg.set(interaction.guild.id, {
+            protection: { ...prot, automod: { ...am, includeAdmins: enabled } },
+          });
+          const embed = new emb.infoEmbed(interaction.client, '🛡️ إعداد حماية الأدمنين', [
+            enabled
+              ? '✅ **مفعّل** — الحماية تشمل الأشخاص الذين لديهم صلاحية Administrator'
+              : '⏭️ **معطّل** — الحماية تتجاهل الأشخاص الذين لديهم صلاحية Administrator (تخطيهم)',
+            '',
+            `**يشمل:** السب، الروابط، السبام، @everyone`,
+          ].join('\n'));
+          await interaction.reply({ embeds: [embed] });
+          return;
+        }
+
+        // status
+        const protectedRoles = cfg.protected_roles.length ? cfg.protected_roles : (gCfg.protectedRoles || []);
+        const includeAdmins = !!(((gCfg.protection || {}).automod || {}).includeAdmins);
         const embed = new emb.infoEmbed(interaction.client, '🛡️ حالة الحماية', [
           `**مكافحة السبام:** \`${cfg.spam_enabled ? '✅ مفعّل' : '❌ معطّل'}\``,
           `**حد الرسائل:** \`${cfg.spam_max_messages}\` خلال \`${cfg.spam_window}\` ثانية`,
           `**مدة الكتم:** \`${cfg.spam_timeout}\` دقيقة`,
+          `**الحماية تشمل الأدمنين:** \`${includeAdmins ? '✅ نعم' : '⏭️ لا (تخطي)'}\``,
           '',
           '**الرتب المحمية:**',
           protectedRoles.length
             ? protectedRoles.map(id => `<@&${id}>`).join(', ')
             : 'لا توجد',
-          `**العقوبة:** \`${guildCfg.protectionAction || 'kick'}\``,
+          `**العقوبة:** \`${gCfg.protectionAction || 'kick'}\``,
         ].join('\n'));
         await interaction.reply({ embeds: [embed] });
       },

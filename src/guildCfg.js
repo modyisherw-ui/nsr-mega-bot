@@ -20,7 +20,7 @@ const DEFAULTS = {
     roleDelete: { enabled: true, threshold: 3, window: 10, action: 'kick' },
     webhook: { enabled: true, action: 'kick' },
     bot: { enabled: true, action: 'kick' },
-    automod: { enabled: true, links: true, everyone: true, spam: true },
+    automod: { enabled: true, links: true, everyone: true, spam: true, includeAdmins: false },
     swearWords: { enabled: true },
   },
   staffRoles: [],
