@@ -5,21 +5,21 @@ const guildCfg = require('./guildCfg');
 const { systemRows } = require('./modules/adminPanel');
 const { getProducts, findProduct, saveRatingConfig } = require('./modules/ratings');
 const { messagesEmbed, messagesRows } = require('./modules/messages');
+const { LOGO_ATTACH, hasLogo } = require('./utils/logo');
 
 const PAGES = {
-  home: { emoji: '🏠', name: 'الرئيسية', desc: 'نظرة عامة على السيرفر: إحصائيات التذاكر والمشاركات والباندات.', commands: ['🔄 زر التحديث يعيد جلب الأرقام فوراً'] },
-  welcome: { emoji: '👋', name: 'نظام الترحيب', desc: 'رسالة ترحيب تلقائية للأعضاء الجدد: اختر الروم أو الخاص، اكتب الرسالة، أضف صورة، وحدد محتواها.', commands: ['اختر **الروم** من القائمة بالأسفل', '✏️ عدّل **الرسالة** (كلمات: {user} منشن العضو، {count} رقم العضو)', '🖼️ ضع **صورة/بنر** للرسالة', '📩 اختر **خاص أو روم** للاستقبال'] },
-  tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['أظهر/أخفِ الأنواع من الأزرار', '➕ أضف نوعاً مخصصاً / 🗑️ احذفه', '📨 أرسل لوحة التذاكر لروم'] },
-  suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '📨 إرسال لوحة الاقتراحات'] },
-  messages: { emoji: '💬', name: 'نظام الرسائل', desc: 'أرسل رسائل خاصة للأعضاء: رسالة، استدعاء، شكر، أو عرض خاص.\n\n> هناك تهدئة دقيقة واحدة بين كل رسالة لنفس الشخص.', commands: ['اختر نوع الرسالة من الأزرار بالأسفل ثم اكتب المعرّف والنص'] },
-  security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية كاملة: الرتب المحمية، حذف الرومات، النسف، الباند والطرد الجماعي، حذف الرتب، الويبهوك، البوتات، والأوتومود.', commands: ['🔒 الرتب المحمية + رتب تتجاوز الحماية', '📂 أقسام: الرومات • الأعضاء • الرتب • الأوتومود'] },
-  logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
-  ai: { emoji: '🧠', name: 'معالج AI', desc: 'ذكاء اصطناعي يرد تلقائياً على أسئلة الأعضاء ومشاكلهم في الروم المحدد، مع فلترة الألفاظ ومستويات معاقبة.', commands: ['فعّل/عطّل النظام وزر الاختبار', 'اختر **روم الرد** من القائمة', 'بدّل الوضع: حل مشاكل / استفسارات'] },
-  ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص.', commands: ['➕ إضافة منتج / 🗑️ حذف منتج', '📨 إرسال تقييم مباشرة', 'اختر **روم التقييمات** من القائمة'] },
-  autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
-  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد في أي روم.\n**📜 الأوامر** — قائمة الأوامر وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
-  commands: { emoji: '📜', name: 'صلاحيات الأوامر', desc: 'تحكم في من يستطيع استخدام كل أمر من أوامر البوت: عام، رتب الإدارة، أدمن فقط، أو معطّل.', commands: ['اختر أمراً من القائمة ثم اختر الصلاحية'] },
-  staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'رتب تستطيع استخدام أوامر الإدارة (`/rate` و`/ticket panel` وغيرها) بينما اللوحة تبقى للأدمن فقط.', commands: ['اختر الرتب من القائمة بالأسفل — يُحفظ فوراً'] },
+  home: { emoji: '🏠', name: 'الرئيسية', desc: 'إحصائيات السيرفر' },
+  welcome: { emoji: '👋', name: 'الترحيب', desc: 'رسالة ترحيب للأعضاء الجدد' },
+  tickets: { emoji: '🎫', name: 'التذاكر', desc: 'أنواع التذاكر ولوحة الإرسال' },
+  suggestions: { emoji: '💡', name: 'الاقتراحات', desc: 'روم الاقتراحات وزر التقديم' },
+  messages: { emoji: '💬', name: 'الرسائل', desc: 'رسائل خاصة للأعضاء' },
+  security: { emoji: '🛡️', name: 'الأمان', desc: 'الحماية والفلاتر' },
+  logs: { emoji: '📋', name: 'اللوقات', desc: 'رومات تسجيل الأحداث' },
+  ratings: { emoji: '🛍️', name: 'التقييمات', desc: 'المنتجات ورومات التقييم' },
+  autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة عند الدخول والبوتات' },
+  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة' },
+  commands: { emoji: '📜', name: 'صلاحيات الأوامر', desc: 'من يستخدم كل أمر' },
+  staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'الرتب التي تستخدم أوامر الإدارة' },
 };
 
 // أحداث اللوقات المتاحة للتعديل من اللوحة
@@ -103,12 +103,10 @@ function logsEmbed(client, guild) {
     .setColor(panelColor(guild))
     .setTitle('📋 إعداد رومات اللوقات')
     .setDescription([
-      'اختر الحدث من القوائم بالأسفل، ثم اختر القناة التي تصل إليه.',
-      '',
       ...lines,
       '',
       '━━━━━━━━━━━━━━',
-      '**📌 الأحداث المستخدمة حالياً في الرومات:**',
+      '**📌 الأحداث المربوطة:**',
       usedList,
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
@@ -231,10 +229,7 @@ function staffEmbed(client, guild) {
     .setColor(panelColor(guild))
     .setTitle('👮 رتب الإدارة')
     .setDescription([
-      'هذه الرتب تستطيع استخدام أوامر الإدارة مثل `/rate` و`/ticket panel` وغيرها.',
-      'لوحة التحكم نفسها تبقى **للأدمن (Administrator) فقط**.',
-      '',
-      `**رتب الإدارة الحالية:**`,
+      '**رتب الإدارة:**',
       list,
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
@@ -278,8 +273,6 @@ function suggestionsEmbed(client, guild) {
     .setTitle('💡 نظام الاقتراحات')
     .setDescription([
       `**روم الاقتراحات:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`,
-      '',
-      'عندما يرسل أحدهم اقتراحاً سيصلك على الخاص **ومعه نسخة في الروم** المحدد بالأسفل.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -383,9 +376,7 @@ function commandsEmbed2(client, guild, page) {
     .setColor(panelColor(guild))
     .setTitle('📜 قائمة الأوامر والصلاحيات')
     .setDescription([
-      'هذه قائمة أوامر البوت. اختر أمراً من القائمة بالأسفل لتغيير من يستطيع استخدامه.',
-      '',
-      `**الأوامر (صفحة ${p + 1}/${totalPages}):**`,
+      `**صفحة ${p + 1}/${totalPages}**`,
       '',
       lines.length ? lines.join('\n') : '_لا توجد أوامر._',
     ].join('\n'))
@@ -482,12 +473,10 @@ async function handleCmdPerm(interaction) {
 
 function pageEmbed(interaction, pageId) {
   const p = PAGES[pageId];
-  const parts = [p.desc];
-  if (p.commands && p.commands.length) parts.push(`\n**الأوامر:**\n${p.commands.map(c => c).join('\n')}`);
   return new EmbedBuilder()
     .setColor(panelColor(interaction.guild))
     .setTitle(`${p.emoji} ${p.name}`)
-    .setDescription(parts.join('\n'))
+    .setDescription(p.desc)
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
@@ -510,12 +499,8 @@ function autorolesEmbed(client, guild) {
     .setColor(panelColor(guild))
     .setTitle('🤖 الرولات التلقائية')
     .setDescription([
-      'اختر من القوائم بالأسفل، ويُحفظ فوراً.',
-      '',
       `👤 **رتبة الأعضاء:** ${memberRole ? `<@&${memberRole.id}>` : '`غير محددة`'}`,
       `🤖 **رتبة البوتات:** ${botRole ? `<@&${botRole.id}>` : '`غير محددة`'}`,
-      '',
-      '> سيحصل أي عضو/بوت يدخل السيرفر على رتبته تلقائياً.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -655,8 +640,6 @@ function welcomeEmbed(client, guild) {
     .setColor(panelColor(guild))
     .setTitle('👋 نظام الترحيب')
     .setDescription([
-      'رسالة ترحيب تلقائية لكل عضو جديد يدخل السيرفر.',
-      '',
       `**📢 الروم:** ${channel ? `<#${channel.id}>` : '`غير محدد`'}`,
       `**📩 الاستقبال:** ${w.mode === 'dm' ? 'رسالة خاصة (DM)' : 'روم السيرفر'}`,
       `**🖼️ مع صورة:** ${w.withImage ? (w.imageUrl ? 'نعم ✅' : 'نعم (بدون رابط صورة بعد) ⚠️') : 'لا ❌'}`,
@@ -665,9 +648,7 @@ function welcomeEmbed(client, guild) {
       '**💬 الرسالة (معاينة):**',
       `> ${preview || '`لا توجد رسالة بعد`'}`,
       '',
-      '**كلمات جاهزة:** `{user}` = منشن العضو، `{count}` = رقم العضو، `{server}` = اسم السيرفر.',
-      'إذا فعّلت **رقم العضو** تُضاف تلقائياً: "أنت العضو رقم **{count}**".',
-      w.mode === 'dm' ? '⚠️ في وضع **DM** تُرسل على الخاص — إن أغلق العضو الخاص، تُحول لحالة فشل صامتة.' : '',
+      '`{user}` منشن • `{count}` رقم العضو • `{server}` اسم السيرفر',
     ].filter(Boolean).join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -810,16 +791,11 @@ function ticketsEmbed(client, guild) {
     .setColor(panelColor(guild))
     .setTitle('🎫 نظام التذاكر')
     .setDescription([
-      'تحكم بأنواع التذاكر التي تظهر للعضو (أظهر/أخفِ أي نوع):',
-      '',
       `**عنوان اللوحة:** ${t.panel?.title || '🎫 Support Tickets'}`,
       `**الحالة:** ${enabled.length} نوع مفعّل من ${types.length || 0}`,
       '',
       '**الأنواع:**',
       lines,
-      '',
-      '⚠️ الأنواع المطفأة (❌) لا تظهر في لوحة التذاكر.',
-      '🗑️ الزر الأخضر بحذف **الأنواع المخصصة فقط** — العامة (الافتراضية) لا تُحذف.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -1158,7 +1134,6 @@ function homeEmbed(guild, data) {
       `💬 **رسائل اليوم:** ${gs.msgs_today || 0} • الإجمالي: ${gs.msgs_total || 0}`,
       `⛔ **الباندات:** ${bansTotal}`,
       '',
-      '━━━━━━━━━━━━━━',
       '**آخر الباندات:**',
       banList,
     ].join('\n'))
@@ -1216,9 +1191,7 @@ function securityEmbed(client, guild) {
       '',
       '**أوتومود:**',
       `> ${am.enabled !== false ? '✅' : '❌'} مفعّل • ${am.links !== false ? '✅' : '❌'} روابط • ${am.spam !== false ? '✅' : '❌'} سبام • ${am.everyone !== false ? '✅' : '❌'} @everyone • ${sw.enabled !== false ? '✅' : '❌'} ألفاظ`,
-      `> ${am.includeAdmins ? '✅' : '❌'} يشمل الأدمنين في الفلاتر`,
-      '',
-      '📂 افتح القسم الذي تريد تعديله من الأزرار بالأسفل.',
+      `> ${am.includeAdmins ? '✅' : '❌'} يشمل الأدمنين`,
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -1265,27 +1238,24 @@ function secSubEmbed(client, guild, subId) {
     const am = p.automod || {};
     const sw = p.swearWords || {};
     lines = [
-      `> **${am.enabled !== false ? '✅' : '❌'} الأوتومود (المفتاح الرئيسي)** — أوقفه لإيقاف كل الفلاتر.`,
+      `> **${am.enabled !== false ? '✅' : '❌'} الأوتومود**`,
       '',
-      `🔗 **حماية الروابط:** ${am.links !== false ? '✅ مفعّلة' : '❌'} — يحذف الروابط ويحذف الرسالة.`,
-      `⚡ **حماية السبام:** ${am.spam !== false ? '✅ مفعّلة' : '❌'} — يعاقب من يكرر الرسائل بسرعة.`,
-      `📢 **حماية @everyone:** ${am.everyone !== false ? '✅ مفعّلة' : '❌'} — يمنع منشن الجميع.`,
-      `🤬 **فلتر الألفاظ:** ${sw.enabled !== false ? '✅ مفعّل' : '❌'} — يحذف الألفاظ البذيئة.`,
-      `👮 **يشمل الأدمنين:** ${am.includeAdmins ? '✅ نعم' : '❌ لا (يتجاهل الأدمنين)'} — `,
-      '',
-      '💡 اضغط على أي زر لتبديله فوراً.',
+      `🔗 **روابط:** ${am.links !== false ? '✅' : '❌'}`,
+      `⚡ **سبام:** ${am.spam !== false ? '✅' : '❌'}`,
+      `📢 **@everyone:** ${am.everyone !== false ? '✅' : '❌'}`,
+      `🤬 **ألفاظ:** ${sw.enabled !== false ? '✅' : '❌'}`,
+      `👮 **يشمل الأدمنين:** ${am.includeAdmins ? '✅' : '❌'}`,
     ];
   } else {
     lines = s.cards.map(k => {
       const c = SEC_CARDS[k];
       const v = p[k] || {};
       const parts = [`${v.enabled !== false ? '✅' : '❌'} **${c.emoji} ${c.name}**`];
-      if (c.num) parts.push(`> الحد: **${v.threshold ?? 3}** عملية خلال **${v.window ?? 10}** ثانية`);
+      if (c.num) parts.push(`> الحد: **${v.threshold ?? 3}** / **${v.window ?? 10}** ثانية`);
       if (c.action) parts.push(`> الإجراء: **${v.action === 'ban' ? 'باند ⛔' : 'طرد 👢'}**`);
-      if (c.role) parts.push(`> رتبة مطلوبة للتجاوز: ${v.requiredRole ? `<@&${v.requiredRole}>` : '`أي شخص`'}`);
+      if (c.role) parts.push(`> تتجاوز: ${v.requiredRole ? `<@&${v.requiredRole}>` : '`أي شخص`'}`);
       return parts.join('\n');
     });
-    lines.push('', '💡 ✅/❌ = تفعيل • ⚙️ = ضبط الأرقام والإجراء.');
   }
   return new EmbedBuilder()
     .setColor(panelColor(guild))
@@ -1464,132 +1434,19 @@ async function handleSecSub(interaction) {
   });
 }
 
-// ═══════════ معالج AI ═══════════
-function aiEmbed(client, guild) {
-  const a = guildCfg.get(guild.id).ai || {};
-  const ch = a.channelId ? guild?.channels?.cache?.get(a.channelId) : null;
-  const sev = a.severity === 'mute' ? '⏳ صمت (timeout)' : a.severity === 'warn' ? '⚠️ تحذير' : '🗑️ حذف الرسالة';
-  return new EmbedBuilder()
-    .setColor(panelColor(guild))
-    .setTitle('🧠 معالج AI')
-    .setDescription([
-      `**الحالة:** ${a.enabled ? '✅ مفعّل' : '❌ معطّل'}`,
-      `**روم الرد:** ${ch ? `<#${ch.id}>` : '`غير محدد`'}`,
-      `**الوضع:** ${a.mode === 'inquiry' ? '💬 استفسارات عامة' : '🛠️ حل المشاكل'}`,
-      `**شدة الألفاظ:** ${sev}`,
-      '',
-      '> يعمل البوت تلقائياً في الروم المحدد ويرد على أسئلة الأعضاء.',
-      '> زر الاختبار يُجرّب الرد دون إرسال لأي عضو.',
-      '> ⚠️ اختر روماً يُسمح للجميع فيه بالكتابة، وينخفض التفاعل المزعج.',
-    ].join('\n'))
-    .setFooter({ text: 'NSR HUB - MoDy Dev' })
-    .setTimestamp();
-}
-
-function aiRows(guild) {
-  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
-  const a = guildCfg.get(guild.id).ai || {};
-  const chSel = new ChannelSelectMenuBuilder()
-    .setCustomId('bd_ai_channel')
-    .setPlaceholder(a.channelId && guild?.channels?.cache?.get(a.channelId) ? `روم AI: #${guild.channels.cache.get(a.channelId).name}` : 'اختر روم الذكاء الاصطناعي...')
-    .addChannelTypes(ChannelType.GuildText);
-  if (a.channelId && guild?.channels?.cache?.get(a.channelId)) chSel.setDefaultChannels([a.channelId]);
-  const sevLabel = a.severity === 'mute' ? 'صمت' : a.severity === 'warn' ? 'تحذير' : 'حذف';
-  return [
-    new ActionRowBuilder().addComponents(chSel),
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('bd_ai_toggle').setLabel(a.enabled ? '✅ مفعّل' : '❌ معطّل').setStyle(a.enabled ? ButtonStyle.Success : ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('bd_ai_mode').setLabel(a.mode === 'inquiry' ? '💬 استفسارات' : '🛠️ حل مشاكل').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('bd_ai_sev').setLabel(`🤬 شدة الألفاظ: ${sevLabel}`).setStyle(ButtonStyle.Secondary),
-    ),
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('bd_ai_test').setLabel('🧪 اختبار الرد').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
-    ),
-  ];
-}
-
-async function handleAiChannelSelect(interaction) {
-  const channelId = interaction.values[0];
-  if (!channelId) return;
-  const a = guildCfg.get(interaction.guild.id).ai || {};
-  guildCfg.set(interaction.guild.id, { ai: { ...a, channelId } });
-  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
-  await interaction.followUp({ content: `✅ تم ضبط روم AI: <#${channelId}>`, ephemeral: true });
-}
-
-async function handleAiToggle(interaction) {
-  const a = guildCfg.get(interaction.guild.id).ai || {};
-  if (!a.enabled && !a.channelId) {
-    await interaction.reply({ content: '⚠️ اختر روم الرد أولاً قبل التفعيل.', ephemeral: true });
-    return;
-  }
-  guildCfg.set(interaction.guild.id, { ai: { ...a, enabled: !a.enabled } });
-  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
-  await interaction.followUp({ content: a.enabled ? '❌ تم إيقاف معالج AI.' : '✅ تم تفعيل معالج AI.', ephemeral: true });
-}
-
-async function handleAiMode(interaction) {
-  const a = guildCfg.get(interaction.guild.id).ai || {};
-  guildCfg.set(interaction.guild.id, { ai: { ...a, mode: a.mode === 'inquiry' ? 'solve' : 'inquiry' } });
-  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
-}
-
-async function handleAiSev(interaction) {
-  const a = guildCfg.get(interaction.guild.id).ai || {};
-  const order = ['delete', 'warn', 'mute'];
-  const next = order[(order.indexOf(a.severity) + 1) % order.length];
-  guildCfg.set(interaction.guild.id, { ai: { ...a, severity: next } });
-  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
-}
-
-async function handleAiTestShow(interaction) {
-  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-  const modal = new ModalBuilder().setCustomId('bd_ai_test_modal').setTitle('🧪 اختبار رد الذكاء الاصطناعي');
-  modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
-    .setCustomId('ai_text')
-    .setLabel('اكتب سؤالاً أو مشكلة لتجربة الرد')
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true)
-    .setMaxLength(500)
-    .setPlaceholder('مثال: كيف أعيد ضبط كلمة المرور؟')));
-  await interaction.showModal(modal);
-}
-
-async function handleAiTestModal(interaction) {
-  const text = interaction.fields.getTextInputValue('ai_text');
-  let res;
-  try {
-    res = require('./modules/aiAssistant').testReply(text);
-  } catch (err) {
-    return interaction.reply({ content: '❌ تعذر تشغيل الاختبار: ' + err.message, ephemeral: true });
-  }
-  await interaction.reply({
-    content: [
-      '🧪 **نتيجة الاختبار:**',
-      `> ${res.reply}`,
-      '',
-      `*المصدر: ${res.matched || 'لا يوجد رد مطابق'}*`,
-    ].join('\n'),
-    ephemeral: true,
-  });
-}
-
 function mainEmbed(client, guild) {
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor(panelColor(guild))
     .setTitle('🎛️ لوحة التحكم الرئيسية')
     .setDescription([
-      'اختر النظام الذي تريد الدخول إليه:',
+      Object.entries(PAGES).map(([id, p]) => `${p.emoji} **${p.name}** — ${p.desc}`).join('\n'),
       '',
-      Object.entries(PAGES).map(([id, p]) => `${p.emoji} **${p.name}** — ${p.desc.split('\n')[0].slice(0, 80)}`).join('\n'),
-      '',
-      `> السيرفر: **${guild?.name || '-'}** • ${guild?.memberCount || 0} عضو`,
-      '',
-      '💡 كل التعديلات **تُحفظ فوراً** — لا يوجد زر حفظ.',
+      `> ${guild?.name || '-'} • ${guild?.memberCount || 0} عضو`,
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
+  if (hasLogo) embed.setImage(LOGO_ATTACH);
+  return embed;
 }
 
 function mainRows() {
@@ -1616,12 +1473,8 @@ function botInfoEmbed(client, guild) {
     .setColor(color || 0x5865F2)
     .setTitle('🖌️ تغيير معلومات البوت')
     .setDescription([
-      'عدّل صورة البوت ولونه — التغييرات تطبق على **هذا السيرفر فقط**.',
-      '',
       `> **صورة البوت:** ${g.logoUrl ? 'محددة ✔' : 'الافتراضية'}`,
       `> **لون البوت:** ${color ? `\`#${color.toString(16).padStart(6, '0').toUpperCase()}\`` : 'الأزرق الافتراضي'}`,
-      '',
-      'اختر الخيار بالأسفل.'
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -1742,7 +1595,6 @@ async function handleSetLogoModal(interaction) {
 function pageRows(pageId, guild) {
   if (pageId === 'home') return homeRows();
   if (pageId === 'security') return securityRows(guild);
-  if (pageId === 'ai') return aiRows(guild);
   if (pageId === 'logs') return logsRows(guild);
   if (pageId === 'autoroles') return autorolesRows(guild);
   if (pageId === 'ratings') return ratingsRows(guild);
@@ -1812,13 +1664,6 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_sec_action') return handleSecActionSelect(interaction);
   if (id.startsWith('bd_am_')) return handleAmToggle(interaction);
 
-  // ══ معالج AI ══
-  if (id === 'bd_ai_channel') return handleAiChannelSelect(interaction);
-  if (id === 'bd_ai_toggle') return handleAiToggle(interaction);
-  if (id === 'bd_ai_mode') return handleAiMode(interaction);
-  if (id === 'bd_ai_sev') return handleAiSev(interaction);
-  if (id === 'bd_ai_test') return handleAiTestShow(interaction);
-
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
     if (pageId === 'home') {
@@ -1828,7 +1673,6 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
     }
     let embed;
     if (pageId === 'security') embed = securityEmbed(interaction.client, interaction.guild);
-    else if (pageId === 'ai') embed = aiEmbed(interaction.client, interaction.guild);
     else if (pageId === 'ratings') embed = ratingsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'staff') embed = staffEmbed(interaction.client, interaction.guild);
     else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
@@ -1840,9 +1684,8 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
     return;
   }
 
-  // ══ مودالات الأمان و AI ══
+  // ══ مودالات الأمان ══
   if (id.startsWith('bd_sec_cfgm_')) return handleSecCfgModal(interaction);
-  if (id === 'bd_ai_test_modal') return handleAiTestModal(interaction);
 
   if (id === 'bd_send_ticket_panel') return handleSendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
@@ -1855,7 +1698,7 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   if (id === 'bd_cmd_next' || id === 'bd_cmd_prev') return handleCmdPage(interaction, id === 'bd_cmd_next' ? 'next' : 'prev');
 }
 
-// حمالة لوحة التذاكر (تُستخدم من اللوحة ومن التطبيق عبر الجسر)
+// حمالة لوحة التذاكر
 function buildTicketPanelPayload(guild, tcfg) {
   const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
   const types = (tcfg.ticketTypes || []).filter(tp => tp.enabled !== false);
@@ -1980,4 +1823,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, LOG_EVENTS, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect, buildTicketPanelPayload, buildSuggestionsPanelPayload, pageRows, homeEmbed, homeRows, buildHomeData, securityEmbed, securityRows, secSubEmbed, secSubRows, aiEmbed, aiRows, SEC_SUBS, SEC_CARDS };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, LOG_EVENTS, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect, buildTicketPanelPayload, buildSuggestionsPanelPayload, pageRows, homeEmbed, homeRows, buildHomeData, securityEmbed, securityRows, secSubEmbed, secSubRows, SEC_SUBS, SEC_CARDS };

@@ -576,7 +576,7 @@ async function handleWebhookCreate(channel) {
   ]);
 }
 
-// ═══════════ فحص السب في النصوص المرسلة من التطبيق (رسائل/ثيمات) ═══════════
+// ═══════════ فحص السب في النصوص المرسلة ═══════════
 function containsSwear(text) {
   if (!text) return false;
   return containsBannedWord(text, bannedWords);

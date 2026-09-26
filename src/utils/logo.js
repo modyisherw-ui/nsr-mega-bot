@@ -109,17 +109,28 @@ async function uploadLogoFromUrl(client, url, guildId) {
   return cdn;
 }
 
+// روابط مرفق ديسكورد لها تاريخ انتهاء (ex=) — لو انتهت الرابط يبقى معطوباً
+function isUsableLogoUrl(u) {
+  if (!u || typeof u !== 'string') return false;
+  const m = /[?&]ex=([0-9a-f]+)/i.exec(u);
+  if (m) {
+    const exp = parseInt(m[1], 16);
+    if (Number.isFinite(exp) && exp * 1000 < Date.now()) return false;
+  }
+  return true;
+}
+
 // رابط اللوقو للسيرفر المحدد، أو اللوقو الافتراضي إن لم يحدده السيرفر نفسه
 function getLogoUrl(guildId) {
   if (guildId) {
     try {
       const g = require('../guildCfg').get(guildId);
-      if (g.logoUrl) return g.logoUrl;
+      if (isUsableLogoUrl(g.logoUrl)) return g.logoUrl;
     } catch (err) {
       log.warn('فشل قراءة لوقو السيرفر: ' + err.message);
     }
   }
-  return config.logoUrl || '';
+  return isUsableLogoUrl(config.logoUrl) ? config.logoUrl : '';
 }
 
 // حفظ اللوقو: مع guildId يُحفظ لكل سيرفر، بدون يُحفظ كافتراضي عام
@@ -153,18 +164,18 @@ function stripTitleEmoji(title) {
 
 // لون السيرفر المخصص (مع اللوقو) — قراءة واحدة من إعدادات السيرفر
 function getGuildBrand(guildId) {
-  if (!guildId) return { logoUrl: config.logoUrl || '', embedColor: 0 };
+  if (!guildId) return { logoUrl: isUsableLogoUrl(config.logoUrl) ? config.logoUrl : '', embedColor: 0 };
   try {
     const g = require('../guildCfg').get(guildId);
     const ec = g.embedColor;
     const validColor = typeof ec === 'number' && Number.isInteger(ec) && ec >= 0 && ec <= 0xFFFFFF ? ec : 0;
     return {
-      logoUrl: g.logoUrl || config.logoUrl || '',
+      logoUrl: isUsableLogoUrl(g.logoUrl) ? g.logoUrl : (isUsableLogoUrl(config.logoUrl) ? config.logoUrl : ''),
       embedColor: validColor,
     };
   } catch (err) {
     log.warn('فشل قراءة إعدادات السيرفر: ' + err.message);
-    return { logoUrl: config.logoUrl || '', embedColor: 0 };
+    return { logoUrl: isUsableLogoUrl(config.logoUrl) ? config.logoUrl : '', embedColor: 0 };
   }
 }
 
@@ -188,6 +199,8 @@ function applyLogo(embed, guildId) {
     const t = stripTitleEmoji(embed.title);
     if (t !== embed.title) embed.title = t;
   }
+  const hasImage = embed.data ? embed.data.image : embed.image;
+  if (hasImage && hasImage.url === LOGO_ATTACH) return false; // اللوقو معروض كصورة كبيرة → لا نضيف ثمبنيل فوقه
   const hasThumb = embed.data ? embed.data.thumbnail : embed.thumbnail;
   if (hasThumb) return false;
   const url = brand.logoUrl;
@@ -198,12 +211,21 @@ function applyLogo(embed, guildId) {
   return true;
 }
 
+function embedNeedsLogoFile(embed) {
+  if (!embed) return false;
+  const img = (embed.data && embed.data.image) || embed.image;
+  const th = (embed.data && embed.data.thumbnail) || embed.thumbnail;
+  return (img && img.url === LOGO_ATTACH) || (th && th.url === LOGO_ATTACH) ? true : false;
+}
+
 function withLogo(payload, guildId) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
   if (!Array.isArray(payload.embeds) || payload.embeds.length === 0) return payload;
   const g = getGuildBrand(guildId);
   const added = payload.embeds.some((e) => applyLogo(e, guildId));
-  if (g.logoUrl || !HAS_LOGO || !added) return payload;
+  const needsFile = payload.embeds.some(embedNeedsLogoFile);
+  if (!needsFile && (g.logoUrl || !HAS_LOGO || !added)) return payload;
+  if (!HAS_LOGO) return payload;
   const files = Array.isArray(payload.files) ? [...payload.files] : [];
   if (!files.some((f) => f && f.name === LOGO_NAME)) {
     files.push({ attachment: LOGO_PATH, name: LOGO_NAME });
@@ -212,4 +234,4 @@ function withLogo(payload, guildId) {
   return payload;
 }
 
-module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, getLogoUrl, getGuildBrand, hasLogo: HAS_LOGO };
+module.exports = { withLogo, ensureLogoUrl, uploadLogoFromUrl, setLogoUrl, getLogoUrl, getGuildBrand, hasLogo: HAS_LOGO, LOGO_PATH, LOGO_NAME, LOGO_ATTACH };

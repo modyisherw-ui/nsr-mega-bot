@@ -59,7 +59,6 @@ const config = {
   feedChannelId: process.env.FEED_CHANNEL_ID || '',
   reviewChannelId: process.env.REVIEW_CHANNEL_ID || '',
   serverSettings: raw.serverSettings || {},
-  bridgeKey: raw.bridgeKey || '',
   customerRoleId: raw.customerRoleId || '',
   featureRoles: raw.featureRoles || {},
 };

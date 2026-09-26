@@ -14,13 +14,7 @@ function messagesEmbed(client, guild) {
   return new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('💬 نظام الرسائل')
-    .setDescription([
-      'أرسل رسالة خاصة لأي شخص في السيرفر، أو استدعاء.',
-      '',
-      `> **تنبيه:** هناك تهدئة بمقدار دقيقة بين كل رسالة لنفس الشخص.`,
-      '',
-      'اختر نوع الرسالة من الأزرار بالأسفل.'
-    ].join('\n'))
+    .setDescription('> ⏱️ تهدئة دقيقة واحدة بين كل رسالة لنفس الشخص')
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
 }
@@ -126,7 +120,7 @@ async function sendMessageToUser(client, guild, typeId, rawTarget, text) {
   const user = await client.users.fetch(targetId).catch(() => null);
   if (!user) throw new Error('لم يتم العثور على هذا العضو');
 
-  const key = `bridge:${guild.id}:${targetId}`;
+  const key = `dm:${guild.id}:${targetId}`;
   const now = Date.now();
   const last = lastSent.get(key);
   if (last && now - last < COOLDOWN_MS) {
