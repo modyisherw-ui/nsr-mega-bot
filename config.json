@@ -266,6 +266,15 @@
       "rating": {
         "reviewsChannelId": "1530565626245021868",
         "products": []
+      },
+      "protection": {
+        "automod": {
+          "enabled": true,
+          "links": true,
+          "everyone": true,
+          "spam": true,
+          "includeAdmins": false
+        }
       }
     },
     "1409929493291991192": {
