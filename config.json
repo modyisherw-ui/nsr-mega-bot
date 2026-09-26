@@ -275,6 +275,13 @@
           "spam": true,
           "includeAdmins": false
         }
+      },
+      "ai": {
+        "enabled": true,
+        "locked": false,
+        "mode": "inquiry",
+        "channelId": "1431739325426565200",
+        "severity": "delete"
       }
     },
     "1409929493291991192": {
