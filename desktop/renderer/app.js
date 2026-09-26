@@ -1649,10 +1649,11 @@ function renderSecurity(main) {
     <div class="card" style="margin-top:16px;">
       <h4>${ic('chat')} حماية الرسائل (Automod)</h4>
       <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">تُفحص الرسائل تلقائياً وتحذف المخالفة — تحمي السيرفر والبوت من الحظر.</p>
+      ${secCard('amadmin', ic('users'), 'الحماية تشمل الأدمنين', 'مفعّل = الفلاتر (سب، روابط، سبام، @everyone) تُطبّق على الأدمنين أيضاً. معطّل = تتجاهل الأدمنين وتخطيهم.', ``, am.includeAdmins === true, true)}
       ${secCard('am', ic('link'), 'حماية الروابط', 'يحذف الرسائل التي تحتوي روابط (ماعدا الإدارة).', ``, am.enabled !== false && am.links !== false, true)}
       ${secCard('amspam', ic('chat'), 'حماية السبام', 'يكتم من يرسل رسائل كثيرة بسرعة.', ``, am.enabled !== false && am.spam !== false, true)}
       ${secCard('amev', ic('users'), 'حماية @everyone / @here', 'يحذف رسائل الإشارة الجماعية غير المصرح بها.', ``, am.enabled !== false && am.everyone !== false, true)}
-      ${secCard('sw', ic('warn'), 'حماية السب (كلمات بذيئة)', 'يحذف أي رسالة فيها سب/قدف — حتى من الإدارة — لحماية البوت من الحظر، ويُبلَّغ المالك.', ``, sw.enabled !== false, true)}
+      ${secCard('sw', ic('warn'), 'حماية السب (كلمات بذيئة)', 'يحذف أي رسالة فيها سب/قدف — لحماية البوت من الحظر، ويُبلَّغ المالك.', ``, sw.enabled !== false, true)}
     </div>
 
     <div class="grid-actions">
@@ -1705,6 +1706,7 @@ function renderSecurity(main) {
         links: main.querySelector('[data-sw="am"]')?.checked ?? false,
         spam: main.querySelector('[data-sw="amspam"]')?.checked ?? false,
         everyone: main.querySelector('[data-sw="amev"]')?.checked ?? false,
+        includeAdmins: main.querySelector('[data-sw="amadmin"]')?.checked ?? false,
       },
       swearWords: { enabled: main.querySelector('[data-sw="sw"]')?.checked ?? true },
     };
