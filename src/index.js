@@ -11,7 +11,6 @@ const security = require('./modules/security');
 const giveaway = require('./modules/giveaway');
 const roles = require('./modules/roles');
 const registerLogs = require('./modules/logs');
-const bridge = require('./modules/bridge');
 const { handleAdminButton, handleAdminModal, handleStaffRolesSelect: handleAdminStaffSelect, handleEmbedChannelSelect } = require('./modules/adminPanel');
 const { handleMessagesButton, handleMessagesModal } = require('./modules/messages');
 
@@ -67,7 +66,6 @@ client.once('ready', async () => {
   registerLogs(client);
   security.setClient(client);
   giveaway.setClient(client);
-  bridge.start(client);
 
   // نبضة قلب: ملف زمني يثبت أن البوت حي (يشاركه الريبو ليتأكد أي مراقب)
   const fs = require('fs');
@@ -214,6 +212,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (id === 'bd_welcome_msg_modal') return handleWelcomeMsgModal(interaction);
       if (id === 'bd_welcome_img_modal') return handleWelcomeImgModal(interaction);
       if (id === 'bd_tk_add_modal') return handleTicketAddModal(interaction);
+      if (id.startsWith('bd_')) return handleDashboard(interaction, client);
       return;
     }
 
@@ -224,6 +223,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (interaction.customId === 'bd_tk_del_sel') return handleTicketDelSelect(interaction);
       if (interaction.customId === 'bd_cmd_pick') return handleCmdPick(interaction);
       if (interaction.customId === 'bd_cmd_perm') return handleCmdPerm(interaction);
+      if (interaction.customId.startsWith('bd_')) return handleDashboard(interaction, client);
       return;
     }
 
@@ -232,6 +232,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (interaction.customId === 'bd_prod_role') return handleProdRoleSelect(interaction);
       if (interaction.customId === 'bd_staff_roles') return handleStaffRolesSelect(interaction);
       if (interaction.customId === 'admn_staff_roles') return handleAdminStaffSelect(interaction);
+      if (interaction.customId.startsWith('bd_')) return handleDashboard(interaction, client);
       return;
     }
 
@@ -243,6 +244,7 @@ if (id === 'bd_prod_modal') return handleProdModal(interaction);
       if (interaction.customId === 'bd_send_panel_channel') return handleSendPanelChannel(interaction);
       if (interaction.customId === 'bd_welcome_channel') return handleWelcomeChannelSelect(interaction);
       if (interaction.customId === 'bd_send_ticket_panel_channel') return handleSendTicketPanelChannel(interaction);
+      if (interaction.customId.startsWith('bd_')) return handleDashboard(interaction, client);
       return;
     }
   } catch (err) {

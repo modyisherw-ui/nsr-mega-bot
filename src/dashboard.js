@@ -7,15 +7,19 @@ const { getProducts, findProduct, saveRatingConfig } = require('./modules/rating
 const { messagesEmbed, messagesRows } = require('./modules/messages');
 
 const PAGES = {
-  logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
-  autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
+  home: { emoji: '🏠', name: 'الرئيسية', desc: 'نظرة عامة على السيرفر: إحصائيات التذاكر والمشاركات والباندات.', commands: ['🔄 زر التحديث يعيد جلب الأرقام فوراً'] },
   welcome: { emoji: '👋', name: 'نظام الترحيب', desc: 'رسالة ترحيب تلقائية للأعضاء الجدد: اختر الروم أو الخاص، اكتب الرسالة، أضف صورة، وحدد محتواها.', commands: ['اختر **الروم** من القائمة بالأسفل', '✏️ عدّل **الرسالة** (كلمات: {user} منشن العضو، {count} رقم العضو)', '🖼️ ضع **صورة/بنر** للرسالة', '📩 اختر **خاص أو روم** للاستقبال'] },
-  ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص (عربي/إنجليزي + نجوم + رسالة + نشر التقييم في الروم).', commands: ['اضغط **إضافة منتج** لإنشاء منتج وربط روله', 'اضبط **روم التقييمات** من القائمة بالأسفل', 'ثم نفّذ: `/rate @user` واكتب اسم المنتج'] },
-  suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '`/suggestions panel` — إرسال اللوحة'] },
-  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد.\n**📜 الأوامر** — قائمة الأوامر الكاملة وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
+  tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['أظهر/أخفِ الأنواع من الأزرار', '➕ أضف نوعاً مخصصاً / 🗑️ احذفه', '📨 أرسل لوحة التذاكر لروم'] },
+  suggestions: { emoji: '💡', name: 'نظام الاقتراحات', desc: 'زر تقديم اقتراح — الاقتراح يوصل للمالك على الخاص + روم يحدده الأدمن من هنا.', commands: ['اختر **روم الاقتراحات** من القائمة بالأسفل', 'زر اللوحة يشتغل تلقائياً', '📨 إرسال لوحة الاقتراحات'] },
   messages: { emoji: '💬', name: 'نظام الرسائل', desc: 'أرسل رسائل خاصة للأعضاء: رسالة، استدعاء، شكر، أو عرض خاص.\n\n> هناك تهدئة دقيقة واحدة بين كل رسالة لنفس الشخص.', commands: ['اختر نوع الرسالة من الأزرار بالأسفل ثم اكتب المعرّف والنص'] },
-  tickets: { emoji: '🎫', name: 'نظام التذاكر', desc: 'تذاكر دعم خاصة باختيارات وأنواع، مع تقييم بعد الإغلاق وسجل نقل.', commands: ['`/ticket panel` — إرسال لوحة التذاكر', '`/ticket stats` — الإحصائيات', '`/ticket close` — إغلاق يدوي', '`/ticket add/remove` — إدارة الأعضاء'] },
-  security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية من السبام، الرايد، النسف، والبوتات الخطرة مع مراقبة مستمرة.', commands: ['الحماية تعمل تلقائياً', '`/security status` — الحالة', '`/scan` — فحص شامل'] },
+  security: { emoji: '🛡️', name: 'نظام الأمان', desc: 'حماية كاملة: الرتب المحمية، حذف الرومات، النسف، الباند والطرد الجماعي، حذف الرتب، الويبهوك، البوتات، والأوتومود.', commands: ['🔒 الرتب المحمية + رتب تتجاوز الحماية', '📂 أقسام: الرومات • الأعضاء • الرتب • الأوتومود'] },
+  logs: { emoji: '📋', name: 'نظام اللوقات', desc: 'يراقب كل أحداث السيرفر: دخول/خروج الأعضاء، حذف/تعديل الرسائل، الرياكشنات، الفويس، الرتب، القنوات، الباند والطرد، والرتب المحمية.', commands: ['عدّل رومات اللوقات مباشرة من هذه الصفحة عبر القوائم بالأسفل'] },
+  ai: { emoji: '🧠', name: 'معالج AI', desc: 'ذكاء اصطناعي يرد تلقائياً على أسئلة الأعضاء ومشاكلهم في الروم المحدد، مع فلترة الألفاظ ومستويات معاقبة.', commands: ['فعّل/عطّل النظام وزر الاختبار', 'اختر **روم الرد** من القائمة', 'بدّل الوضع: حل مشاكل / استفسارات'] },
+  ratings: { emoji: '🛍️', name: 'المنتجات والتقييمات', desc: 'أضف منتجاتك مع رول كل منتج، وحدد روم التقييمات. ثم استخدم `/rate @عميل` ليرسل البوت رسالة تقييم للعميل على الخاص.', commands: ['➕ إضافة منتج / 🗑️ حذف منتج', '📨 إرسال تقييم مباشرة', 'اختر **روم التقييمات** من القائمة'] },
+  autoroles: { emoji: '🤖', name: 'الرولات التلقائية', desc: 'رتبة تُعطى تلقائياً عند دخول الأعضاء، ورتبة تُعطى لكل بوت يدخل السيرفر.', commands: ['اختر الرتبة المطلوبة من القوائم بالأسفل، ويتم الحفظ فوراً'] },
+  system: { emoji: '⚙️', name: 'نظام الإدارة', desc: 'أدوات إدارية سريعة بالأزرار:\n\n**📋 إمبد** — إرسال إمبد في أي روم.\n**📜 الأوامر** — قائمة الأوامر وصلاحياتها.\n**📢 رسالة** — إرسال رسالة باسم البوت.\n**👮 رتبة الإدارة** — إدارة رتب الإدارة.', commands: [] },
+  commands: { emoji: '📜', name: 'صلاحيات الأوامر', desc: 'تحكم في من يستطيع استخدام كل أمر من أوامر البوت: عام، رتب الإدارة، أدمن فقط، أو معطّل.', commands: ['اختر أمراً من القائمة ثم اختر الصلاحية'] },
+  staff: { emoji: '👮', name: 'رتب الإدارة', desc: 'رتب تستطيع استخدام أوامر الإدارة (`/rate` و`/ticket panel` وغيرها) بينما اللوحة تبقى للأدمن فقط.', commands: ['اختر الرتب من القائمة بالأسفل — يُحفظ فوراً'] },
 };
 
 // أحداث اللوقات المتاحة للتعديل من اللوحة
@@ -1117,6 +1121,460 @@ async function handleRateModal(interaction) {
   });
 }
 
+// ═══════════ الرئيسية (إحصائيات) ═══════════
+async function buildHomeData(guild) {
+  const gs = db.guildStats.get(guild.id);
+  let tk = { total: 0, open: 0, closed: 0, today: 0 };
+  try { tk = db.tickets.stats(guild.id) || tk; } catch (_) {}
+  let bansTotal = 0;
+  const bans = [];
+  try {
+    const banList = await guild.bans.fetch();
+    bansTotal = banList.size;
+    const { AuditLogEvent } = require('discord.js');
+    const byUser = {};
+    try {
+      const audit = await guild.fetchAuditLogs({ type: AuditLogEvent.MemberBanAdd, limit: 20 });
+      for (const e of audit.entries.values()) if (e.target) byUser[e.target.id] = e.executor?.username || 'غير معروف';
+    } catch (_) {}
+    banList.forEach((b, id) => bans.push({ username: b.user.username, reason: b.reason || 'بدون سبب', bannedBy: byUser[id] || 'غير معروف' }));
+  } catch (_) {}
+  return { gs, tk, bansTotal, bans: bans.slice(0, 10) };
+}
+
+function homeEmbed(guild, data) {
+  const { gs, tk, bansTotal, bans } = data;
+  const banList = bans.length
+    ? bans.map(b => `• **${b.username}** — ${b.reason} *(بواسطة: ${b.bannedBy})*`).join('\n')
+    : 'لا توجد باندات (أو البوت لا يملك صلاحية القراءة).';
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle('🏠 الرئيسية — نظرة عامة')
+    .setDescription([
+      `> **${guild.name}** • ${guild.memberCount} عضو • ${guild.channels.cache.size} روم`,
+      '',
+      `🎫 **التذاكر:** ${tk.open || 0} مفتوحة • ${tk.closed || 0} مغلقة • ${tk.total || 0} إجمالي (${tk.today || 0} اليوم)`,
+      `👋 **دخول اليوم:** ${gs.joins_today || 0} • الإجمالي: ${gs.joins_total || 0}`,
+      `💬 **رسائل اليوم:** ${gs.msgs_today || 0} • الإجمالي: ${gs.msgs_total || 0}`,
+      `⛔ **الباندات:** ${bansTotal}`,
+      '',
+      '━━━━━━━━━━━━━━',
+      '**آخر الباندات:**',
+      banList,
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function homeRows() {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_home_refresh').setLabel('🔄 تحديث الإحصائيات').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 القائمة الرئيسية').setStyle(ButtonStyle.Secondary),
+    ),
+  ];
+}
+
+// ═══════════ الأمان (حماية كاملة) ═══════════
+const SEC_CARDS = {
+  channelDelete: { key: 'cd', emoji: '🧹', name: 'حذف الرومات', num: true, action: true, role: true },
+  nuke: { key: 'nk', emoji: '💣', name: 'النسف (Nuke)', num: true, action: true },
+  ban: { key: 'bn', emoji: '⛔', name: 'حظر جماعي', num: true, action: true },
+  kick: { key: 'kk', emoji: '👢', name: 'طرد جماعي', num: true, action: true },
+  roleDelete: { key: 'rd', emoji: '🎭', name: 'حذف الرتب', num: true, action: true },
+  webhook: { key: 'wh', emoji: '🔗', name: 'إنشاء ويبهوك', num: false, action: true },
+  bot: { key: 'bt', emoji: '🤖', name: 'دخول بوتات', num: false, action: false },
+};
+const SEC_SUBS = {
+  core: { emoji: '🛡️', name: 'الرومات والدمار', cards: ['channelDelete', 'nuke', 'webhook', 'bot'] },
+  mem: { emoji: '👥', name: 'حماية الأعضاء', cards: ['ban', 'kick'] },
+  role: { emoji: '🎭', name: 'حماية الرتب', cards: ['roleDelete'] },
+  am: { emoji: '🤖', name: 'أوتومود', cards: [] },
+};
+const secKeyToField = (key) => Object.keys(SEC_CARDS).find(k => SEC_CARDS[k].key === key);
+const pendingSecSub = new Map(); // userId -> sub id
+
+function securityEmbed(client, guild) {
+  const g = guildCfg.get(guild.id);
+  const prot = g.protectedRoles || [];
+  const byp = g.protectionBypassRoles || [];
+  const act = g.protectionAction === 'ban' ? 'باند ⛔' : 'طرد 👢';
+  const p = g.protection || {};
+  const lines = Object.entries(SEC_CARDS).map(([k, c]) => `${c.emoji} **${c.name}:** ${(p[k] && p[k].enabled !== false) ? '✅ مفعّل' : '❌ معطّل'}`);
+  const am = p.automod || {};
+  const sw = p.swearWords || {};
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle('🛡️ نظام الأمان والحماية')
+    .setDescription([
+      `**🔴 الرتب المحمية:** ${prot.length ? prot.map(id => `<@&${id}>`).join(' ') : '`لا توجد`'}`,
+      `**🟢 رتب تتجاوز الحماية:** ${byp.length ? byp.map(id => `<@&${id}>`).join(' ') : '`لا توجد`'}`,
+      `**⚖️ الإجراء الافتراضي:** ${act}`,
+      '',
+      '**حالة الحمايات:**',
+      lines.join('\n'),
+      '',
+      '**أوتومود:**',
+      `> ${am.enabled !== false ? '✅' : '❌'} مفعّل • ${am.links !== false ? '✅' : '❌'} روابط • ${am.spam !== false ? '✅' : '❌'} سبام • ${am.everyone !== false ? '✅' : '❌'} @everyone • ${sw.enabled !== false ? '✅' : '❌'} ألفاظ`,
+      `> ${am.includeAdmins ? '✅' : '❌'} يشمل الأدمنين في الفلاتر`,
+      '',
+      '📂 افتح القسم الذي تريد تعديله من الأزرار بالأسفل.',
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function securityRows(guild) {
+  const { RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+  const g = guildCfg.get(guild.id);
+  const protSel = new RoleSelectMenuBuilder()
+    .setCustomId('bd_sec_prot')
+    .setPlaceholder('🔴 الرتب المحمية (لا تُمس حمايتها)')
+    .setMinValues(0).setMaxValues(10);
+  if ((g.protectedRoles || []).length) protSel.setDefaultRoles(g.protectedRoles.slice(0, 10));
+  const bypSel = new RoleSelectMenuBuilder()
+    .setCustomId('bd_sec_bypass')
+    .setPlaceholder('🟢 الرتب التي تتجاوز الحماية (المشرفين)')
+    .setMinValues(0).setMaxValues(10);
+  if ((g.protectionBypassRoles || []).length) bypSel.setDefaultRoles(g.protectionBypassRoles.slice(0, 10));
+  const actSel = new StringSelectMenuBuilder()
+    .setCustomId('bd_sec_action')
+    .setPlaceholder(`الإجراء الافتراضي: ${g.protectionAction === 'ban' ? 'باند' : 'طرد'}`)
+    .addOptions(
+      new StringSelectMenuOptionBuilder().setLabel('👢 طرد (kick)').setValue('kick').setDescription('طرد المخالف فوراً'),
+      new StringSelectMenuOptionBuilder().setLabel('⛔ باند (ban)').setValue('ban').setDescription('حظر المخالف فوراً'),
+    );
+  return [
+    new ActionRowBuilder().addComponents(protSel),
+    new ActionRowBuilder().addComponents(bypSel),
+    new ActionRowBuilder().addComponents(actSel),
+    new ActionRowBuilder().addComponents(
+      ...Object.entries(SEC_SUBS).map(([id, s]) =>
+        new ButtonBuilder().setCustomId(`bd_sec_sub_${id}`).setLabel(s.name).setEmoji(s.emoji).setStyle(ButtonStyle.Secondary)),
+    ),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary)),
+  ];
+}
+
+function secSubEmbed(client, guild, subId) {
+  const s = SEC_SUBS[subId] || SEC_SUBS.core;
+  const p = guildCfg.get(guild.id).protection || {};
+  let lines;
+  if (subId === 'am') {
+    const am = p.automod || {};
+    const sw = p.swearWords || {};
+    lines = [
+      `> **${am.enabled !== false ? '✅' : '❌'} الأوتومود (المفتاح الرئيسي)** — أوقفه لإيقاف كل الفلاتر.`,
+      '',
+      `🔗 **حماية الروابط:** ${am.links !== false ? '✅ مفعّلة' : '❌'} — يحذف الروابط ويحذف الرسالة.`,
+      `⚡ **حماية السبام:** ${am.spam !== false ? '✅ مفعّلة' : '❌'} — يعاقب من يكرر الرسائل بسرعة.`,
+      `📢 **حماية @everyone:** ${am.everyone !== false ? '✅ مفعّلة' : '❌'} — يمنع منشن الجميع.`,
+      `🤬 **فلتر الألفاظ:** ${sw.enabled !== false ? '✅ مفعّل' : '❌'} — يحذف الألفاظ البذيئة.`,
+      `👮 **يشمل الأدمنين:** ${am.includeAdmins ? '✅ نعم' : '❌ لا (يتجاهل الأدمنين)'} — `,
+      '',
+      '💡 اضغط على أي زر لتبديله فوراً.',
+    ];
+  } else {
+    lines = s.cards.map(k => {
+      const c = SEC_CARDS[k];
+      const v = p[k] || {};
+      const parts = [`${v.enabled !== false ? '✅' : '❌'} **${c.emoji} ${c.name}**`];
+      if (c.num) parts.push(`> الحد: **${v.threshold ?? 3}** عملية خلال **${v.window ?? 10}** ثانية`);
+      if (c.action) parts.push(`> الإجراء: **${v.action === 'ban' ? 'باند ⛔' : 'طرد 👢'}**`);
+      if (c.role) parts.push(`> رتبة مطلوبة للتجاوز: ${v.requiredRole ? `<@&${v.requiredRole}>` : '`أي شخص`'}`);
+      return parts.join('\n');
+    });
+    lines.push('', '💡 ✅/❌ = تفعيل • ⚙️ = ضبط الأرقام والإجراء.');
+  }
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle(`${s.emoji} ${s.name}`)
+    .setDescription(lines.join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function secSubRows(guild, subId) {
+  const s = SEC_SUBS[subId] || SEC_SUBS.core;
+  const p = guildCfg.get(guild.id).protection || {};
+  const rows = [];
+  if (subId === 'am') {
+    const am = p.automod || {};
+    const sw = p.swearWords || {};
+    const tog = (f, label, on) => new ButtonBuilder()
+      .setCustomId(`bd_am_${f}`).setLabel(`${label}: ${on ? '✅' : '❌'}`)
+      .setStyle(on ? ButtonStyle.Success : ButtonStyle.Secondary);
+    rows.push(new ActionRowBuilder().addComponents(
+      tog('enabled', '🤖 الأوتومود', am.enabled !== false),
+      tog('links', '🔗 الروابط', am.links !== false),
+      tog('spam', '⚡ السبام', am.spam !== false),
+    ));
+    rows.push(new ActionRowBuilder().addComponents(
+      tog('everyone', '📢 @everyone', am.everyone !== false),
+      tog('swear', '🤬 الألفاظ', sw.enabled !== false),
+      tog('includeAdmins', '👮 يشمل الأدمنين', !!am.includeAdmins),
+    ));
+  } else {
+    for (let i = 0; i < s.cards.length; i += 2) {
+      const btns = [];
+      for (const k of s.cards.slice(i, i + 2)) {
+        const c = SEC_CARDS[k];
+        const v = p[k] || {};
+        const on = v.enabled !== false;
+        btns.push(new ButtonBuilder()
+          .setCustomId(`bd_sec_tog_${c.key}`)
+          .setLabel(`${c.emoji} ${c.name}: ${on ? '✅' : '❌'}`)
+          .setStyle(on ? ButtonStyle.Success : ButtonStyle.Secondary));
+        if (c.num || c.action) {
+          btns.push(new ButtonBuilder().setCustomId(`bd_sec_cfg_${c.key}`).setLabel('⚙️').setStyle(ButtonStyle.Secondary));
+        }
+      }
+      rows.push(new ActionRowBuilder().addComponents(btns));
+    }
+  }
+  rows.push(new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('bd_sec_back').setLabel('🔙 رجوع لقسم الأمان').setStyle(ButtonStyle.Secondary),
+  ));
+  return rows;
+}
+
+async function handleSecCfgShow(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const key = interaction.customId.replace('bd_sec_cfg_', '');
+  const fieldName = secKeyToField(key);
+  const c = SEC_CARDS[fieldName];
+  if (!c) return;
+  const v = (guildCfg.get(interaction.guild.id).protection || {})[fieldName] || {};
+  pendingSecSub.set(interaction.user.id, pendingSecSub.get(interaction.user.id) || 'core');
+  const modal = new ModalBuilder().setCustomId(`bd_sec_cfgm_${key}`).setTitle(`⚙️ ${c.name}`);
+  if (c.num) {
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(new TextInputBuilder()
+        .setCustomId('sec_threshold').setLabel('الحد الأقصى للعمليات')
+        .setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(4)
+        .setValue(String(v.threshold ?? 3)).setPlaceholder('3')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder()
+        .setCustomId('sec_window').setLabel('النافذة الزمنية بالثواني')
+        .setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(5)
+        .setValue(String(v.window ?? 10)).setPlaceholder('10')),
+    );
+  }
+  if (c.action) {
+    modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+      .setCustomId('sec_action').setLabel('الإجراء (kick أو ban)')
+      .setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(4)
+      .setValue(v.action === 'ban' ? 'ban' : 'kick').setPlaceholder('kick')));
+  }
+  if (c.role) {
+    modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+      .setCustomId('sec_role').setLabel('رتبة تتجاوز الحماية (ID) — اختياري')
+      .setStyle(TextInputStyle.Short).setRequired(false).setMaxLength(25)
+      .setValue(v.requiredRole || '').setPlaceholder('123456789012345678')));
+  }
+  await interaction.showModal(modal);
+}
+
+async function handleSecCfgModal(interaction) {
+  const key = interaction.customId.replace('bd_sec_cfgm_', '');
+  const fieldName = secKeyToField(key);
+  const c = SEC_CARDS[fieldName];
+  if (!c) return interaction.reply({ content: '❌ إعداد غير معروف.', ephemeral: true });
+  const g = guildCfg.get(interaction.guild.id);
+  const cur = (g.protection || {})[fieldName] || {};
+  const patch = { ...cur };
+  if (c.num) {
+    const th = parseInt(interaction.fields.getTextInputValue('sec_threshold'), 10);
+    const wn = parseInt(interaction.fields.getTextInputValue('sec_window'), 10);
+    if (Number.isFinite(th) && th > 0) patch.threshold = Math.min(th, 99);
+    if (Number.isFinite(wn) && wn > 0) patch.window = Math.min(wn, 86400);
+  }
+  if (c.action) {
+    const a = interaction.fields.getTextInputValue('sec_action').trim().toLowerCase();
+    if (a === 'ban' || a === 'kick') patch.action = a;
+  }
+  if (c.role) {
+    patch.requiredRole = interaction.fields.getTextInputValue('sec_role').replace(/[^0-9]/g, '');
+  }
+  guildCfg.set(interaction.guild.id, { protection: { [fieldName]: patch } });
+  const sub = pendingSecSub.get(interaction.user.id) || 'core';
+  await interaction.reply({ content: `✅ تم حفظ إعدادات **${c.name}**.`, ephemeral: true });
+  await interaction.message?.edit({
+    embeds: [secSubEmbed(interaction.client, interaction.guild, sub)],
+    components: secSubRows(interaction.guild, sub),
+  }).catch(() => {});
+}
+
+async function handleSecToggle(interaction) {
+  const fieldName = secKeyToField(interaction.customId.replace('bd_sec_tog_', ''));
+  if (!fieldName) return;
+  const g = guildCfg.get(interaction.guild.id);
+  const cur = (g.protection || {})[fieldName] || {};
+  const next = { ...cur, enabled: cur.enabled === false };
+  guildCfg.set(interaction.guild.id, { protection: { [fieldName]: next } });
+  const sub = pendingSecSub.get(interaction.user.id) || 'core';
+  await interaction.update({
+    embeds: [secSubEmbed(interaction.client, interaction.guild, sub)],
+    components: secSubRows(interaction.guild, sub),
+  });
+}
+
+async function handleAmToggle(interaction) {
+  const f = interaction.customId.replace('bd_am_', '');
+  const g = guildCfg.get(interaction.guild.id);
+  const p = g.protection || {};
+  if (f === 'swear') {
+    const cur = p.swearWords || {};
+    guildCfg.set(interaction.guild.id, { protection: { swearWords: { ...cur, enabled: cur.enabled === false } } });
+  } else {
+    const am = p.automod || {};
+    const cur = am[f];
+    const next = f === 'includeAdmins' ? !cur : cur === false;
+    guildCfg.set(interaction.guild.id, { protection: { automod: { ...am, [f]: next } } });
+  }
+  await interaction.update({
+    embeds: [secSubEmbed(interaction.client, interaction.guild, 'am')],
+    components: secSubRows(interaction.guild, 'am'),
+  });
+}
+
+async function handleSecRolesSelect(interaction) {
+  const ids = interaction.values || [];
+  if (interaction.customId === 'bd_sec_prot') guildCfg.set(interaction.guild.id, { protectedRoles: ids });
+  else guildCfg.set(interaction.guild.id, { protectionBypassRoles: ids });
+  await interaction.update({ embeds: [securityEmbed(interaction.client, interaction.guild)], components: securityRows(interaction.guild) });
+  await interaction.followUp({ content: ids.length ? `✅ تم الحفظ: ${ids.map(id => `<@&${id}>`).join(' ')}` : '✅ تم إفراغ القائمة.', ephemeral: true });
+}
+
+async function handleSecActionSelect(interaction) {
+  const v = interaction.values[0];
+  if (v !== 'kick' && v !== 'ban') return;
+  guildCfg.set(interaction.guild.id, { protectionAction: v });
+  await interaction.update({ embeds: [securityEmbed(interaction.client, interaction.guild)], components: securityRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ الإجراء الافتراضي الآن: ${v === 'ban' ? 'باند ⛔' : 'طرد 👢'}`, ephemeral: true });
+}
+
+async function handleSecSub(interaction) {
+  const sub = interaction.customId.replace('bd_sec_sub_', '');
+  if (!SEC_SUBS[sub]) return;
+  pendingSecSub.set(interaction.user.id, sub);
+  await interaction.update({
+    embeds: [secSubEmbed(interaction.client, interaction.guild, sub)],
+    components: secSubRows(interaction.guild, sub),
+  });
+}
+
+// ═══════════ معالج AI ═══════════
+function aiEmbed(client, guild) {
+  const a = guildCfg.get(guild.id).ai || {};
+  const ch = a.channelId ? guild?.channels?.cache?.get(a.channelId) : null;
+  const sev = a.severity === 'mute' ? '⏳ صمت (timeout)' : a.severity === 'warn' ? '⚠️ تحذير' : '🗑️ حذف الرسالة';
+  return new EmbedBuilder()
+    .setColor(panelColor(guild))
+    .setTitle('🧠 معالج AI')
+    .setDescription([
+      `**الحالة:** ${a.enabled ? '✅ مفعّل' : '❌ معطّل'}`,
+      `**روم الرد:** ${ch ? `<#${ch.id}>` : '`غير محدد`'}`,
+      `**الوضع:** ${a.mode === 'inquiry' ? '💬 استفسارات عامة' : '🛠️ حل المشاكل'}`,
+      `**شدة الألفاظ:** ${sev}`,
+      '',
+      '> يعمل البوت تلقائياً في الروم المحدد ويرد على أسئلة الأعضاء.',
+      '> زر الاختبار يُجرّب الرد دون إرسال لأي عضو.',
+      '> ⚠️ اختر روماً يُسمح للجميع فيه بالكتابة، وينخفض التفاعل المزعج.',
+    ].join('\n'))
+    .setFooter({ text: 'NSR HUB - MoDy Dev' })
+    .setTimestamp();
+}
+
+function aiRows(guild) {
+  const { ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+  const a = guildCfg.get(guild.id).ai || {};
+  const chSel = new ChannelSelectMenuBuilder()
+    .setCustomId('bd_ai_channel')
+    .setPlaceholder(a.channelId && guild?.channels?.cache?.get(a.channelId) ? `روم AI: #${guild.channels.cache.get(a.channelId).name}` : 'اختر روم الذكاء الاصطناعي...')
+    .addChannelTypes(ChannelType.GuildText);
+  if (a.channelId && guild?.channels?.cache?.get(a.channelId)) chSel.setDefaultChannels([a.channelId]);
+  const sevLabel = a.severity === 'mute' ? 'صمت' : a.severity === 'warn' ? 'تحذير' : 'حذف';
+  return [
+    new ActionRowBuilder().addComponents(chSel),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_ai_toggle').setLabel(a.enabled ? '✅ مفعّل' : '❌ معطّل').setStyle(a.enabled ? ButtonStyle.Success : ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_ai_mode').setLabel(a.mode === 'inquiry' ? '💬 استفسارات' : '🛠️ حل مشاكل').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('bd_ai_sev').setLabel(`🤬 شدة الألفاظ: ${sevLabel}`).setStyle(ButtonStyle.Secondary),
+    ),
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('bd_ai_test').setLabel('🧪 اختبار الرد').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('bd_back').setLabel('🔙 رجوع للرئيسية').setStyle(ButtonStyle.Secondary),
+    ),
+  ];
+}
+
+async function handleAiChannelSelect(interaction) {
+  const channelId = interaction.values[0];
+  if (!channelId) return;
+  const a = guildCfg.get(interaction.guild.id).ai || {};
+  guildCfg.set(interaction.guild.id, { ai: { ...a, channelId } });
+  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
+  await interaction.followUp({ content: `✅ تم ضبط روم AI: <#${channelId}>`, ephemeral: true });
+}
+
+async function handleAiToggle(interaction) {
+  const a = guildCfg.get(interaction.guild.id).ai || {};
+  if (!a.enabled && !a.channelId) {
+    await interaction.reply({ content: '⚠️ اختر روم الرد أولاً قبل التفعيل.', ephemeral: true });
+    return;
+  }
+  guildCfg.set(interaction.guild.id, { ai: { ...a, enabled: !a.enabled } });
+  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
+  await interaction.followUp({ content: a.enabled ? '❌ تم إيقاف معالج AI.' : '✅ تم تفعيل معالج AI.', ephemeral: true });
+}
+
+async function handleAiMode(interaction) {
+  const a = guildCfg.get(interaction.guild.id).ai || {};
+  guildCfg.set(interaction.guild.id, { ai: { ...a, mode: a.mode === 'inquiry' ? 'solve' : 'inquiry' } });
+  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
+}
+
+async function handleAiSev(interaction) {
+  const a = guildCfg.get(interaction.guild.id).ai || {};
+  const order = ['delete', 'warn', 'mute'];
+  const next = order[(order.indexOf(a.severity) + 1) % order.length];
+  guildCfg.set(interaction.guild.id, { ai: { ...a, severity: next } });
+  await interaction.update({ embeds: [aiEmbed(interaction.client, interaction.guild)], components: aiRows(interaction.guild) });
+}
+
+async function handleAiTestShow(interaction) {
+  const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+  const modal = new ModalBuilder().setCustomId('bd_ai_test_modal').setTitle('🧪 اختبار رد الذكاء الاصطناعي');
+  modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+    .setCustomId('ai_text')
+    .setLabel('اكتب سؤالاً أو مشكلة لتجربة الرد')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true)
+    .setMaxLength(500)
+    .setPlaceholder('مثال: كيف أعيد ضبط كلمة المرور؟')));
+  await interaction.showModal(modal);
+}
+
+async function handleAiTestModal(interaction) {
+  const text = interaction.fields.getTextInputValue('ai_text');
+  let res;
+  try {
+    res = require('./modules/aiAssistant').testReply(text);
+  } catch (err) {
+    return interaction.reply({ content: '❌ تعذر تشغيل الاختبار: ' + err.message, ephemeral: true });
+  }
+  await interaction.reply({
+    content: [
+      '🧪 **نتيجة الاختبار:**',
+      `> ${res.reply}`,
+      '',
+      `*المصدر: ${res.matched || 'لا يوجد رد مطابق'}*`,
+    ].join('\n'),
+    ephemeral: true,
+  });
+}
+
 function mainEmbed(client, guild) {
   return new EmbedBuilder()
     .setColor(panelColor(guild))
@@ -1124,11 +1582,11 @@ function mainEmbed(client, guild) {
     .setDescription([
       'اختر النظام الذي تريد الدخول إليه:',
       '',
-      Object.entries(PAGES).map(([id, p]) => `${p.emoji} **${p.name}**`).join('\n'),
+      Object.entries(PAGES).map(([id, p]) => `${p.emoji} **${p.name}** — ${p.desc.split('\n')[0].slice(0, 80)}`).join('\n'),
       '',
-      `> السيرفر: **${guild?.name || '-'}**`,
+      `> السيرفر: **${guild?.name || '-'}** • ${guild?.memberCount || 0} عضو`,
       '',
-      '💻 **تطبيق سطح المكتب:** حمّل البرنامج من الزر بالأسفل وتحكم في البوت من جهازك مباشرة مع الحركات والأصوات.',
+      '💡 كل التعديلات **تُحفظ فوراً** — لا يوجد زر حفظ.',
     ].join('\n'))
     .setFooter({ text: 'NSR HUB - MoDy Dev' })
     .setTimestamp();
@@ -1147,7 +1605,6 @@ function mainRows() {
   }
   rows.push(new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('bd_botinfo').setLabel('🖌️ تغيير معلومات البوت').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setLabel('💻 تحميل التطبيق').setURL('https://github.com/modyisherw-ui/nsr-mega-bot/releases/download/desktop/NSR-Dashboard-Setup-1.0.0.exe').setStyle(ButtonStyle.Link)
   ));
   return rows;
 }
@@ -1283,6 +1740,9 @@ async function handleSetLogoModal(interaction) {
 }
 
 function pageRows(pageId, guild) {
+  if (pageId === 'home') return homeRows();
+  if (pageId === 'security') return securityRows(guild);
+  if (pageId === 'ai') return aiRows(guild);
   if (pageId === 'logs') return logsRows(guild);
   if (pageId === 'autoroles') return autorolesRows(guild);
   if (pageId === 'ratings') return ratingsRows(guild);
@@ -1332,10 +1792,44 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
   }
   if (id === 'bd_set_color') return handleSetColor(interaction);
 
+  // ══ الرئيسية (إحصائيات) ══
+  if (id === 'bd_home' || id === 'bd_home_refresh') {
+    const data = await buildHomeData(interaction.guild);
+    await interaction.update({ embeds: [homeEmbed(interaction.guild, data)], components: homeRows() });
+    return;
+  }
+
+  // ══ الأمان ══
+  if (id.startsWith('bd_sec_tog_')) return handleSecToggle(interaction);
+  if (id.startsWith('bd_sec_cfg_')) return handleSecCfgShow(interaction);
+  if (id.startsWith('bd_sec_sub_')) return handleSecSub(interaction);
+  if (id === 'bd_sec_back') {
+    pendingSecSub.delete(interaction.user.id);
+    await interaction.update({ embeds: [securityEmbed(interaction.client, interaction.guild)], components: securityRows(interaction.guild) });
+    return;
+  }
+  if (id === 'bd_sec_prot' || id === 'bd_sec_bypass') return handleSecRolesSelect(interaction);
+  if (id === 'bd_sec_action') return handleSecActionSelect(interaction);
+  if (id.startsWith('bd_am_')) return handleAmToggle(interaction);
+
+  // ══ معالج AI ══
+  if (id === 'bd_ai_channel') return handleAiChannelSelect(interaction);
+  if (id === 'bd_ai_toggle') return handleAiToggle(interaction);
+  if (id === 'bd_ai_mode') return handleAiMode(interaction);
+  if (id === 'bd_ai_sev') return handleAiSev(interaction);
+  if (id === 'bd_ai_test') return handleAiTestShow(interaction);
+
   const pageId = id.replace('bd_', '');
   if (PAGES[pageId]) {
+    if (pageId === 'home') {
+      const data = await buildHomeData(interaction.guild);
+      await interaction.update({ embeds: [homeEmbed(interaction.guild, data)], components: homeRows() });
+      return;
+    }
     let embed;
-    if (pageId === 'ratings') embed = ratingsEmbed(interaction.client, interaction.guild);
+    if (pageId === 'security') embed = securityEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'ai') embed = aiEmbed(interaction.client, interaction.guild);
+    else if (pageId === 'ratings') embed = ratingsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'staff') embed = staffEmbed(interaction.client, interaction.guild);
     else if (pageId === 'suggestions') embed = suggestionsEmbed(interaction.client, interaction.guild);
     else if (pageId === 'commands') embed = commandsEmbed2(interaction.client, interaction.guild, pendingCmdPage.get(interaction.user.id) || 0);
@@ -1345,6 +1839,10 @@ if (id === PROD_ADD) return handleProdAdd(interaction);
     await interaction.update({ embeds: [embed], components: pageRows(pageId, interaction.guild) });
     return;
   }
+
+  // ══ مودالات الأمان و AI ══
+  if (id.startsWith('bd_sec_cfgm_')) return handleSecCfgModal(interaction);
+  if (id === 'bd_ai_test_modal') return handleAiTestModal(interaction);
 
   if (id === 'bd_send_ticket_panel') return handleSendTicketPanel(interaction);
   if (id === 'bd_send_suggestions_panel') return sendSuggestionsPanel(interaction);
@@ -1482,4 +1980,4 @@ async function sendSuggestionsPanel(interaction, opts) {
   await interaction.editReply({ content: `✅ تم إرسال لوحة الاقتراحات إلى <#${target.id}>!`, ephemeral: true });
 }
 
-module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, LOG_EVENTS, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect, buildTicketPanelPayload, buildSuggestionsPanelPayload };
+module.exports = { handleDashboard, handleSetLogoModal, handleSetColorModal, mainEmbed, mainRows, PAGES, LOG_EVENTS, commandsEmbed2, commandsRows, handleLogsSelect, handleLogsChannelSelect, handleLogsApply, handleLogsDelete, handleAutoRoleSelect, handleRatingChannelSelect, handleProdRoleSelect, handleProdDeleteSelect, handleProdModal, handleStaffRolesSelect, handleSuggestionsChannelSelect, handleSendPanel, handleSendPanelChannel, handleCmdPick, handleCmdPerm, handleCmdPage, sendTicketPanel, handleSendTicketPanel, handleSendTicketPanelChannel, sendSuggestionsPanel, handleSendRate, handleRateModal, handleWelcomeChannelSelect, handleWelcomeMsgModal, handleWelcomeImgModal, handleTicketToggle, handleTicketAdd, handleTicketAddModal, handleTicketDel, handleTicketDelSelect, buildTicketPanelPayload, buildSuggestionsPanelPayload, pageRows, homeEmbed, homeRows, buildHomeData, securityEmbed, securityRows, secSubEmbed, secSubRows, aiEmbed, aiRows, SEC_SUBS, SEC_CARDS };
