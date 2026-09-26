@@ -277,7 +277,7 @@
         }
       },
       "ai": {
-        "enabled": true,
+        "enabled": false,
         "locked": false,
         "mode": "inquiry",
         "channelId": "1431739325426565200",
