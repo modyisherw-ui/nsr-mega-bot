@@ -175300,3 +175300,8 @@ components[0].components[0].options[2].emoji.name[COMPONENT_INVALID_EMOJI]: Inva
 [2026-10-18T10:33:04.525Z] 📡 متصل في 2 سيرفر
 [2026-10-18T10:33:04.606Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
 [2026-10-18T10:33:05.137Z] ✅ تم تسجيل 38 أوامر عامة في 2 سيرفر
+[2026-10-18T14:27:22.980Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-10-18T14:27:23.027Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-10-18T14:27:23.694Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.29868511973179557; waiting 12320ms
