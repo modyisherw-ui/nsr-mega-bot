@@ -1,10 +1,13 @@
-# Node_modules and build artifacts
+# Node modules and build artifacts
 node_modules/
 .env
 
-# Runtime data files (DB + logs must not be in git)
-data/bot.db
-data/bot.db-shm
-data/bot.db-wal
+# Runtime data files
+# - سجلات الجلسات القديمة و heartbeat تبقى خارج الريبو
+# - bot.db + bot.db-wal داخل الريبو حتى تنجو البيانات (تذاكر/تقييمات/ستريك/سجنات)
+#   من إعادة تشغيل GitHub Actions — تجاهلها كان يمسح كل شيء عند كل إقلاع
+data/bot-[0-9]*.txt
+data/bot.log
 data/heartbeat.json
-data/bot-*.txt
+# ملف الـ shm قابل لإعادة الإنشاء فقط، لا يُنسخ بين الجلسات
+data/bot.db-shm

@@ -5,10 +5,15 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 */5 * * *"
+    # كل نص ساعة: أي فجوة بين الجلسات ما تتجاوز وقت الإقلاع (~دقيقة)
+    - cron: "*/30 * * * *"
 
+# مجموعة توازٍ واحدة: تشغيل واحد فقط + انتظار واحد (الأحدث يلغي الأقدم)
+# الإلغاء يصير عند push يدوياً فقط — التشغيل المجدول ما يقطع جلسة شغالة
+# (وبالمقابل دفعات sync تحمل [skip ci] فلا تسبب إعادة تشغيل بلا نهاية)
 concurrency:
   group: bot-run
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
 permissions:
   contents: write
@@ -16,7 +21,8 @@ permissions:
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    # أقل من حد GitHub (6 ساعات): الجلسة تنتهي ويعيد الجدولة تشغيل واحدة جديدة فوراً
+    timeout-minutes: 355
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,7 +61,13 @@ jobs:
           git config user.name "nsr-bot"
           git config user.email "nsr-bot@users.noreply.github.com"
 
-          ( while true; do sleep 120; git add -A data config.json; if ! git diff --cached --quiet; then git commit -m "chore: sync db $(date -u +%H:%M)" || true; git push origin main || true; fi; done ) &
+          # سجل حي لكل جلسة: نبدأ من ملف فارغ حتى لا يكبر الريبو بلا حدود
+          : > data/bot-live.txt || true
+
+          # [skip ci] ضروري: بدونها كل دفعة sync تلغي الجلسة الحالية وتعيد تشغيل البوت بلا نهاية
+          # pull --rebase: لو سبقنا رِبو آخر (سباق عند الإلغاء) نعيد تطبيق كوميتاتنا فوقه بدل أن تفشل المزامنة للأبد
+          # checkpoint: نفرّغ الـ WAL داخل bot.db قبل المزامنة حتى تكون النسخة المحفوظة كاملة ومتسقة
+          ( while true; do sleep 120; if [ -f data/bot.db ]; then node -e "const{DatabaseSync}=require('node:sqlite');const d=new DatabaseSync('data/bot.db');d.exec('PRAGMA wal_checkpoint(TRUNCATE)');d.close()" || true; fi; git add -A data config.json; if ! git diff --cached --quiet; then git commit -m "chore: sync db $(date -u +%H:%M) [skip ci]" || true; git pull --rebase origin main || git rebase --abort || true; git push origin main || true; fi; done ) &
           WATCHER=$!
 
           while true; do
