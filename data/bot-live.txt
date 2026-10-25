@@ -3,3 +3,8 @@
 [2026-10-25T01:46:50.830Z] 📡 متصل في 1 سيرفر
 [2026-10-25T01:46:50.904Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
 [2026-10-25T01:46:51.243Z] ✅ تم تسجيل 38 أوامر عامة في 1 سيرفر
+[2026-10-25T03:10:24.205Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-10-25T03:10:24.230Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-10-25T03:10:24.795Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.19830950552814353; waiting 8180ms
