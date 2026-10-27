@@ -18,3 +18,8 @@
 	Ready state: 1
 [2026-10-27T21:38:34.224Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
 [2026-10-27T21:38:34.784Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.2507275471658835; waiting 10342ms
+[2026-10-27T23:11:06.483Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-10-27T23:11:06.507Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-10-27T23:11:07.058Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.43193980321879377; waiting 17817ms
