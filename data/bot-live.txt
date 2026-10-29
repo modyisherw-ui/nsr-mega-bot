@@ -8,3 +8,8 @@
 	Needs closing: false
 	Ready state: 3
 [2026-10-29T07:27:32.173Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.8407767989016119; waiting 34682ms
+[2026-10-29T08:13:08.619Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
+	Needs closing: true
+	Ready state: 1
+[2026-10-29T08:13:08.695Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
+[2026-10-29T08:13:09.323Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.3456529405211911; waiting 14258ms
