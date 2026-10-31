@@ -17,3 +17,4 @@
 [2026-10-31T10:57:09.323Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
 	Needs closing: false
 	Ready state: 3
+[2026-10-31T10:57:09.867Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.867037665644572; waiting 35765ms
