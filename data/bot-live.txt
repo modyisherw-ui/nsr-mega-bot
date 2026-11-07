@@ -1,20 +1,5 @@
-[2026-11-07T00:14:30.476Z] 🚀 جاري تشغيل Mega Bot...
-[2026-11-07T00:14:31.539Z] ✅ تم تسجيل الدخول باسم NSR HUB#6652
-[2026-11-07T00:14:31.539Z] 📡 متصل في 1 سيرفر
-[2026-11-07T00:14:31.739Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
-[2026-11-07T00:14:32.336Z] ✅ تم تسجيل 38 أوامر عامة في 1 سيرفر
-[2026-11-07T00:43:37.324Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
-[2026-11-07T00:43:37.325Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
-	Needs closing: false
-	Ready state: 3
-[2026-11-07T00:43:38.012Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.8382154695238548; waiting 34576ms
-[2026-11-07T04:26:08.108Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
-	Needs closing: true
-	Ready state: 1
-[2026-11-07T04:26:08.154Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
-[2026-11-07T04:26:08.805Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.9481031029485215; waiting 39109ms
-[2026-11-07T05:55:44.981Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
-[2026-11-07T05:55:44.981Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
-	Needs closing: false
-	Ready state: 3
-[2026-11-07T05:55:45.655Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.2866874250028212; waiting 11825ms
+[2026-11-07T06:09:42.662Z] 🚀 جاري تشغيل Mega Bot...
+[2026-11-07T06:09:43.501Z] ✅ تم تسجيل الدخول باسم NSR HUB#6652
+[2026-11-07T06:09:43.501Z] 📡 متصل في 1 سيرفر
+[2026-11-07T06:09:43.605Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
+[2026-11-07T06:09:44.057Z] ✅ تم تسجيل 38 أوامر عامة في 1 سيرفر
