@@ -1,15 +1,5 @@
-[2026-11-19T18:35:01.411Z] 🚀 جاري تشغيل Mega Bot...
-[2026-11-19T18:35:02.651Z] ✅ تم تسجيل الدخول باسم NSR HUB#6652
-[2026-11-19T18:35:02.651Z] 📡 متصل في 1 سيرفر
-[2026-11-19T18:35:02.783Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
-[2026-11-19T18:35:03.402Z] ✅ تم تسجيل 38 أوامر عامة في 1 سيرفر
-[2026-11-19T22:00:52.955Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
-	Needs closing: true
-	Ready state: 1
-[2026-11-19T22:00:53.037Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
-[2026-11-19T22:00:53.712Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.6840487803439931; waiting 28217ms
-[2026-11-19T23:57:22.038Z] 🔧 debug: [WS => Shard 0] Connection status during destroy
-	Needs closing: true
-	Ready state: 1
-[2026-11-19T23:57:22.112Z] 🔄 shardReconnecting id=0 — جاري إعادة الاتصال
-[2026-11-19T23:57:22.779Z] 🔧 debug: [WS => Shard 0] Preparing first heartbeat of the connection with a jitter of 0.3834277924510133; waiting 15816ms
+[2026-11-20T01:09:56.860Z] 🚀 جاري تشغيل Mega Bot...
+[2026-11-20T01:09:58.540Z] ✅ تم تسجيل الدخول باسم NSR HUB#6652
+[2026-11-20T01:09:58.541Z] 📡 متصل في 1 سيرفر
+[2026-11-20T01:09:58.638Z] 📋 نظام اللوقات مفعّل (لكل سيرفر)
+[2026-11-20T01:09:59.028Z] ✅ تم تسجيل 38 أوامر عامة في 1 سيرفر
